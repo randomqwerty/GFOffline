@@ -1,0 +1,82 @@
+{
+ "name": "retired_rankings",
+ "description": "Ranking maps the game later replaced with \"+\" versions, playable again from one Campaign tab entry.",
+ "version": "4",
+ "enabled": false,
+ "_comment": "Ranking maps that a later \"+\" version replaced in the event archives, listed together as one Campaign tab entry. Each map keeps its id, so the server's rules for it (score, supply line) still apply. Maps: Down the Rabbit Hole (10017), Imaginary Maze (10036), Hornet's Nest (10091), Hurricane Rescue (10155), Reign of Chaos (10253, 10273), Flowers of the End and EX (10342, 10365), Escape Acceleration EX-I and Labyrinthine Defense (10417, 10418), Vortex of Secrets, Tide of Blood and Trap of Espionage (10520-10522), Scorpion Vortex and Operation Mistbuster (10674, 10675), City of Nightmares (10800).",
+ "campaign": {
+  "name": "Retired Rankings",
+  "description": "Ranking maps from past events that the game replaced with their \"+\" versions.",
+  "missions": [
+   10017,
+   10036,
+   10091,
+   10155,
+   10253,
+   10273,
+   10342,
+   10365,
+   10417,
+   10418,
+   10520,
+   10521,
+   10522,
+   10674,
+   10675,
+   10800
+  ],
+  "look": 21
+ },
+ "grant": {
+  "missions": [
+   {
+    "id": 10017
+   },
+   {
+    "id": 10036
+   },
+   {
+    "id": 10091
+   },
+   {
+    "id": 10155
+   },
+   {
+    "id": 10253
+   },
+   {
+    "id": 10273
+   },
+   {
+    "id": 10342
+   },
+   {
+    "id": 10365
+   },
+   {
+    "id": 10417
+   },
+   {
+    "id": 10418
+   },
+   {
+    "id": 10520
+   },
+   {
+    "id": 10521
+   },
+   {
+    "id": 10522
+   },
+   {
+    "id": 10674
+   },
+   {
+    "id": 10675
+   },
+   {
+    "id": 10800
+   }
+  ]
+ }
+}

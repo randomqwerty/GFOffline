@@ -1,0 +1,12 @@
+{
+ "name": "ck_letters",
+ "description": "Opens the Convolutional Kernel letters screen, which the game hides: the letters from Angular Gyrus.",
+ "version": "1",
+ "enabled": false,
+ "_comment": "Turns on the Convolutional Kernel letter entrance, which the game's config has commented out. Type 1 is the receiving screen, listing the letters sent in Angular Gyrus.",
+ "profile_edits": {
+  "opspanel/campion-74.txt": [
+   {"from": "//LetterSendBack|202412Activity_LetterEntrance|1|11603", "to": "LetterSendBack|202412Activity_LetterEntrance|1|11603"}
+  ]
+ }
+}

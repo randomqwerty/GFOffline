@@ -1,0 +1,4809 @@
+{
+"package": "protoMsg",
+"messages": {
+"S_Error": [
+[
+1,
+"errorNum",
+5,
+false,
+""
+]
+],
+"C_GatewayKickout": [
+[
+1,
+"userId",
+4,
+false,
+""
+]
+],
+"C_FriendChatJoin": [
+[
+1,
+"uid",
+4,
+false,
+""
+]
+],
+"S_FriendChatJoinOwn": [
+[
+1,
+"list",
+11,
+true,
+"FriendChatOnline"
+]
+],
+"FriendChatOnline": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"online",
+13,
+false,
+""
+],
+[
+3,
+"chatList",
+9,
+true,
+""
+]
+],
+"FriendChatContent": [
+[
+1,
+"fromUid",
+4,
+false,
+""
+],
+[
+2,
+"toUid",
+4,
+false,
+""
+],
+[
+3,
+"message",
+9,
+false,
+""
+],
+[
+4,
+"createTime",
+3,
+false,
+""
+]
+],
+"S_FriendChatJoinOther": [
+[
+1,
+"fuid",
+4,
+false,
+""
+]
+],
+"C_FriendChatList": [
+[
+1,
+"fuid",
+4,
+false,
+""
+]
+],
+"S_FriendChatList": [
+[
+3,
+"chatList",
+9,
+true,
+""
+]
+],
+"C_FriendChat": [
+[
+1,
+"fuid",
+4,
+false,
+""
+],
+[
+2,
+"message",
+9,
+false,
+""
+]
+],
+"S_FriendChat": [
+[
+1,
+"fuid",
+4,
+false,
+""
+],
+[
+2,
+"chat",
+9,
+false,
+""
+]
+],
+"C_FriendChatLeave": [
+[
+1,
+"fuid",
+4,
+false,
+""
+]
+],
+"S_FriendChatLeave": [
+[
+1,
+"fuid",
+4,
+false,
+""
+]
+],
+"C_FriendAdd": [
+[
+1,
+"uid",
+4,
+false,
+""
+]
+],
+"S_FriendAdd": [
+[
+1,
+"ret",
+13,
+false,
+""
+],
+[
+2,
+"uid",
+4,
+false,
+""
+]
+],
+"C_FriendDel": [
+[
+1,
+"uid",
+4,
+false,
+""
+]
+],
+"S_FriendDel": [
+[
+1,
+"ret",
+13,
+false,
+""
+],
+[
+2,
+"uid",
+4,
+false,
+""
+]
+],
+"C_GuildChatJoin": [
+[
+1,
+"uid",
+4,
+false,
+""
+]
+],
+"S_GuildChatJoinOwn": [
+[
+1,
+"list",
+11,
+true,
+"GuildChatOnline"
+]
+],
+"GuildChatOnline": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"online",
+13,
+false,
+""
+],
+[
+3,
+"chatList",
+9,
+true,
+""
+]
+],
+"GuildChatContent": [
+[
+1,
+"fromUid",
+4,
+false,
+""
+],
+[
+2,
+"toUid",
+4,
+false,
+""
+],
+[
+3,
+"message",
+9,
+false,
+""
+],
+[
+4,
+"createTime",
+3,
+false,
+""
+]
+],
+"S_GuildChatJoinOther": [
+[
+1,
+"fuid",
+4,
+false,
+""
+]
+],
+"C_GuildChatList": [
+[
+1,
+"fuid",
+4,
+false,
+""
+]
+],
+"S_GuildChatList": [
+[
+3,
+"chatList",
+9,
+true,
+""
+]
+],
+"C_GuildChat": [
+[
+1,
+"fuid",
+4,
+false,
+""
+],
+[
+2,
+"message",
+9,
+false,
+""
+]
+],
+"S_GuildChat": [
+[
+1,
+"fuid",
+4,
+false,
+""
+],
+[
+2,
+"chat",
+9,
+false,
+""
+]
+],
+"C_GuildChatLeave": [
+[
+1,
+"fuid",
+4,
+false,
+""
+]
+],
+"S_GuildChatLeave": [
+[
+1,
+"fuid",
+4,
+false,
+""
+]
+],
+"C_GuildJoin": [
+[
+1,
+"guildId",
+5,
+false,
+""
+]
+],
+"S_GuildJoin": [
+[
+1,
+"ret",
+13,
+false,
+""
+],
+[
+2,
+"uid",
+4,
+false,
+""
+]
+],
+"C_GuildLeave": [
+[
+1,
+"uid",
+4,
+false,
+""
+]
+],
+"S_GuildLeave": [
+[
+1,
+"ret",
+13,
+false,
+""
+],
+[
+2,
+"uid",
+4,
+false,
+""
+]
+],
+"C_GuildSceneJoin": [
+[
+1,
+"line",
+5,
+false,
+""
+],
+[
+2,
+"position",
+5,
+false,
+""
+],
+[
+3,
+"insence",
+5,
+false,
+""
+]
+],
+"S_GuildSceneJoin": [
+[
+1,
+"posList",
+11,
+true,
+"ScenePosition"
+]
+],
+"C_GuildSceneMove": [
+[
+2,
+"position",
+5,
+false,
+""
+]
+],
+"S_GuildSceneMove": [
+[
+2,
+"position",
+5,
+false,
+""
+]
+],
+"C_GuildSceneLeave": [
+[
+1,
+"inscene",
+5,
+false,
+""
+]
+],
+"S_GuildSceneLeave": [
+[
+2,
+"uid",
+4,
+false,
+""
+]
+],
+"S_GuildScenePositionSync": [
+[
+1,
+"line",
+5,
+false,
+""
+],
+[
+2,
+"posList",
+11,
+true,
+"ScenePosition"
+],
+[
+3,
+"target",
+4,
+true,
+""
+]
+],
+"ScenePosition": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"position",
+5,
+false,
+""
+]
+],
+"C_GuildTest": [
+[
+1,
+"uid",
+4,
+false,
+""
+]
+],
+"S_GuildTest": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"nickName",
+9,
+false,
+""
+]
+],
+"C_ChessLobbyCreateRoom": [
+[
+1,
+"crewMode",
+5,
+false,
+""
+],
+[
+2,
+"userNum",
+5,
+false,
+""
+],
+[
+3,
+"joinLimit",
+5,
+false,
+""
+],
+[
+4,
+"missionId",
+5,
+false,
+""
+],
+[
+5,
+"mapId",
+5,
+false,
+""
+],
+[
+6,
+"isRandomMission",
+8,
+false,
+""
+]
+],
+"S_ChessLobbyCreateRoom": [
+[
+1,
+"roomId",
+5,
+false,
+""
+]
+],
+"C_ChessLobbyQuickJoin": [
+[
+1,
+"crewMode",
+5,
+false,
+""
+]
+],
+"S_ChessLobbyQuickJoin": [
+[
+1,
+"roomId",
+5,
+false,
+""
+],
+[
+2,
+"crewMode",
+5,
+false,
+""
+],
+[
+3,
+"userNum",
+5,
+false,
+""
+],
+[
+4,
+"joinLimit",
+5,
+false,
+""
+],
+[
+5,
+"ownerId",
+4,
+false,
+""
+],
+[
+6,
+"users",
+4,
+true,
+""
+],
+[
+7,
+"preparedUsers",
+4,
+true,
+""
+],
+[
+8,
+"missionId",
+5,
+false,
+""
+],
+[
+9,
+"mapId",
+5,
+false,
+""
+],
+[
+10,
+"isRandomMission",
+8,
+false,
+""
+]
+],
+"S_ChessLobbyQuickJoinOther": [
+[
+1,
+"userId",
+4,
+false,
+""
+]
+],
+"S_ChessLobbyQuickJoinFailed": [],
+"C_ChessLobbySearchRoom": [
+[
+1,
+"roomId",
+5,
+false,
+""
+]
+],
+"S_ChessLobbySearchRoom": [
+[
+1,
+"status",
+5,
+false,
+""
+]
+],
+"C_ChessLobbyJoinRoom": [
+[
+1,
+"roomId",
+5,
+false,
+""
+]
+],
+"S_ChessLobbyJoinRoom": [
+[
+1,
+"roomId",
+5,
+false,
+""
+],
+[
+2,
+"crewMode",
+5,
+false,
+""
+],
+[
+3,
+"userNum",
+5,
+false,
+""
+],
+[
+4,
+"joinLimit",
+5,
+false,
+""
+],
+[
+5,
+"ownerId",
+4,
+false,
+""
+],
+[
+6,
+"users",
+4,
+true,
+""
+],
+[
+7,
+"preparedUsers",
+4,
+true,
+""
+],
+[
+8,
+"missionId",
+5,
+false,
+""
+],
+[
+9,
+"mapId",
+5,
+false,
+""
+],
+[
+10,
+"isRandomMission",
+8,
+false,
+""
+]
+],
+"S_ChessLobbyJoinRoomOther": [
+[
+1,
+"userId",
+4,
+false,
+""
+]
+],
+"C_ChessLobbyLeaveRoom": [
+[
+1,
+"roomId",
+5,
+false,
+""
+]
+],
+"S_ChessLobbyLeaveRoom": [],
+"S_ChessLobbyLeaveRoomOther": [
+[
+1,
+"ownerId",
+4,
+false,
+""
+],
+[
+2,
+"userId",
+4,
+false,
+""
+]
+],
+"C_ChessLobbyKickUser": [
+[
+1,
+"kickedUserId",
+4,
+false,
+""
+]
+],
+"S_ChessLobbyKickUser": [],
+"S_ChessLobbyKickUserOther": [
+[
+1,
+"userId",
+4,
+false,
+""
+]
+],
+"S_ChessLobbyKickUserKicked": [],
+"C_ChessLobbyModRoom": [
+[
+1,
+"crewMode",
+5,
+false,
+""
+],
+[
+2,
+"joinLimit",
+5,
+false,
+""
+],
+[
+3,
+"missionId",
+5,
+false,
+""
+],
+[
+4,
+"mapId",
+5,
+false,
+""
+],
+[
+5,
+"isRandomMission",
+8,
+false,
+""
+]
+],
+"S_ChessLobbyModRoom": [],
+"S_ChessLobbyModRoomOther": [
+[
+1,
+"crewMode",
+5,
+false,
+""
+],
+[
+2,
+"joinLimit",
+5,
+false,
+""
+],
+[
+3,
+"missionId",
+5,
+false,
+""
+],
+[
+4,
+"mapId",
+5,
+false,
+""
+],
+[
+5,
+"isRandomMission",
+8,
+false,
+""
+]
+],
+"C_ChessLobbyPrepare": [
+[
+1,
+"prepare",
+5,
+false,
+""
+]
+],
+"S_ChessLobbyPrepare": [],
+"S_ChessLobbyPrepareOther": [
+[
+1,
+"userId",
+4,
+false,
+""
+],
+[
+2,
+"prepare",
+5,
+false,
+""
+]
+],
+"C_ChessLobbyStartGame": [],
+"S_ChessLobbyStartGame": [
+[
+1,
+"missionId",
+5,
+false,
+""
+]
+],
+"C_ChessLobbyMatch": [],
+"S_ChessLobbyMatch": [
+[
+1,
+"userNum",
+5,
+false,
+""
+]
+],
+"S_ChessLobbyMatchFinish": [
+[
+1,
+"users",
+4,
+true,
+""
+]
+],
+"S_ChessLobbyMatchCD": [
+[
+1,
+"matchCD",
+5,
+false,
+""
+]
+],
+"C_ChessLobbyCancelMatch": [],
+"S_ChessLobbyCancelMatch": [],
+"S_ChessLobbyCancelMatchOther": [
+[
+1,
+"userNum",
+5,
+false,
+""
+]
+],
+"C_ChessLobbyMatchPrepare": [],
+"S_ChessLobbyMatchPrepare": [],
+"S_ChessLobbyMatchPrepareOther": [
+[
+1,
+"userId",
+4,
+false,
+""
+]
+],
+"C_ChessLobbyEndGame": [
+[
+1,
+"roomLogKey",
+9,
+false,
+""
+],
+[
+2,
+"users",
+4,
+true,
+""
+]
+],
+"S_ChessLobbyEndGame": [],
+"S_ChessLobbyReconnect": [
+[
+1,
+"roomId",
+5,
+false,
+""
+],
+[
+2,
+"crewMode",
+5,
+false,
+""
+],
+[
+3,
+"userNum",
+5,
+false,
+""
+],
+[
+4,
+"joinLimit",
+5,
+false,
+""
+],
+[
+5,
+"ownerId",
+4,
+false,
+""
+],
+[
+6,
+"users",
+4,
+true,
+""
+],
+[
+7,
+"preparedUsers",
+4,
+true,
+""
+],
+[
+8,
+"isMatch",
+5,
+false,
+""
+],
+[
+9,
+"missionId",
+5,
+false,
+""
+],
+[
+10,
+"mapId",
+5,
+false,
+""
+],
+[
+11,
+"isRandomMission",
+8,
+false,
+""
+]
+],
+"S_ChessLobbyConnect": [],
+"S_ChessLobbyReconnectGame": [
+[
+1,
+"roomId",
+5,
+false,
+""
+],
+[
+2,
+"crewMode",
+5,
+false,
+""
+],
+[
+3,
+"userNum",
+5,
+false,
+""
+],
+[
+4,
+"joinLimit",
+5,
+false,
+""
+],
+[
+5,
+"ownerId",
+4,
+false,
+""
+],
+[
+6,
+"users",
+4,
+true,
+""
+],
+[
+7,
+"preparedUsers",
+4,
+true,
+""
+],
+[
+8,
+"isMatch",
+5,
+false,
+""
+],
+[
+9,
+"missionId",
+5,
+false,
+""
+],
+[
+10,
+"mapId",
+5,
+false,
+""
+],
+[
+11,
+"isRandomMission",
+8,
+false,
+""
+]
+],
+"S_ChessLobbyReconnectTutorial": [],
+"C_ChessLobbyChat": [
+[
+1,
+"chatType",
+5,
+false,
+""
+],
+[
+2,
+"chatContent",
+9,
+false,
+""
+]
+],
+"S_ChessLobbyChat": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"chatType",
+5,
+false,
+""
+],
+[
+3,
+"chatContent",
+9,
+false,
+""
+]
+],
+"C_ChessLobbyGiveUp": [
+[
+1,
+"RoomLogKey",
+9,
+false,
+""
+],
+[
+2,
+"users",
+4,
+true,
+""
+]
+],
+"S_ChessLobbyGiveUp": [],
+"C_ChessLobbyStartTutorial": [
+[
+1,
+"missionId",
+5,
+false,
+""
+]
+],
+"S_ChessLobbyStartTutorial": [],
+"C_ChessLobbyEndTutorial": [
+[
+1,
+"isQuit",
+8,
+false,
+""
+]
+],
+"S_ChessLobbyEndTutorial": [],
+"S_ChessLobbyGameResult": [
+[
+1,
+"userId",
+4,
+false,
+""
+],
+[
+2,
+"score",
+5,
+false,
+""
+],
+[
+3,
+"timeTicket",
+5,
+false,
+""
+],
+[
+4,
+"rankTicket",
+5,
+false,
+""
+]
+],
+"C_ChessLobbyBlackList": [
+[
+1,
+"userId",
+4,
+false,
+""
+]
+],
+"S_ChessLobbyBlackList": [
+[
+1,
+"status",
+5,
+false,
+""
+],
+[
+2,
+"num",
+5,
+false,
+""
+]
+],
+"C_ChessLobbyClearUserRoom": [
+[
+1,
+"userId",
+4,
+false,
+""
+],
+[
+2,
+"time",
+5,
+false,
+""
+],
+[
+3,
+"sign",
+9,
+false,
+""
+]
+],
+"C_ChessLobbyStartGameDebug": [],
+"C_CreateRoom2": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"missionId",
+5,
+false,
+""
+]
+],
+"C_CreateRoom": [
+[
+1,
+"uid",
+4,
+true,
+""
+],
+[
+2,
+"gameType",
+5,
+false,
+""
+],
+[
+3,
+"missionId",
+5,
+false,
+""
+],
+[
+4,
+"playerNum",
+5,
+false,
+""
+]
+],
+"C_ChessMoveRoll": [],
+"C_ChessMove": [
+[
+1,
+"gunId",
+5,
+false,
+""
+]
+],
+"C_ChessSetCamp": [
+[
+1,
+"camp",
+5,
+false,
+""
+]
+],
+"C_ChessSetTeam": [
+[
+1,
+"teamId",
+5,
+false,
+""
+]
+],
+"C_ChessChooseChip": [
+[
+1,
+"chipIndex",
+5,
+false,
+""
+],
+[
+2,
+"equipIndex",
+5,
+false,
+""
+]
+],
+"C_ChessBuyChip": [
+[
+1,
+"chipIndex",
+5,
+false,
+""
+],
+[
+2,
+"equipIndex",
+5,
+false,
+""
+]
+],
+"C_ChessSellChip": [
+[
+1,
+"type",
+5,
+false,
+""
+],
+[
+2,
+"index",
+5,
+false,
+""
+]
+],
+"C_ChessChanceChoose": [
+[
+1,
+"chanceId",
+5,
+false,
+""
+]
+],
+"C_ChessFly": [
+[
+1,
+"gunId",
+5,
+false,
+""
+],
+[
+2,
+"spotId",
+5,
+false,
+""
+],
+[
+3,
+"direction",
+5,
+false,
+""
+]
+],
+"C_ChessGiveUpCard": [],
+"C_ChessFlushCard": [],
+"C_ChessUseChip": [
+[
+1,
+"index",
+5,
+false,
+""
+],
+[
+2,
+"targetList",
+11,
+false,
+"C_ChessTargetInfo"
+]
+],
+"C_ChessTargetInfo": [
+[
+1,
+"firstTargetType",
+5,
+false,
+""
+],
+[
+2,
+"firstTargetIdList",
+4,
+true,
+""
+],
+[
+3,
+"secondTargetType",
+5,
+false,
+""
+],
+[
+4,
+"secondTargetIdList",
+4,
+true,
+""
+]
+],
+"C_ChessAttack": [
+[
+1,
+"targetType",
+5,
+false,
+""
+],
+[
+2,
+"targetId",
+5,
+false,
+""
+]
+],
+"C_ChessBattleRoll": [],
+"C_ChessEnd": [],
+"C_ChessInit": [],
+"C_ChessFlyOrMove": [
+[
+1,
+"mode",
+5,
+false,
+""
+]
+],
+"C_ChessDropChip": [
+[
+1,
+"index",
+5,
+true,
+""
+]
+],
+"C_ChessSkillEnd": [],
+"C_ChessUseGunChip": [
+[
+1,
+"gunId",
+5,
+false,
+""
+],
+[
+2,
+"targetList",
+11,
+false,
+"C_ChessTargetInfo"
+]
+],
+"C_ChessUseCampChip": [
+[
+2,
+"targetList",
+11,
+false,
+"C_ChessTargetInfo"
+]
+],
+"C_ChessSetAuto": [
+[
+1,
+"mode",
+8,
+false,
+""
+]
+],
+"C_ChessSetLock": [
+[
+1,
+"mode",
+8,
+false,
+""
+]
+],
+"C_ChessExitGun": [
+[
+1,
+"gunList",
+5,
+true,
+""
+]
+],
+"C_ChessReplaceChip": [
+[
+1,
+"indexList",
+5,
+true,
+""
+]
+],
+"C_ChessUseItemFly": [
+[
+1,
+"itemIndex",
+5,
+false,
+""
+],
+[
+2,
+"gunId",
+5,
+false,
+""
+],
+[
+3,
+"spotId",
+5,
+false,
+""
+],
+[
+4,
+"direction",
+5,
+false,
+""
+]
+],
+"C_ChessUseItemDice": [
+[
+1,
+"itemIndex",
+5,
+false,
+""
+],
+[
+2,
+"dicePoint",
+5,
+false,
+""
+]
+],
+"C_ChessClearRoom": [
+[
+1,
+"uid",
+4,
+false,
+""
+]
+],
+"C_ChessDebugTools": [
+[
+1,
+"debugType",
+5,
+false,
+""
+],
+[
+2,
+"param1",
+9,
+false,
+""
+],
+[
+3,
+"param2",
+9,
+false,
+""
+]
+],
+"C_ChessReplaceChipGiveUp": [],
+"C_ChessPrepareSetTeam": [
+[
+1,
+"teamId",
+5,
+false,
+""
+]
+],
+"C_ChessPrepareSetGun": [
+[
+1,
+"GunId",
+5,
+false,
+""
+]
+],
+"C_ChessPrepareSetDirection": [
+[
+1,
+"Direction",
+5,
+false,
+""
+]
+],
+"C_ChessPrepareSetCamp": [
+[
+1,
+"campId",
+5,
+false,
+""
+]
+],
+"C_ChessPrepareMoveGun": [
+[
+1,
+"gunId",
+5,
+false,
+""
+]
+],
+"C_ChessPrepareAttackGun": [
+[
+1,
+"objectType",
+5,
+false,
+""
+],
+[
+2,
+"objectId",
+5,
+false,
+""
+]
+],
+"C_ChessShopEnd": [
+[
+1,
+"isEnd",
+8,
+false,
+""
+]
+],
+"S_ChessChanceChooseInfo": [
+[
+1,
+"isChoose",
+8,
+false,
+""
+],
+[
+2,
+"chanceList",
+5,
+true,
+""
+]
+],
+"S_ChessWin": [
+[
+1,
+"rank",
+11,
+true,
+"S_ChessWin.RankEntry"
+],
+[
+2,
+"orderList",
+11,
+true,
+"S_ChessOrder"
+],
+[
+3,
+"changeList",
+11,
+false,
+"S_ChessChangeList"
+],
+[
+4,
+"autoTime",
+11,
+true,
+"S_ChessWin.AutoTimeEntry"
+],
+[
+5,
+"gameTime",
+5,
+false,
+""
+]
+],
+"S_ChessWin.RankEntry": [
+[
+1,
+"key",
+4,
+false,
+""
+],
+[
+2,
+"value",
+5,
+false,
+""
+]
+],
+"S_ChessWin.AutoTimeEntry": [
+[
+1,
+"key",
+4,
+false,
+""
+],
+[
+2,
+"value",
+5,
+false,
+""
+]
+],
+"S_GameStage": [
+[
+1,
+"stageId",
+13,
+false,
+""
+],
+[
+2,
+"startTime",
+3,
+false,
+""
+],
+[
+3,
+"endTime",
+3,
+false,
+""
+],
+[
+4,
+"curType",
+5,
+false,
+""
+],
+[
+5,
+"curId",
+4,
+false,
+""
+],
+[
+6,
+"roundNum",
+13,
+false,
+""
+],
+[
+7,
+"orderList",
+11,
+true,
+"S_ChessOrder"
+],
+[
+8,
+"changeList",
+11,
+false,
+"S_ChessChangeList"
+]
+],
+"S_GameStageEnd": [
+[
+1,
+"stageId",
+13,
+false,
+""
+],
+[
+2,
+"orderList",
+11,
+true,
+"S_ChessOrder"
+],
+[
+3,
+"changeList",
+11,
+false,
+"S_ChessChangeList"
+]
+],
+"S_ChessRollResult": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"diceList",
+11,
+true,
+"S_ChessRollResult.DiceListEntry"
+],
+[
+3,
+"orderList",
+11,
+true,
+"S_ChessOrder"
+],
+[
+4,
+"changeList",
+11,
+false,
+"S_ChessChangeList"
+],
+[
+5,
+"diceListResult",
+11,
+true,
+"S_ChessRollResult.DiceListResultEntry"
+]
+],
+"S_ChessRollResult.DiceListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+5,
+false,
+""
+]
+],
+"S_ChessRollResult.DiceListResultEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+5,
+false,
+""
+]
+],
+"S_SetTeamInfo": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"gunList",
+11,
+true,
+"S_SetTeamInfo.GunListEntry"
+]
+],
+"S_SetTeamInfo.GunListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+11,
+false,
+"S_ChessGunInfo"
+]
+],
+"S_ChessGunInfo": [
+[
+1,
+"gunId",
+5,
+false,
+""
+],
+[
+2,
+"gunImage",
+5,
+false,
+""
+],
+[
+3,
+"gunType",
+5,
+false,
+""
+],
+[
+4,
+"skin",
+5,
+false,
+""
+],
+[
+5,
+"skillChipId",
+5,
+false,
+""
+],
+[
+6,
+"chipId",
+5,
+false,
+""
+],
+[
+7,
+"uid",
+4,
+false,
+""
+],
+[
+8,
+"direction",
+5,
+false,
+""
+],
+[
+9,
+"hp",
+5,
+false,
+""
+],
+[
+10,
+"power",
+5,
+false,
+""
+],
+[
+11,
+"maxHp",
+5,
+false,
+""
+],
+[
+12,
+"armor",
+5,
+false,
+""
+],
+[
+13,
+"attackTimes",
+5,
+false,
+""
+],
+[
+14,
+"attackRange",
+5,
+false,
+""
+],
+[
+15,
+"ap",
+5,
+false,
+""
+],
+[
+16,
+"shield",
+5,
+false,
+""
+],
+[
+17,
+"jumpNum",
+5,
+false,
+""
+]
+],
+"S_ChessBattleRollResult": [
+[
+1,
+"atkUid",
+4,
+false,
+""
+],
+[
+2,
+"atkDiceList",
+11,
+true,
+"S_ChessBattleRollResult.AtkDiceListEntry"
+],
+[
+3,
+"defUid",
+4,
+false,
+""
+],
+[
+4,
+"defDiceList",
+11,
+true,
+"S_ChessBattleRollResult.DefDiceListEntry"
+],
+[
+5,
+"atkType",
+5,
+false,
+""
+],
+[
+6,
+"atkId",
+4,
+false,
+""
+],
+[
+7,
+"defType",
+5,
+false,
+""
+],
+[
+8,
+"defId",
+4,
+false,
+""
+],
+[
+9,
+"atkDiceListResult",
+11,
+true,
+"S_ChessBattleRollResult.AtkDiceListResultEntry"
+],
+[
+10,
+"defDiceListResult",
+11,
+true,
+"S_ChessBattleRollResult.DefDiceListResultEntry"
+],
+[
+15,
+"orderList",
+11,
+true,
+"S_ChessOrder"
+],
+[
+16,
+"changeList",
+11,
+false,
+"S_ChessChangeList"
+]
+],
+"S_ChessBattleRollResult.AtkDiceListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+5,
+false,
+""
+]
+],
+"S_ChessBattleRollResult.DefDiceListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+5,
+false,
+""
+]
+],
+"S_ChessBattleRollResult.AtkDiceListResultEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+5,
+false,
+""
+]
+],
+"S_ChessBattleRollResult.DefDiceListResultEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+5,
+false,
+""
+]
+],
+"S_ChessGunMove": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"type",
+5,
+false,
+""
+],
+[
+3,
+"gunId",
+5,
+false,
+""
+],
+[
+4,
+"oldSpotId",
+5,
+false,
+""
+],
+[
+5,
+"newSpotId",
+5,
+false,
+""
+],
+[
+6,
+"stepNum",
+5,
+false,
+""
+],
+[
+7,
+"isAtk",
+8,
+false,
+""
+],
+[
+8,
+"orderList",
+11,
+true,
+"S_ChessOrder"
+],
+[
+9,
+"changeList",
+11,
+false,
+"S_ChessChangeList"
+]
+],
+"S_ChessGunBattle": [
+[
+1,
+"atkType",
+5,
+false,
+""
+],
+[
+2,
+"atkId",
+4,
+false,
+""
+],
+[
+3,
+"atkDiceNum",
+5,
+false,
+""
+],
+[
+4,
+"defType",
+5,
+false,
+""
+],
+[
+5,
+"defId",
+4,
+false,
+""
+],
+[
+6,
+"defDiceNum",
+5,
+false,
+""
+],
+[
+7,
+"orderList",
+11,
+true,
+"S_ChessOrder"
+],
+[
+8,
+"changeList",
+11,
+false,
+"S_ChessChangeList"
+]
+],
+"S_ChessInitInfo": [
+[
+1,
+"userList",
+11,
+true,
+"S_UserInfo"
+],
+[
+2,
+"randomEnemyList",
+11,
+true,
+"S_ChessRandomEnemy"
+],
+[
+3,
+"campSkillInfo",
+11,
+true,
+"S_ChessInitInfo.CampSkillInfoEntry"
+],
+[
+4,
+"missionId",
+5,
+false,
+""
+]
+],
+"S_ChessInitInfo.CampSkillInfoEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+5,
+false,
+""
+]
+],
+"S_UserInfo": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"name",
+9,
+false,
+""
+],
+[
+3,
+"order",
+5,
+false,
+""
+],
+[
+4,
+"diceNum",
+5,
+false,
+""
+],
+[
+5,
+"isRobot",
+8,
+false,
+""
+]
+],
+"S_ChessRandomEnemy": [
+[
+1,
+"id",
+5,
+false,
+""
+],
+[
+2,
+"spotId",
+5,
+false,
+""
+]
+],
+"S_ChessFlyEvent": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"endTime",
+5,
+false,
+""
+]
+],
+"S_ChessEnemyMove": [
+[
+1,
+"enemyId",
+5,
+false,
+""
+],
+[
+2,
+"type",
+5,
+false,
+""
+],
+[
+3,
+"oldSpotId",
+5,
+false,
+""
+],
+[
+4,
+"newSpotId",
+5,
+false,
+""
+],
+[
+5,
+"stepNum",
+5,
+false,
+""
+],
+[
+6,
+"direction",
+5,
+false,
+""
+],
+[
+7,
+"orderList",
+11,
+true,
+"S_ChessOrder"
+],
+[
+8,
+"changeList",
+11,
+false,
+"S_ChessChangeList"
+]
+],
+"S_ChessGunFly": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"gunId",
+5,
+false,
+""
+],
+[
+3,
+"spotId",
+5,
+false,
+""
+],
+[
+4,
+"direction",
+5,
+false,
+""
+],
+[
+5,
+"orderList",
+11,
+true,
+"S_ChessOrder"
+],
+[
+6,
+"changeList",
+11,
+false,
+"S_ChessChangeList"
+]
+],
+"S_ChessSetCamp": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"camp",
+5,
+false,
+""
+],
+[
+3,
+"staticChipId",
+5,
+false,
+""
+],
+[
+4,
+"chipId",
+5,
+false,
+""
+]
+],
+"S_ChessChooseChip": [
+[
+1,
+"token",
+5,
+false,
+""
+],
+[
+2,
+"chipList",
+11,
+true,
+"S_ChessChooseChip.ChipListEntry"
+],
+[
+3,
+"orderList",
+11,
+true,
+"S_ChessOrder"
+],
+[
+4,
+"changeList",
+11,
+false,
+"S_ChessChangeList"
+]
+],
+"S_ChessChooseChip.ChipListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+5,
+false,
+""
+]
+],
+"S_ChessEquipList": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"equipList",
+11,
+true,
+"S_ChessEquipList.EquipListEntry"
+],
+[
+3,
+"chipOrderList",
+11,
+true,
+"S_ChessChipOrder"
+],
+[
+4,
+"orderList",
+11,
+true,
+"S_ChessOrder"
+],
+[
+5,
+"changeList",
+11,
+false,
+"S_ChessChangeList"
+]
+],
+"S_ChessEquipList.EquipListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+11,
+false,
+"S_Equip"
+]
+],
+"S_Equip": [
+[
+1,
+"chipId",
+5,
+false,
+""
+],
+[
+2,
+"exp",
+5,
+false,
+""
+]
+],
+"S_ChessChipOrder": [
+[
+1,
+"chipId",
+5,
+false,
+""
+],
+[
+2,
+"type",
+5,
+false,
+""
+],
+[
+3,
+"oldChipId",
+5,
+false,
+""
+]
+],
+"S_ChessItemList": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"addChip",
+5,
+false,
+""
+],
+[
+3,
+"deleteChipList",
+5,
+true,
+""
+],
+[
+4,
+"itemList",
+11,
+true,
+"S_ChessItemList.ItemListEntry"
+],
+[
+5,
+"orderList",
+11,
+true,
+"S_ChessOrder"
+],
+[
+6,
+"changeList",
+11,
+false,
+"S_ChessChangeList"
+]
+],
+"S_ChessItemList.ItemListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+5,
+false,
+""
+]
+],
+"S_ChessChooseChipEvent": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"endTime",
+5,
+false,
+""
+],
+[
+3,
+"chipList",
+11,
+true,
+"S_ChessChooseChipEvent.ChipListEntry"
+]
+],
+"S_ChessChooseChipEvent.ChipListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+5,
+false,
+""
+]
+],
+"S_ChessReplaceChipEvent": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"endTime",
+5,
+false,
+""
+],
+[
+3,
+"replaceNum",
+5,
+false,
+""
+]
+],
+"S_NewDay": [],
+"S_GetServerTime": [
+[
+1,
+"serverTime",
+3,
+false,
+""
+]
+],
+"C_ClientCommand": [
+[
+1,
+"kind",
+13,
+false,
+""
+],
+[
+2,
+"param",
+9,
+false,
+""
+]
+],
+"C_LoginServer": [
+[
+1,
+"account",
+9,
+false,
+""
+],
+[
+2,
+"serverID",
+5,
+false,
+""
+],
+[
+5,
+"loginChannel",
+9,
+false,
+""
+],
+[
+6,
+"data",
+9,
+false,
+""
+],
+[
+7,
+"version",
+9,
+false,
+""
+]
+],
+"S_LoginServer": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"address",
+9,
+false,
+""
+],
+[
+3,
+"account",
+9,
+false,
+""
+],
+[
+4,
+"sessionkey",
+9,
+false,
+""
+],
+[
+5,
+"result",
+13,
+false,
+""
+],
+[
+6,
+"isNew",
+8,
+false,
+""
+]
+],
+"C_VerifySession": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"sessionkey",
+9,
+false,
+""
+]
+],
+"S_VerifySession": [
+[
+1,
+"result",
+13,
+false,
+""
+]
+],
+"C_AccountInfo": [
+[
+1,
+"uid",
+4,
+false,
+""
+]
+],
+"S_AccountInfo": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"nickName",
+9,
+false,
+""
+]
+],
+"S_ReConnect": [
+[
+1,
+"ret",
+13,
+false,
+""
+]
+],
+"S_ChessOrder": [
+[
+1,
+"eventType",
+5,
+false,
+""
+],
+[
+2,
+"orderType",
+5,
+false,
+""
+],
+[
+3,
+"effectType",
+5,
+false,
+""
+],
+[
+4,
+"effectId",
+4,
+false,
+""
+],
+[
+5,
+"targetType",
+5,
+false,
+""
+],
+[
+6,
+"targetId",
+4,
+false,
+""
+],
+[
+7,
+"AttrType",
+5,
+false,
+""
+],
+[
+8,
+"changeAttr",
+5,
+false,
+""
+],
+[
+9,
+"lastAttr",
+5,
+false,
+""
+],
+[
+10,
+"triggerSpotId",
+5,
+false,
+""
+],
+[
+11,
+"skillObject",
+11,
+false,
+"S_ChessChipSkill"
+],
+[
+12,
+"changeAttrSign",
+8,
+false,
+""
+]
+],
+"S_ChessChangeList": [
+[
+2,
+"ActiveChipChangeList",
+11,
+true,
+"S_ChessChangeList.ActiveChipChangeListEntry"
+],
+[
+4,
+"addBuffList",
+11,
+true,
+"S_ChessChangeList.AddBuffListEntry"
+],
+[
+5,
+"delBuffList",
+11,
+true,
+"S_ChessChangeList.DelBuffListEntry"
+],
+[
+6,
+"changeBuffList",
+11,
+true,
+"S_ChessChangeList.ChangeBuffListEntry"
+],
+[
+7,
+"addCreationList",
+11,
+true,
+"S_ChessChangeList.AddCreationListEntry"
+],
+[
+8,
+"delCreationList",
+11,
+true,
+"S_ChessChangeList.DelCreationListEntry"
+],
+[
+9,
+"addEnemyList",
+11,
+true,
+"S_ChessChangeList.AddEnemyListEntry"
+]
+],
+"S_ChessChangeList.ActiveChipChangeListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+11,
+false,
+"S_ChessActiveChipChange"
+]
+],
+"S_ChessChangeList.AddBuffListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+11,
+false,
+"S_ChessBuff"
+]
+],
+"S_ChessChangeList.DelBuffListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+5,
+false,
+""
+]
+],
+"S_ChessChangeList.ChangeBuffListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+11,
+false,
+"S_ChessBuffChange"
+]
+],
+"S_ChessChangeList.AddCreationListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+11,
+false,
+"S_ChessCreation"
+]
+],
+"S_ChessChangeList.DelCreationListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+5,
+false,
+""
+]
+],
+"S_ChessChangeList.AddEnemyListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+11,
+false,
+"S_ChessEnemy"
+]
+],
+"S_ChessChipSkill": [
+[
+1,
+"Id",
+5,
+false,
+""
+],
+[
+2,
+"StaticSkillId",
+5,
+false,
+""
+],
+[
+3,
+"staticChipId",
+5,
+false,
+""
+],
+[
+4,
+"sourceType",
+5,
+false,
+""
+],
+[
+5,
+"sourceId",
+4,
+false,
+""
+],
+[
+6,
+"LaunchCount",
+5,
+false,
+""
+]
+],
+"S_ChessActiveChip": [
+[
+1,
+"Id",
+5,
+false,
+""
+],
+[
+2,
+"StaticChipId",
+5,
+false,
+""
+],
+[
+3,
+"OwnType",
+5,
+false,
+""
+],
+[
+4,
+"OwnId",
+4,
+false,
+""
+],
+[
+5,
+"Cd",
+5,
+false,
+""
+],
+[
+6,
+"CdCount",
+5,
+false,
+""
+]
+],
+"S_ChessActiveChipChange": [
+[
+1,
+"Id",
+5,
+false,
+""
+],
+[
+2,
+"StaticChipId",
+5,
+false,
+""
+],
+[
+3,
+"OwnType",
+5,
+false,
+""
+],
+[
+4,
+"OwnId",
+4,
+false,
+""
+],
+[
+5,
+"Cd",
+5,
+false,
+""
+],
+[
+6,
+"CdCount",
+5,
+false,
+""
+],
+[
+7,
+"IsChangedByBuff",
+5,
+false,
+""
+]
+],
+"S_ChessBuff": [
+[
+1,
+"Id",
+5,
+false,
+""
+],
+[
+2,
+"StaticBuffId",
+5,
+false,
+""
+],
+[
+3,
+"SourceType",
+5,
+false,
+""
+],
+[
+4,
+"SourceId",
+5,
+false,
+""
+],
+[
+5,
+"EffectType",
+5,
+false,
+""
+],
+[
+6,
+"effectId",
+4,
+false,
+""
+],
+[
+7,
+"duration",
+5,
+false,
+""
+],
+[
+8,
+"skillObject",
+11,
+false,
+"S_ChessChipSkill"
+]
+],
+"S_ChessBuffChange": [
+[
+1,
+"Id",
+5,
+false,
+""
+],
+[
+2,
+"duration",
+5,
+false,
+""
+]
+],
+"S_ChessCreation": [
+[
+1,
+"id",
+5,
+false,
+""
+],
+[
+2,
+"targetType",
+5,
+false,
+""
+],
+[
+3,
+"targetId",
+5,
+false,
+""
+],
+[
+4,
+"performCreationId",
+9,
+false,
+""
+],
+[
+5,
+"skillId",
+5,
+false,
+""
+],
+[
+6,
+"skillObject",
+11,
+false,
+"S_ChessChipSkill"
+]
+],
+"S_CreationHurt": [
+[
+1,
+"hurt",
+5,
+false,
+""
+],
+[
+2,
+"cd",
+5,
+false,
+""
+],
+[
+3,
+"cdType",
+5,
+false,
+""
+],
+[
+4,
+"cdCount",
+5,
+false,
+""
+]
+],
+"S_CreationBuff": [
+[
+1,
+"buffId",
+5,
+false,
+""
+],
+[
+2,
+"buffTier",
+5,
+false,
+""
+],
+[
+3,
+"cd",
+5,
+false,
+""
+],
+[
+4,
+"cdType",
+5,
+false,
+""
+],
+[
+5,
+"cdCount",
+5,
+false,
+""
+]
+],
+"S_ChessReconnect": [
+[
+1,
+"userList",
+11,
+true,
+"S_ChessUser"
+],
+[
+2,
+"gunList",
+11,
+true,
+"S_ChessGun"
+],
+[
+3,
+"enemyList",
+11,
+true,
+"S_ChessEnemy"
+],
+[
+4,
+"creationList",
+11,
+true,
+"S_ChessCreation"
+],
+[
+5,
+"ActiveChipList",
+11,
+true,
+"S_ChessActiveChip"
+],
+[
+6,
+"buffList",
+11,
+true,
+"S_ChessBuff"
+],
+[
+7,
+"randomEnemyList",
+11,
+true,
+"S_ChessRandomEnemy"
+],
+[
+8,
+"currentStage",
+5,
+false,
+""
+],
+[
+9,
+"stageEndTime",
+5,
+false,
+""
+],
+[
+10,
+"roundNum",
+5,
+false,
+""
+],
+[
+11,
+"curId",
+4,
+false,
+""
+],
+[
+12,
+"curType",
+5,
+false,
+""
+],
+[
+13,
+"userStatus",
+11,
+true,
+"S_ChessUserStatus"
+],
+[
+14,
+"userChooseChip",
+11,
+false,
+"S_ChessChooseChip"
+],
+[
+15,
+"isLock",
+8,
+false,
+""
+],
+[
+16,
+"campSkillInfo",
+11,
+true,
+"S_ChessReconnect.CampSkillInfoEntry"
+],
+[
+17,
+"gameStartTime",
+5,
+false,
+""
+],
+[
+18,
+"stageIsComp",
+8,
+false,
+""
+],
+[
+19,
+"missionId",
+5,
+false,
+""
+]
+],
+"S_ChessReconnect.CampSkillInfoEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+5,
+false,
+""
+]
+],
+"S_ChessGun": [
+[
+1,
+"gunInfo",
+11,
+false,
+"S_ChessGunInfo"
+],
+[
+2,
+"currentPoint",
+5,
+false,
+""
+]
+],
+"S_ChessEnemy": [
+[
+1,
+"id",
+5,
+false,
+""
+],
+[
+2,
+"enemyId",
+5,
+false,
+""
+],
+[
+3,
+"currentPoint",
+5,
+false,
+""
+],
+[
+4,
+"randomEnemyId",
+5,
+false,
+""
+],
+[
+5,
+"hp",
+5,
+false,
+""
+],
+[
+6,
+"power",
+5,
+false,
+""
+],
+[
+7,
+"maxHp",
+5,
+false,
+""
+],
+[
+8,
+"armor",
+5,
+false,
+""
+],
+[
+9,
+"attackTimes",
+5,
+false,
+""
+],
+[
+10,
+"attackRange",
+5,
+false,
+""
+],
+[
+11,
+"ap",
+5,
+false,
+""
+],
+[
+12,
+"shield",
+5,
+false,
+""
+],
+[
+13,
+"skillObject",
+11,
+false,
+"S_ChessChipSkill"
+]
+],
+"S_ChessUser": [
+[
+1,
+"userId",
+4,
+false,
+""
+],
+[
+2,
+"playOrder",
+5,
+false,
+""
+],
+[
+3,
+"camp",
+5,
+false,
+""
+],
+[
+4,
+"score",
+5,
+false,
+""
+],
+[
+5,
+"handChipList",
+11,
+true,
+"S_ChessUser.HandChipListEntry"
+],
+[
+6,
+"equipChipList",
+11,
+true,
+"S_ChessUser.EquipChipListEntry"
+],
+[
+7,
+"maxItemNum",
+5,
+false,
+""
+],
+[
+8,
+"maxEquipChipNum",
+5,
+false,
+""
+],
+[
+9,
+"maxOnlineGunNum",
+5,
+false,
+""
+],
+[
+10,
+"killGun",
+5,
+false,
+""
+],
+[
+11,
+"killEnemy",
+5,
+false,
+""
+],
+[
+12,
+"totalAchieveNum",
+5,
+false,
+""
+],
+[
+13,
+"isRobot",
+8,
+false,
+""
+]
+],
+"S_ChessUser.HandChipListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+5,
+false,
+""
+]
+],
+"S_ChessUser.EquipChipListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+11,
+false,
+"S_ChessEquipChip"
+]
+],
+"S_ChessEquipChip": [
+[
+1,
+"userId",
+4,
+false,
+""
+],
+[
+2,
+"index",
+5,
+false,
+""
+],
+[
+3,
+"chipId",
+5,
+false,
+""
+],
+[
+4,
+"exp",
+5,
+false,
+""
+]
+],
+"S_ChessUseChip": [
+[
+1,
+"StaticChipId",
+5,
+false,
+""
+],
+[
+2,
+"userId",
+4,
+false,
+""
+],
+[
+3,
+"gunId",
+5,
+false,
+""
+],
+[
+4,
+"orderList",
+11,
+true,
+"S_ChessOrder"
+],
+[
+5,
+"changeList",
+11,
+false,
+"S_ChessChangeList"
+]
+],
+"S_ChessAttackHurt": [
+[
+1,
+"atkHurt",
+5,
+false,
+""
+],
+[
+8,
+"defHurt",
+5,
+false,
+""
+],
+[
+2,
+"defShield",
+5,
+false,
+""
+],
+[
+3,
+"defHp",
+5,
+false,
+""
+],
+[
+4,
+"endTime",
+5,
+false,
+""
+],
+[
+5,
+"isAgain",
+8,
+false,
+""
+],
+[
+6,
+"orderList",
+11,
+true,
+"S_ChessOrder"
+],
+[
+7,
+"changeList",
+11,
+false,
+"S_ChessChangeList"
+]
+],
+"S_ChestTestConnect": [
+[
+1,
+"roomNum",
+5,
+false,
+""
+]
+],
+"S_ChessUserStatus": [
+[
+1,
+"uid",
+4,
+false,
+""
+],
+[
+2,
+"isAi",
+8,
+false,
+""
+],
+[
+3,
+"isLeave",
+8,
+false,
+""
+],
+[
+4,
+"isExitGame",
+8,
+false,
+""
+]
+],
+"S_ChessSkill": [
+[
+1,
+"Id",
+5,
+false,
+""
+],
+[
+2,
+"StaticSkillId",
+5,
+false,
+""
+],
+[
+3,
+"staticChipId",
+5,
+false,
+""
+],
+[
+4,
+"OwnType",
+5,
+false,
+""
+],
+[
+5,
+"OwnId",
+4,
+false,
+""
+],
+[
+6,
+"CdCount",
+5,
+false,
+""
+]
+],
+"S_ChessSkillChange": [
+[
+1,
+"Id",
+5,
+false,
+""
+],
+[
+6,
+"CdCount",
+5,
+false,
+""
+]
+],
+"S_ChessSkillList": [
+[
+1,
+"AddSkillList",
+11,
+true,
+"S_ChessSkillList.AddSkillListEntry"
+],
+[
+2,
+"ChangeSkillList",
+11,
+true,
+"S_ChessSkillList.ChangeSkillListEntry"
+],
+[
+3,
+"delSkillList",
+11,
+true,
+"S_ChessSkillList.DelSkillListEntry"
+]
+],
+"S_ChessSkillList.AddSkillListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+11,
+false,
+"S_ChessSkill"
+]
+],
+"S_ChessSkillList.ChangeSkillListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+11,
+false,
+"S_ChessSkillChange"
+]
+],
+"S_ChessSkillList.DelSkillListEntry": [
+[
+1,
+"key",
+5,
+false,
+""
+],
+[
+2,
+"value",
+5,
+false,
+""
+]
+],
+"S_ChessStartDelay": [],
+"S_ChessMoveEnd": [
+[
+1,
+"chipId",
+5,
+false,
+""
+],
+[
+2,
+"orderList",
+11,
+true,
+"S_ChessOrder"
+],
+[
+3,
+"changeList",
+11,
+false,
+"S_ChessChangeList"
+]
+],
+"S_ChessOrderList": [
+[
+2,
+"orderList",
+11,
+true,
+"S_ChessOrder"
+],
+[
+3,
+"changeList",
+11,
+false,
+"S_ChessChangeList"
+]
+],
+"S_ChessBuyEnd": [
+[
+1,
+"index",
+5,
+false,
+""
+],
+[
+2,
+"token",
+5,
+false,
+""
+],
+[
+3,
+"orderList",
+11,
+true,
+"S_ChessOrder"
+]
+],
+"S_ChessSellEnd": [
+[
+1,
+"type",
+5,
+false,
+""
+],
+[
+2,
+"index",
+5,
+false,
+""
+],
+[
+3,
+"token",
+5,
+false,
+""
+],
+[
+4,
+"orderList",
+11,
+true,
+"S_ChessOrder"
+],
+[
+5,
+"changeList",
+11,
+false,
+"S_ChessChangeList"
+]
+],
+"S_ChessChanceList": [
+[
+1,
+"chanceList",
+5,
+true,
+""
+]
+],
+"S_ChessChanceCountDown": [
+[
+1,
+"countDown",
+5,
+false,
+""
+]
+],
+"S_ChessShopCount": [
+[
+1,
+"count",
+5,
+false,
+""
+],
+[
+2,
+"self",
+8,
+false,
+""
+]
+],
+"S_ChessRoomIsAlive": [
+[
+1,
+"isAlive",
+8,
+false,
+""
+]
+]
+},
+"map_entries": [
+"S_ChessWin.RankEntry",
+"S_ChessWin.AutoTimeEntry",
+"S_ChessRollResult.DiceListEntry",
+"S_ChessRollResult.DiceListResultEntry",
+"S_SetTeamInfo.GunListEntry",
+"S_ChessBattleRollResult.AtkDiceListEntry",
+"S_ChessBattleRollResult.DefDiceListEntry",
+"S_ChessBattleRollResult.AtkDiceListResultEntry",
+"S_ChessBattleRollResult.DefDiceListResultEntry",
+"S_ChessInitInfo.CampSkillInfoEntry",
+"S_ChessChooseChip.ChipListEntry",
+"S_ChessEquipList.EquipListEntry",
+"S_ChessItemList.ItemListEntry",
+"S_ChessChooseChipEvent.ChipListEntry",
+"S_ChessChangeList.ActiveChipChangeListEntry",
+"S_ChessChangeList.AddBuffListEntry",
+"S_ChessChangeList.DelBuffListEntry",
+"S_ChessChangeList.ChangeBuffListEntry",
+"S_ChessChangeList.AddCreationListEntry",
+"S_ChessChangeList.DelCreationListEntry",
+"S_ChessChangeList.AddEnemyListEntry",
+"S_ChessReconnect.CampSkillInfoEntry",
+"S_ChessUser.HandChipListEntry",
+"S_ChessUser.EquipChipListEntry",
+"S_ChessSkillList.AddSkillListEntry",
+"S_ChessSkillList.ChangeSkillListEntry",
+"S_ChessSkillList.DelSkillListEntry"
+],
+"enums": {
+"Prop": {
+"prop_init": 0,
+"prop_coin": 1,
+"prop_dan": 2,
+"prop_diamond": 3,
+"prop_fuca": 4,
+"prop_cbswitch": 5,
+"prop_money": 6,
+"prop_maxDan": 7,
+"prop_gameNum": 8,
+"prop_messengerId": 9,
+"prop_carMaxDan": 10,
+"prop_sumRMB": 11
+},
+"DataType": {
+"type_init": 0,
+"typeInt32": 1,
+"typeFloat32": 2,
+"typeBool": 3,
+"typeString": 4,
+"typeBytes": 5
+},
+"ErrorMsg": {
+"FriendChatSensitive": 0,
+"FriendChatSensitive2": 100,
+"InvalidParameter": 1,
+"InvalidOperation": 3,
+"ServerError": 2,
+"ChessLobbyNotOwner": 200,
+"ChessLobbyNotInSameRoom": 201,
+"ChessLobbyRoomNotFound": 202,
+"ChessLobbyAlreadyInRoom": 203,
+"ChessLobbyRoomIsFull": 204,
+"ChessLobbyIsKicked": 205,
+"ChessLobbyNotAllPrepared": 206,
+"ChessLobbyOverStartLimit": 207,
+"ChessLobbyOverCloseLimit": 208,
+"ChessLobbyNotInSeason": 233,
+"IsSwoonNotMove": 209,
+"IsSwoonNotUseChip": 210,
+"ThisPassiveSkillNoUse": 211,
+"SkillInCd": 212,
+"NoGun": 213,
+"GunOffLineNoUse": 214,
+"TargetNoChoose": 215,
+"TargetTypeError": 216,
+"NoTarget": 217,
+"TargetError": 220,
+"TargetNoEnough": 222,
+"TargetEmpty": 223,
+"StaticDataError": 224,
+"NotHandNoUse": 225,
+"StageError": 226,
+"HandlerParamError": 227,
+"ChessLobbyChatTooFrequently": 228,
+"ChessChipNoEnough": 229,
+"ChessExitGameCd": 230,
+"ChessTokenLoss": 231,
+"ActiveSkillLaunchUnsuccessful": 232,
+"StageErrorTip": 300
+},
+"C_CMD": {
+"C_INIT": 0,
+"C_GETSERVERTIME": 5000,
+"C_CLIENTLOG": 5001,
+"C_CLIENTCOMMAND": 5002,
+"C_HEARTBEST": 5999,
+"C_LOGINSERVER": 6000,
+"C_VERIFYSESSION": 6001,
+"C_ACCOUNTINFO": 6002,
+"C_RECONNECT": 6029,
+"C_LOBBYGM": 6045,
+"C_RECONNECTROOM": 6057,
+"C_GATEWAY_KICKOUT": 10000,
+"C_FRIEND_CHATJOIN": 7001,
+"C_FRIEND_CHAT": 7003,
+"C_FRIEND_CHATLIST": 7004,
+"C_FRIEND_CHATLEAVE": 7005,
+"C_GUILD_CHAT": 7101,
+"C_GUILD_CHATLIST": 7102,
+"C_GUILD_CHATCLOSE": 7103,
+"C_GUILD_SCENEJOIN": 7104,
+"C_GUILD_SCENEMOVE": 7105,
+"C_GUILD_SCENELEAVE": 7106,
+"C_GUILD_TEST": 7109,
+"C_CREATEROOM2": 7299,
+"C_CHESS_TEST_CONNECT": 7298,
+"C_CREATEROOM": 7200,
+"C_CHESSMOVEROLL": 7201,
+"C_CHESSMOVE": 7202,
+"C_CHESSSETCAMP": 7203,
+"C_CHESSSETTEAM": 7204,
+"C_CHESSCHOOSECHIP": 7205,
+"C_CHESSFLY": 7206,
+"C_CHESSGIVEUPCARD": 7207,
+"C_CHESSFLUSHCARD": 7208,
+"C_CHESSUSECHIP": 7209,
+"C_CHESSATTACK": 7210,
+"C_CHESSBATTLEROLL": 7211,
+"C_CHESSEND": 7212,
+"C_CHESSINIT": 7213,
+"C_CHESSFLYORMOVE": 7214,
+"C_CHESSDROPCHIP": 7215,
+"C_CHESSSKILLEND": 7216,
+"C_CHESSUSEGUNCHIP": 7217,
+"C_CHESSUSECAMPCHIP": 7218,
+"C_CHESSSETAUTO": 7219,
+"C_CHESSSETLOCK": 7220,
+"C_CHESSEXITGUN": 7221,
+"C_CHESSRECONNECT": 7222,
+"C_CHESSREPLACECHIP": 7223,
+"C_CHESS_ANIME_COMP": 7224,
+"C_CHESS_WAKEUP_SUB_STAGE": 7225,
+"C_CHESS_USE_ITEM_FLY": 7226,
+"C_CHESS_USE_ITEM_DICE": 7227,
+"C_CHESS_CLEAR_ROOM": 7228,
+"C_CHESS_DEBUG_TOOLS": 7229,
+"C_CHESS_ROOM_IS_READY": 7230,
+"C_CHESS_REPLACECHIP_GIVEUP": 7231,
+"C_CHESS_EXIT_GAME": 7232,
+"C_CHESS_BUY_CHIP": 7233,
+"C_CHESS_SELL_CHIP": 7234,
+"C_CHESS_CHANCE_CHOOSE": 7235,
+"C_CHESS_PREPARE_SET_TEAM": 7236,
+"C_CHESS_PREPARE_SET_GUN": 7237,
+"C_CHESS_PREPARE_SET_DIRECTION": 7238,
+"C_CHESS_PREPARE_SET_CAMP": 7239,
+"C_CHESS_SET_SHOP_END": 7240,
+"C_CHESS_PREPARE_MOVE_GUN": 7241,
+"C_CHESS_PREPARE_ATTACK_GUN": 7242,
+"C_CHESS_CHANCE_CHOOSE_INFO": 7243,
+"C_CHESS_ROOM_IS_ALIVE": 7244,
+"C_ENTERROOM": 6007,
+"C_LEAVEROOM": 6008,
+"C_CHESSLOBBY_CREATEROOM": 8010,
+"C_CHESSLOBBY_QUICKJOIN": 8020,
+"C_CHESSLOBBY_SEARCHROOM": 8030,
+"C_CHESSLOBBY_JOINROOM": 8040,
+"C_CHESSLOBBY_LEAVEROOM": 8050,
+"C_CHESSLOBBY_KICKUSER": 8060,
+"C_CHESSLOBBY_MODROOM": 8070,
+"C_CHESSLOBBY_PREPARE": 8080,
+"C_CHESSLOBBY_STARTGAME": 8090,
+"C_CHESSLOBBY_MATCH": 8100,
+"C_CHESSLOBBY_CANCELMATCH": 8110,
+"C_CHESSLOBBY_MATCHPREPARE": 8120,
+"C_CHESSLOBBY_ENDGAME": 8130,
+"C_CHESSLOBBY_CONNECT": 8150,
+"C_CHESSLOBBY_CHAT": 8170,
+"C_CHESSLOBBY_CHESSPANIC": 8180,
+"C_CHESSLOBBY_GIVEUP": 8190,
+"C_CHESSLOBBY_STARTTUTORIAL": 8200,
+"C_CHESSLOBBY_ENDTUTORIAL": 8210,
+"C_CHESSLOBBY_BLACKLIST": 8230,
+"C_CHESSLOBBY_CLEARUSERROOM": 8980,
+"C_CHESSLOBBY_STARTGAME_DEBUG": 8990
+},
+"S_CMD": {
+"S_INIT": 0,
+"S_GETSERVERTIME": 15000,
+"S_SYNCPROP": 15005,
+"S_HEARTBEST": 15999,
+"S_KICKOUT": 10000,
+"S_LOGINSERVER": 16000,
+"S_VERIFYSESSION": 16001,
+"S_ACCOUNTINFO": 16002,
+"S_RECONNECT": 16029,
+"S_NEWDAY": 16064,
+"S_RECONNECTROOM": 16057,
+"S_INITFINISH": 16030,
+"S_ERROR": 17000,
+"S_FRIEND_CHATJOINOWN": 17001,
+"S_FRIEND_CHATJOINOTHER": 17002,
+"S_FRIEND_CHAT": 17003,
+"S_FRIEND_CHATLIST": 17004,
+"S_FRIEND_CHATLEAVE": 17005,
+"S_GUILD_CHAT": 17101,
+"S_GUILD_CHATLIST": 17102,
+"S_GUILD_CHATCLOSE": 17103,
+"S_GUILD_SCENEJOIN": 17104,
+"S_GUILD_SCENEMOVE": 17105,
+"S_GUILD_SCENELEAVE": 17106,
+"S_GUILD_SCENEPOSITIONSNYC": 17108,
+"S_GUILD_TEST": 17109,
+"S_CHESS_TEST_CONNECT": 17200,
+"S_CHESSWIN": 17201,
+"S_GAMESTAGE": 17202,
+"S_CHESSROLLRESULT": 17203,
+"S_SETTEAMINFO": 17204,
+"S_CHESSBATTLEROLLRESULT": 17205,
+"S_CHESSGUNMOVE": 17206,
+"S_CHESSGUNBATTLE": 17207,
+"S_CHESSINITINFO": 17208,
+"S_CHESSFLYEVENT": 17209,
+"S_CHESSENEMYMOVE": 17210,
+"S_CHESSGUNFLY": 17211,
+"S_CHESSSETCAMP": 17212,
+"S_CHESSCHOOSECHIP": 17213,
+"S_CHESSEQUIPLIST": 17214,
+"S_CHESSITEMLIST": 17215,
+"S_CHESSCHOOSECHIPEVENT": 17216,
+"S_CHESSREPLACECHIPEVENT": 17217,
+"S_CHESSRECONNECT": 17218,
+"S_CHESSUSECHIPRESULT": 17219,
+"S_CHESS_START_DELAY": 17220,
+"S_GAME_STAGE_END": 17221,
+"S_CHESSATTACKHURT": 17222,
+"S_CHESS_USER_STATUS": 17223,
+"S_CHESS_ROOM_READY": 17224,
+"S_CHESS_MOVE_END": 17225,
+"S_CHESS_ORDER_LIST": 17226,
+"S_CHESS_CAMP_INFO": 17227,
+"S_CHESS_BUY_END": 17228,
+"S_CHESS_SELL_END": 17229,
+"S_CHESS_CHANCE_LIST": 17230,
+"S_CHESS_CHANCE_COUNTDOWN": 17231,
+"S_CHESS_SHOP_COUNT": 17232,
+"S_CHESS_CHANCE_CHOOSE_INFO": 17233,
+"S_CHESS_ROOM_IS_ALIVE": 17234,
+"S_CHESS_SKILL_DEBUG": 17322,
+"S_CHESSLOBBY_CREATEROOM": 18010,
+"S_CHESSLOBBY_QUICKJOIN": 18020,
+"S_CHESSLOBBY_QUICKJOIN_OTHER": 18021,
+"S_CHESSLOBBY_QUICKJOIN_FAILED": 18022,
+"S_CHESSLOBBY_SEARCHROOM": 18030,
+"S_CHESSLOBBY_JOINROOM": 18040,
+"S_CHESSLOBBY_JOINROOM_OTHER": 18041,
+"S_CHESSLOBBY_LEAVEROOM": 18050,
+"S_CHESSLOBBY_LEAVEROOM_OTHER": 18051,
+"S_CHESSLOBBY_KICKUSER": 18060,
+"S_CHESSLOBBY_KICKUSER_OTHER": 18061,
+"S_CHESSLOBBY_KICKUSER_KICKED": 18062,
+"S_CHESSLOBBY_MODROOM": 18070,
+"S_CHESSLOBBY_MODROOM_OTHER": 18071,
+"S_CHESSLOBBY_PREPARE": 18080,
+"S_CHESSLOBBY_PREPARE_OTHER": 18081,
+"S_CHESSLOBBY_STARTGAME": 18090,
+"S_CHESSLOBBY_MATCH": 18100,
+"S_CHESSLOBBY_MATCH_FINISH": 18101,
+"S_CHESSLOBBY_MATCH_CD": 18102,
+"S_CHESSLOBBY_CANCELMATCH": 18110,
+"S_CHESSLOBBY_CANCELMATCH_OTHER": 18111,
+"S_CHESSLOBBY_MATCHPREPARE": 18120,
+"S_CHESSLOBBY_MATCHPREPARE_OTHER": 18121,
+"S_CHESSLOBBY_ENDGAME": 18130,
+"S_CHESSLOBBY_RECONNECT": 18140,
+"S_CHESSLOBBY_CONNECT": 18150,
+"S_CHESSLOBBY_RECONNECT_GAME": 18160,
+"S_CHESSLOBBY_RECONNECT_TUTORIAL": 18161,
+"S_CHESSLOBBY_CHAT": 18170,
+"S_CHESSLOBBY_GIVEUP": 18190,
+"S_CHESSLOBBY_STARTTUTORIAL": 18200,
+"S_CHESSLOBBY_ENDTUTORIAL": 18210,
+"S_CHESSLOBBY_GAMERESULT": 18220,
+"S_CHESSLOBBY_BLACKLIST": 18230
+}
+}
+}

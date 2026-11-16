@@ -1,0 +1,137 @@
+{
+ "name": "honkai_collab",
+ "description": "The Houkai Gakuen 2 collaboration (China only): its four maps, six T-Dolls, costumes and fairies, with an English fan translation of the story.",
+ "_comment": "GFL x Houkai Gakuen 2 (CN only, campaign -14): the CN client's rows for its maps (10043-10046), dolls (1003-1008: Kiana, Mei, Bronya, Theresa, Himeko, Seele) skins (506-508), fairies (1001-1003: Sakura, Kaguya, Chloe), the maps' clear rewards (mission_event_prize_info, for prizes 6043-6046 the EN client has) and the souvenir icon item those give (1193). The EN client already has their spots, enemies, skills, text, story files and art; only these rows were left out. story/ holds a fan translation of the story (TLAnon, game files from Amaryllis), which replaces the Chinese text.",
+ "version": "4",
+ "enabled": false,
+ "banners": [
+  {
+   "event": 90010,
+   "pic": "Pics/Icons/OPS/missionselect_HonkaiGakuen2"
+  }
+ ],
+ "art": {
+  "Pics/Title/collab_missionselect_HonkaiGakuen2.png": "Pics/Icons/OPS/missionselect_HonkaiGakuen2.png"
+ },
+ "tables": {
+  "normal_activity": [
+   {
+    "id": 113,
+    "campaign_id": -14,
+    "tag": "normal_activity-10000113",
+    "order": 210,
+    "name": "normal_activity-20000113",
+    "chapter_name": "normal_activity-30000113",
+    "bg_code": "collab_missionselect_HonkaiGakuen2",
+    "bg_config": "#000000C7,#3D415166,#B43939FF,#FFFFFFFF",
+    "desc": "normal_activity-40000113",
+    "scene_name": "",
+    "event_prize_level": 0,
+    "rank_id": ""
+   }
+  ],
+  "mission_event": [
+   {
+    "id": 90010,
+    "type": 2,
+    "mission_campaign": "-14",
+    "event_name": "mission_event-10090010",
+    "init_mission_id": "10043"
+   }
+  ]
+ },
+ "text": {
+  "normal_activity-10000113": "COLLAB|10",
+  "normal_activity-20000113": "Houkai Gakuen 2",
+  "normal_activity-30000113": "Honkai Descends",
+  "normal_activity-40000113": "Collaboration event",
+  "mission_event-10090010": "Honkai Descends",
+  "fairy-10001001": "Sakura",
+  "fairy-20001001": "\"Bloom, o sorrowful world.\"",
+  "fairy-30001001": "Deals area damage. In battle she raises many pillars of fire that damage the enemies they touch.",
+  "fairy-10001002": "Kaguya",
+  "fairy-20001002": "\"Indifferent and nameless, dancing beneath the moon.\"",
+  "fairy-30001002": "Deals damage on the map. Strikes up to 3 enemy echelons within 2 nodes.",
+  "fairy-10001003": "Chloe",
+  "fairy-20001003": "\"Re Mi Re Mi Fa So Mi Mi Re\"",
+  "fairy-30001003": "Summons phantoms. In battle she calls up 2 phantoms with their own HP, and damages every enemy at intervals.",
+  "fairy_skin-10000055": "Sakura",
+  "fairy_skin-10000056": "Sakura",
+  "fairy_skin-10000057": "Sakura",
+  "fairy_skin-10000058": "Kaguya",
+  "fairy_skin-10000059": "Kaguya",
+  "fairy_skin-10000060": "Kaguya",
+  "fairy_skin-10000061": "Chloe",
+  "fairy_skin-10000062": "Chloe",
+  "fairy_skin-10000063": "Chloe"
+ },
+ "grant": {
+  "guns": [
+   {
+    "id": 1003,
+    "level": 100,
+    "number": 5,
+    "skill1": 10,
+    "skill2": 10,
+    "enhance": 1
+   },
+   {
+    "id": 1004,
+    "level": 100,
+    "number": 5,
+    "skill1": 10,
+    "skill2": 10,
+    "enhance": 1
+   },
+   {
+    "id": 1005,
+    "level": 100,
+    "number": 5,
+    "skill1": 10,
+    "skill2": 10,
+    "enhance": 1
+   },
+   {
+    "id": 1006,
+    "level": 100,
+    "number": 5,
+    "skill1": 10,
+    "skill2": 10,
+    "enhance": 1
+   },
+   {
+    "id": 1007,
+    "level": 100,
+    "number": 5,
+    "skill1": 10,
+    "skill2": 10,
+    "enhance": 1
+   },
+   {
+    "id": 1008,
+    "level": 100,
+    "number": 5,
+    "skill1": 10,
+    "skill2": 10,
+    "enhance": 1
+   }
+  ],
+  "missions": [
+   10043
+  ],
+  "fairies": [
+   {
+    "id": 1001,
+    "max": 1
+   },
+   {
+    "id": 1002,
+    "max": 1
+   },
+   {
+    "id": 1003,
+    "max": 1
+   }
+  ]
+ }
+}

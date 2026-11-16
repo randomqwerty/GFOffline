@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mod Studio</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <div class="brand">Mod Studio <span class="muted" id="base-version"></span></div>
+    <div class="row">
+      <select id="mod-select" title="Mod being edited"></select>
+      <button id="mod-new" title="Create a mod">New mod</button>
+    </div>
+    <button id="btn-all-mods" class="wide">Turn mods on or off</button>
+    <button id="btn-map-config" class="wide" title="Your own enemy spawns and random node odds for any map, not part of a mod">Map spawns</button>
+    <div id="mod-settings" class="box"></div>
+    <div id="entity-list"></div>
+    <div class="box">
+      <button id="btn-check" class="wide">Check mods</button>
+      <button id="btn-build" class="wide primary">Build mods</button>
+      <p class="muted small">Build merges every enabled mod into the game data. Restart the server
+        afterwards; the game downloads the new data on the next login.</p>
+      <label class="check muted small"><input type="checkbox" id="advanced-toggle"> Show raw table rows (advanced)</label>
+    </div>
+  </aside>
+  <main id="main">
+    <div id="editor"><div class="empty">Pick a mod on the left, then open or create an entry.</div></div>
+  </main>
+</div>
+<div id="dialog" class="dialog hidden"><div class="dialog-box"><div id="dialog-body"></div></div></div>
+<div id="toast" class="toast hidden"></div>
+<script src="app.js"></script>
+<script src="map.js"></script>
+<script src="skills.js"></script>
+<script src="mapconfig.js"></script>
+</body>
+</html>

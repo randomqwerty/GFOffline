@@ -1,0 +1,8970 @@
+{
+ "_comment": "Spawn tables by map: which teams each node spawns, on which turns and with what odds. Any map can have one; each entry's _source says where its table comes from (a ranking guide in Recomp/rank_guides, a recording, the stc). Rules as in map_config.json (gfserver/missions._spawn): turns are enemy turns (from_turn 1 = the enemy turn after our turn 1). A map with a table here uses it instead of recorded live runs and the heliport fallback; a mod's or the player's own spawns for a map replace it. Read by gfserver/missions._table_spawn_rules.",
+ "missions": {
+  "10674": {
+   "_name": "Scorpion Vortex (MS ranking, Hole 1)",
+   "_source": "Assassin Eclipse's MS Ranking Notes: 7 prespawns of 35091 CE (L1, L19, L5 in the stc; R8 patrol, H2 / H3 / H6 on Alert, which stay put until their heliports are revealed), R3 11268 CE patrol; 35091 CE spawns on H2, H3 and H6 every turn once revealed and not clogged, 13230 CE on H8. H1, H4, H5, H7 and H9 never spawn. H8 spawns 13230 CE teams like the L4 / L23 prespawns (the user): 44430011, the one 13230 CE team no node uses, on Alert like H2 / H3 / H6's 44430003.",
+   "spawns": [
+    {
+     "spots": [
+      93734,
+      93737,
+      93743
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44430003,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spot": 93744,
+     "start": true,
+     "teams": [
+      {
+       "team": 44430006,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spot": 93736,
+     "start": true,
+     "teams": [
+      {
+       "team": 44430007,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93734,
+      93737,
+      93743
+     ],
+     "from_turn": 1,
+     "chance": 100,
+     "teams": [
+      {
+       "team": 44430003,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spot": 93761,
+     "from_turn": 1,
+     "chance": 100,
+     "teams": [
+      {
+       "team": 44430011,
+       "weight": 1
+      }
+     ]
+    }
+   ]
+  },
+  "10521": {
+   "_name": "Tide of Blood (DR ranking, Hole 2)",
+   "_source": "Assassin Eclipse's DR Ranking Notes: the 12 heliports the console reveals spawn by difficulty. Easy turns 1-2 id03-06, 3-4 id07-09; Normal 1-2 id10-13, 3-4 id14-16; Hard 1 id17-20, 2 id21-24, 3-4 id25-28, and Dreamer (id29) always on H11 on enemy turn 4 unless clogged (the guide doubts she comes on Easy or Normal). idXX = team 94113XX. The four prespawns (id01 / id02) are in the stc. ASSUMED: the heliport sets go Easy 92545.., Normal 92565-92576, Hard 92577-92588 (gfserver/missions.DIFFICULTY_HELIPORTS); H11 is the one next to N23 (92580 in the Hard set); every revealed heliport spawns each enemy turn while empty.",
+   "spawns": [
+    {
+     "spot": 92580,
+     "from_turn": 4,
+     "to_turn": 4,
+     "chance": 100,
+     "teams": [
+      {
+       "team": 9411329,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      92545,
+      92546,
+      92549,
+      92552,
+      92554,
+      92556,
+      92557,
+      92558,
+      92559,
+      92560,
+      92561,
+      92562
+     ],
+     "from_turn": 1,
+     "to_turn": 2,
+     "chance": 100,
+     "teams": [
+      {
+       "team": 9411303,
+       "weight": 1
+      },
+      {
+       "team": 9411304,
+       "weight": 1
+      },
+      {
+       "team": 9411305,
+       "weight": 1
+      },
+      {
+       "team": 9411306,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      92545,
+      92546,
+      92549,
+      92552,
+      92554,
+      92556,
+      92557,
+      92558,
+      92559,
+      92560,
+      92561,
+      92562
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "chance": 100,
+     "teams": [
+      {
+       "team": 9411307,
+       "weight": 1
+      },
+      {
+       "team": 9411308,
+       "weight": 1
+      },
+      {
+       "team": 9411309,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      92565,
+      92566,
+      92567,
+      92568,
+      92569,
+      92570,
+      92571,
+      92572,
+      92573,
+      92574,
+      92575,
+      92576
+     ],
+     "from_turn": 1,
+     "to_turn": 2,
+     "chance": 100,
+     "teams": [
+      {
+       "team": 9411310,
+       "weight": 1
+      },
+      {
+       "team": 9411311,
+       "weight": 1
+      },
+      {
+       "team": 9411312,
+       "weight": 1
+      },
+      {
+       "team": 9411313,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      92565,
+      92566,
+      92567,
+      92568,
+      92569,
+      92570,
+      92571,
+      92572,
+      92573,
+      92574,
+      92575,
+      92576
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "chance": 100,
+     "teams": [
+      {
+       "team": 9411314,
+       "weight": 1
+      },
+      {
+       "team": 9411315,
+       "weight": 1
+      },
+      {
+       "team": 9411316,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      92577,
+      92578,
+      92579,
+      92580,
+      92581,
+      92582,
+      92583,
+      92584,
+      92585,
+      92586,
+      92587,
+      92588
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "chance": 100,
+     "teams": [
+      {
+       "team": 9411317,
+       "weight": 1
+      },
+      {
+       "team": 9411318,
+       "weight": 1
+      },
+      {
+       "team": 9411319,
+       "weight": 1
+      },
+      {
+       "team": 9411320,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      92577,
+      92578,
+      92579,
+      92580,
+      92581,
+      92582,
+      92583,
+      92584,
+      92585,
+      92586,
+      92587,
+      92588
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "chance": 100,
+     "teams": [
+      {
+       "team": 9411321,
+       "weight": 1
+      },
+      {
+       "team": 9411322,
+       "weight": 1
+      },
+      {
+       "team": 9411323,
+       "weight": 1
+      },
+      {
+       "team": 9411324,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      92577,
+      92578,
+      92579,
+      92580,
+      92581,
+      92582,
+      92583,
+      92584,
+      92585,
+      92586,
+      92587,
+      92588
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "chance": 100,
+     "teams": [
+      {
+       "team": 9411325,
+       "weight": 1
+      },
+      {
+       "team": 9411326,
+       "weight": 1
+      },
+      {
+       "team": 9411327,
+       "weight": 1
+      },
+      {
+       "team": 9411328,
+       "weight": 1
+      }
+     ]
+    }
+   ]
+  },
+  "10105": {
+   "_name": "Down the Rabbit Hole+ (AW+ ranking)",
+   "_source": "AW+ Ranking Notes (CN sheet): all 15 enemy heliports spawn one of 2021-2035 / 2141-2143 every turn 1-9 while not clogged (their CE grows by enemy_team.correction_turn). ASSUMED: equal odds.",
+   "spawns": [
+    {
+     "spots": [
+      7197,
+      7185,
+      7200,
+      7203,
+      7208,
+      7230,
+      7209,
+      7191,
+      7211,
+      7232,
+      7225,
+      7188,
+      7193,
+      7192,
+      7228
+     ],
+     "from_turn": 1,
+     "to_turn": 9,
+     "chance": 100,
+     "teams": [
+      {
+       "team": 2021,
+       "weight": 1
+      },
+      {
+       "team": 2022,
+       "weight": 1
+      },
+      {
+       "team": 2023,
+       "weight": 1
+      },
+      {
+       "team": 2024,
+       "weight": 1
+      },
+      {
+       "team": 2025,
+       "weight": 1
+      },
+      {
+       "team": 2026,
+       "weight": 1
+      },
+      {
+       "team": 2027,
+       "weight": 1
+      },
+      {
+       "team": 2028,
+       "weight": 1
+      },
+      {
+       "team": 2029,
+       "weight": 1
+      },
+      {
+       "team": 2030,
+       "weight": 1
+      },
+      {
+       "team": 2031,
+       "weight": 1
+      },
+      {
+       "team": 2032,
+       "weight": 1
+      },
+      {
+       "team": 2033,
+       "weight": 1
+      },
+      {
+       "team": 2034,
+       "weight": 1
+      },
+      {
+       "team": 2035,
+       "weight": 1
+      },
+      {
+       "team": 2141,
+       "weight": 1
+      },
+      {
+       "team": 2142,
+       "weight": 1
+      },
+      {
+       "team": 2143,
+       "weight": 1
+      }
+     ]
+    }
+   ]
+  },
+  "10158": {
+   "_name": "Imaginary Maze+ (DD+ ranking)",
+   "_source": "DD+ Ranking Notes (CN sheet): 17 heliports; the one under the 19828 CE dragoon (9437) never spawns, the four round the Command Post not before turn 4; the rest spawn one of 2348-2362 each turn and sometimes nothing. Bosses 2363-2371 in id order, one a turn from turn 3, on the bottom-left, top-right or bottom-right corner heliport (9440, 9449, 9439), put off a turn when none can take it. ASSUMED: equal odds, 80% chance a heliport spawns.",
+   "spawns": [
+    {
+     "spots": [
+      9440,
+      9449,
+      9439
+     ],
+     "one_of": true,
+     "from_turn": 3,
+     "chance": 100,
+     "queue": [
+      2363,
+      2364,
+      2365,
+      2366,
+      2367,
+      2368,
+      2369,
+      2370,
+      2371
+     ]
+    },
+    {
+     "spots": [
+      9451,
+      9449,
+      9456,
+      9453,
+      9455,
+      9454,
+      9445,
+      9446,
+      9435,
+      9415,
+      9439,
+      9440
+     ],
+     "from_turn": 1,
+     "chance": 80,
+     "teams": [
+      {
+       "team": 2348,
+       "weight": 1
+      },
+      {
+       "team": 2349,
+       "weight": 1
+      },
+      {
+       "team": 2350,
+       "weight": 1
+      },
+      {
+       "team": 2351,
+       "weight": 1
+      },
+      {
+       "team": 2352,
+       "weight": 1
+      },
+      {
+       "team": 2353,
+       "weight": 1
+      },
+      {
+       "team": 2354,
+       "weight": 1
+      },
+      {
+       "team": 2355,
+       "weight": 1
+      },
+      {
+       "team": 2356,
+       "weight": 1
+      },
+      {
+       "team": 2357,
+       "weight": 1
+      },
+      {
+       "team": 2358,
+       "weight": 1
+      },
+      {
+       "team": 2359,
+       "weight": 1
+      },
+      {
+       "team": 2360,
+       "weight": 1
+      },
+      {
+       "team": 2361,
+       "weight": 1
+      },
+      {
+       "team": 2362,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      9400,
+      9399,
+      9402,
+      9401
+     ],
+     "from_turn": 4,
+     "chance": 80,
+     "teams": [
+      {
+       "team": 2348,
+       "weight": 1
+      },
+      {
+       "team": 2349,
+       "weight": 1
+      },
+      {
+       "team": 2350,
+       "weight": 1
+      },
+      {
+       "team": 2351,
+       "weight": 1
+      },
+      {
+       "team": 2352,
+       "weight": 1
+      },
+      {
+       "team": 2353,
+       "weight": 1
+      },
+      {
+       "team": 2354,
+       "weight": 1
+      },
+      {
+       "team": 2355,
+       "weight": 1
+      },
+      {
+       "team": 2356,
+       "weight": 1
+      },
+      {
+       "team": 2357,
+       "weight": 1
+      },
+      {
+       "team": 2358,
+       "weight": 1
+      },
+      {
+       "team": 2359,
+       "weight": 1
+      },
+      {
+       "team": 2360,
+       "weight": 1
+      },
+      {
+       "team": 2361,
+       "weight": 1
+      },
+      {
+       "team": 2362,
+       "weight": 1
+      }
+     ]
+    }
+   ]
+  },
+  "11435": {
+   "_name": "Labyrinthine Defense+ (PL+ ranking)",
+   "_source": "PL+ Ranking Notes (CN sheet, Stay in Hell): heliports 1-9 (600000-600007 top to bottom, 600019) turns 1-3 6363049-52, 4-6 6363053-56, 7-8 6363057-60; the timed heliport 10 (600032) turns 2-3, 5-6 and 8 likewise. Boss 6363098 at the end of the turn our kill count reaches 60 (NPC kills don't count), on one of heliports 5-10. Easy Mod (6363061 everywhere, boss 6363099) isn't modelled. ASSUMED: equal odds.",
+   "spawns": [
+    {
+     "spots": [
+      600004,
+      600005,
+      600006,
+      600007,
+      600019,
+      600032
+     ],
+     "one_of": true,
+     "min_kills": 60,
+     "chance": 100,
+     "queue": [
+      6363098
+     ]
+    },
+    {
+     "spots": [
+      600000,
+      600001,
+      600002,
+      600003,
+      600004,
+      600005,
+      600006,
+      600007,
+      600019
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "chance": 100,
+     "teams": [
+      {
+       "team": 6363049,
+       "weight": 1
+      },
+      {
+       "team": 6363050,
+       "weight": 1
+      },
+      {
+       "team": 6363051,
+       "weight": 1
+      },
+      {
+       "team": 6363052,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      600000,
+      600001,
+      600002,
+      600003,
+      600004,
+      600005,
+      600006,
+      600007,
+      600019
+     ],
+     "from_turn": 4,
+     "to_turn": 6,
+     "chance": 100,
+     "teams": [
+      {
+       "team": 6363053,
+       "weight": 1
+      },
+      {
+       "team": 6363054,
+       "weight": 1
+      },
+      {
+       "team": 6363055,
+       "weight": 1
+      },
+      {
+       "team": 6363056,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      600000,
+      600001,
+      600002,
+      600003,
+      600004,
+      600005,
+      600006,
+      600007,
+      600019
+     ],
+     "from_turn": 7,
+     "to_turn": 8,
+     "chance": 100,
+     "teams": [
+      {
+       "team": 6363057,
+       "weight": 1
+      },
+      {
+       "team": 6363058,
+       "weight": 1
+      },
+      {
+       "team": 6363059,
+       "weight": 1
+      },
+      {
+       "team": 6363060,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spot": 600032,
+     "from_turn": 2,
+     "to_turn": 3,
+     "chance": 100,
+     "teams": [
+      {
+       "team": 6363049,
+       "weight": 1
+      },
+      {
+       "team": 6363050,
+       "weight": 1
+      },
+      {
+       "team": 6363051,
+       "weight": 1
+      },
+      {
+       "team": 6363052,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spot": 600032,
+     "from_turn": 5,
+     "to_turn": 6,
+     "chance": 100,
+     "teams": [
+      {
+       "team": 6363053,
+       "weight": 1
+      },
+      {
+       "team": 6363054,
+       "weight": 1
+      },
+      {
+       "team": 6363055,
+       "weight": 1
+      },
+      {
+       "team": 6363056,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spot": 600032,
+     "from_turn": 8,
+     "to_turn": 8,
+     "chance": 100,
+     "teams": [
+      {
+       "team": 6363057,
+       "weight": 1
+      },
+      {
+       "team": 6363058,
+       "weight": 1
+      },
+      {
+       "team": 6363059,
+       "weight": 1
+      },
+      {
+       "team": 6363060,
+       "weight": 1
+      }
+     ]
+    }
+   ]
+  },
+  "11320": {
+   "_name": "Flowers of the End+ (SC+ ranking)",
+   "_source": "SC+ Ranking Notes (Spawns, Fixed Enemies, Overview). Every enemy heliport spawns each enemy turn. Paradeus: the two heavy heliports and the heliport in the middle (95345, 95365, 95349), the neutral one on the right (95351), and the player's heavy heliport right of the HQ and heliport below it once Paradeus takes them (95356, 95362; the notes), ASSUMED also the two neutral ones near the HQ (95360, 95364: 'can be given up later to spawn enemies'). ELID, top right: 95399, 95401 and the two neutral ones nearer the HQ (95395, 95397); bottom right (the polluted zone): 95336, 95338; the ELID boss 9550116 always on turns 6-7. Military (third party, ally teams, spawned as forces on belong-0 heliports): the three high-score heliports (95376, 95379, 95383; fixed teams 9550117 / 9550118 / 9550120 = the notes' 1-3) and the two low-score ones in the one-way pocket (95373, 95374); the left starting heliport and the supply point (95387, 95334) take the low-score teams once the military holds them (the server doesn't yet hand a spot to the military when its force ends a turn there, so these two don't fire yet). ASSUMED: each turn's listed teams equally likely; turns are enemy turns; the military's come in at the start of our next turn.",
+   "spawns": [
+    {
+     "spots": [
+      95345,
+      95365,
+      95349,
+      95351,
+      95356,
+      95362,
+      95360,
+      95364
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 9550169,
+       "weight": 1
+      },
+      {
+       "team": 9550170,
+       "weight": 1
+      },
+      {
+       "team": 9550171,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      95345,
+      95365,
+      95349,
+      95351,
+      95356,
+      95362,
+      95360,
+      95364
+     ],
+     "from_turn": 4,
+     "to_turn": 5,
+     "teams": [
+      {
+       "team": 9550172,
+       "weight": 1
+      },
+      {
+       "team": 9550173,
+       "weight": 1
+      },
+      {
+       "team": 9550174,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      95345,
+      95365,
+      95349,
+      95351,
+      95356,
+      95362,
+      95360,
+      95364
+     ],
+     "from_turn": 6,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 9550176,
+       "weight": 1
+      },
+      {
+       "team": 9550177,
+       "weight": 1
+      },
+      {
+       "team": 9550178,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      95399,
+      95401,
+      95395,
+      95397
+     ],
+     "from_turn": 1,
+     "to_turn": 2,
+     "teams": [
+      {
+       "team": 9550110,
+       "weight": 1
+      },
+      {
+       "team": 9550111,
+       "weight": 1
+      },
+      {
+       "team": 9550112,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      95399,
+      95401,
+      95395,
+      95397
+     ],
+     "from_turn": 3,
+     "to_turn": 5,
+     "teams": [
+      {
+       "team": 9550113,
+       "weight": 1
+      },
+      {
+       "team": 9550114,
+       "weight": 1
+      },
+      {
+       "team": 9550115,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      95399,
+      95401,
+      95395,
+      95397
+     ],
+     "from_turn": 6,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 9550116,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      95336,
+      95338
+     ],
+     "from_turn": 1,
+     "to_turn": 2,
+     "teams": [
+      {
+       "team": 9550110,
+       "weight": 1
+      },
+      {
+       "team": 9550111,
+       "weight": 1
+      },
+      {
+       "team": 9550112,
+       "weight": 1
+      },
+      {
+       "team": 9550179,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      95336,
+      95338
+     ],
+     "from_turn": 3,
+     "to_turn": 5,
+     "teams": [
+      {
+       "team": 9550113,
+       "weight": 1
+      },
+      {
+       "team": 9550114,
+       "weight": 1
+      },
+      {
+       "team": 9550115,
+       "weight": 1
+      },
+      {
+       "team": 9550180,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      95336,
+      95338
+     ],
+     "from_turn": 6,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 9550116,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      95376,
+      95379,
+      95383
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "teams": [
+      {
+       "team": 9550143,
+       "weight": 1
+      },
+      {
+       "team": 9550144,
+       "weight": 1
+      },
+      {
+       "team": 9550145,
+       "weight": 1
+      }
+     ],
+     "ally": true
+    },
+    {
+     "spots": [
+      95376,
+      95379,
+      95383
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "teams": [
+      {
+       "team": 9550146,
+       "weight": 1
+      },
+      {
+       "team": 9550147,
+       "weight": 1
+      },
+      {
+       "team": 9550148,
+       "weight": 1
+      }
+     ],
+     "ally": true
+    },
+    {
+     "spots": [
+      95376,
+      95379,
+      95383
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 9550149,
+       "weight": 1
+      },
+      {
+       "team": 9550150,
+       "weight": 1
+      },
+      {
+       "team": 9550151,
+       "weight": 1
+      }
+     ],
+     "ally": true
+    },
+    {
+     "spots": [
+      95376,
+      95379,
+      95383
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "teams": [
+      {
+       "team": 9550152,
+       "weight": 1
+      },
+      {
+       "team": 9550153,
+       "weight": 1
+      },
+      {
+       "team": 9550154,
+       "weight": 1
+      }
+     ],
+     "ally": true
+    },
+    {
+     "spots": [
+      95376,
+      95379,
+      95383
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "teams": [
+      {
+       "team": 9550155,
+       "weight": 1
+      },
+      {
+       "team": 9550156,
+       "weight": 1
+      },
+      {
+       "team": 9550157,
+       "weight": 1
+      }
+     ],
+     "ally": true
+    },
+    {
+     "spots": [
+      95376,
+      95379,
+      95383
+     ],
+     "from_turn": 6,
+     "to_turn": 6,
+     "teams": [
+      {
+       "team": 9550158,
+       "weight": 1
+      },
+      {
+       "team": 9550159,
+       "weight": 1
+      },
+      {
+       "team": 9550160,
+       "weight": 1
+      }
+     ],
+     "ally": true
+    },
+    {
+     "spots": [
+      95376,
+      95379,
+      95383
+     ],
+     "from_turn": 7,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 9550161,
+       "weight": 1
+      },
+      {
+       "team": 9550162,
+       "weight": 1
+      },
+      {
+       "team": 9550163,
+       "weight": 1
+      }
+     ],
+     "ally": true
+    },
+    {
+     "spots": [
+      95373,
+      95374,
+      95387,
+      95334
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "teams": [
+      {
+       "team": 9550122,
+       "weight": 1
+      },
+      {
+       "team": 9550123,
+       "weight": 1
+      },
+      {
+       "team": 9550124,
+       "weight": 1
+      }
+     ],
+     "ally": true
+    },
+    {
+     "spots": [
+      95373,
+      95374,
+      95387,
+      95334
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "teams": [
+      {
+       "team": 9550125,
+       "weight": 1
+      },
+      {
+       "team": 9550126,
+       "weight": 1
+      },
+      {
+       "team": 9550127,
+       "weight": 1
+      }
+     ],
+     "ally": true
+    },
+    {
+     "spots": [
+      95373,
+      95374,
+      95387,
+      95334
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 9550128,
+       "weight": 1
+      },
+      {
+       "team": 9550129,
+       "weight": 1
+      },
+      {
+       "team": 9550130,
+       "weight": 1
+      }
+     ],
+     "ally": true
+    },
+    {
+     "spots": [
+      95373,
+      95374,
+      95387,
+      95334
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "teams": [
+      {
+       "team": 9550131,
+       "weight": 1
+      },
+      {
+       "team": 9550132,
+       "weight": 1
+      },
+      {
+       "team": 9550133,
+       "weight": 1
+      }
+     ],
+     "ally": true
+    },
+    {
+     "spots": [
+      95373,
+      95374,
+      95387,
+      95334
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "teams": [
+      {
+       "team": 9550134,
+       "weight": 1
+      },
+      {
+       "team": 9550135,
+       "weight": 1
+      },
+      {
+       "team": 9550136,
+       "weight": 1
+      }
+     ],
+     "ally": true
+    },
+    {
+     "spots": [
+      95373,
+      95374,
+      95387,
+      95334
+     ],
+     "from_turn": 6,
+     "to_turn": 6,
+     "teams": [
+      {
+       "team": 9550137,
+       "weight": 1
+      },
+      {
+       "team": 9550138,
+       "weight": 1
+      },
+      {
+       "team": 9550139,
+       "weight": 1
+      }
+     ],
+     "ally": true
+    },
+    {
+     "spots": [
+      95373,
+      95374,
+      95387,
+      95334
+     ],
+     "from_turn": 7,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 9550140,
+       "weight": 1
+      },
+      {
+       "team": 9550141,
+       "weight": 1
+      },
+      {
+       "team": 9550142,
+       "weight": 1
+      }
+     ],
+     "ally": true
+    }
+   ]
+  },
+  "11630": {
+   "_name": "Paradeus Rising+ (PR+ ranking)",
+   "_source": "PR+ Spreadsheet (Map Overview, Spawns). The map is a 10x10 grid split at (5,6); every enemy heliport spawns each enemy turn, by area and heliport kind, turns 1-3 / 4-5 / 6-7. Top-left heavy 86383 / 86395 / 86398 (86383 and 86398 hold garrison prespawns), normal 86388 / 86393; bottom-left heavy 86377, normal 86361 / 86363 / 86373 / 86375; top-right heavy 86358, normal 86336 / 86338 / 86348 / 86350; bottom-right heavy 86313, normal 86306 / 86309 / 86324. The neutral heliports (86340, 86353, 86359, 86382) never spawn. ASSUMED: each band's teams equally likely. Nyto (670190-670193) stays with RANDOM_BUILDINGS.",
+   "spawns": [
+    {
+     "spots": [
+      86383,
+      86395,
+      86398
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 670137,
+       "weight": 1
+      },
+      {
+       "team": 670138,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86383,
+      86395,
+      86398
+     ],
+     "from_turn": 4,
+     "to_turn": 5,
+     "teams": [
+      {
+       "team": 670186,
+       "weight": 1
+      },
+      {
+       "team": 670187,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86383,
+      86395,
+      86398
+     ],
+     "from_turn": 6,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 670188,
+       "weight": 1
+      },
+      {
+       "team": 670189,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86388,
+      86393
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 670134,
+       "weight": 1
+      },
+      {
+       "team": 670135,
+       "weight": 1
+      },
+      {
+       "team": 670136,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86388,
+      86393
+     ],
+     "from_turn": 4,
+     "to_turn": 5,
+     "teams": [
+      {
+       "team": 670180,
+       "weight": 1
+      },
+      {
+       "team": 670181,
+       "weight": 1
+      },
+      {
+       "team": 670182,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86388,
+      86393
+     ],
+     "from_turn": 6,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 670183,
+       "weight": 1
+      },
+      {
+       "team": 670184,
+       "weight": 1
+      },
+      {
+       "team": 670185,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86377
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 670117,
+       "weight": 1
+      },
+      {
+       "team": 670118,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86377
+     ],
+     "from_turn": 4,
+     "to_turn": 5,
+     "teams": [
+      {
+       "team": 670166,
+       "weight": 1
+      },
+      {
+       "team": 670167,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86377
+     ],
+     "from_turn": 6,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 670178,
+       "weight": 1
+      },
+      {
+       "team": 670179,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86361,
+      86363,
+      86373,
+      86375
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 670114,
+       "weight": 1
+      },
+      {
+       "team": 670115,
+       "weight": 1
+      },
+      {
+       "team": 670116,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86361,
+      86363,
+      86373,
+      86375
+     ],
+     "from_turn": 4,
+     "to_turn": 5,
+     "teams": [
+      {
+       "team": 670160,
+       "weight": 1
+      },
+      {
+       "team": 670161,
+       "weight": 1
+      },
+      {
+       "team": 670162,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86361,
+      86363,
+      86373,
+      86375
+     ],
+     "from_turn": 6,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 670173,
+       "weight": 1
+      },
+      {
+       "team": 670174,
+       "weight": 1
+      },
+      {
+       "team": 670175,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86358
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 670127,
+       "weight": 1
+      },
+      {
+       "team": 670128,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86358
+     ],
+     "from_turn": 4,
+     "to_turn": 5,
+     "teams": [
+      {
+       "team": 670176,
+       "weight": 1
+      },
+      {
+       "team": 670177,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86358
+     ],
+     "from_turn": 6,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 670168,
+       "weight": 1
+      },
+      {
+       "team": 670169,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86336,
+      86338,
+      86348,
+      86350
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 670124,
+       "weight": 1
+      },
+      {
+       "team": 670125,
+       "weight": 1
+      },
+      {
+       "team": 670126,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86336,
+      86338,
+      86348,
+      86350
+     ],
+     "from_turn": 4,
+     "to_turn": 5,
+     "teams": [
+      {
+       "team": 670170,
+       "weight": 1
+      },
+      {
+       "team": 670171,
+       "weight": 1
+      },
+      {
+       "team": 670172,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86336,
+      86338,
+      86348,
+      86350
+     ],
+     "from_turn": 6,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 670163,
+       "weight": 1
+      },
+      {
+       "team": 670164,
+       "weight": 1
+      },
+      {
+       "team": 670165,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86313
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 670107,
+       "weight": 1
+      },
+      {
+       "team": 670108,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86313
+     ],
+     "from_turn": 4,
+     "to_turn": 5,
+     "teams": [
+      {
+       "team": 670156,
+       "weight": 1
+      },
+      {
+       "team": 670157,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86313
+     ],
+     "from_turn": 6,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 670158,
+       "weight": 1
+      },
+      {
+       "team": 670159,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86306,
+      86309,
+      86324
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 670104,
+       "weight": 1
+      },
+      {
+       "team": 670105,
+       "weight": 1
+      },
+      {
+       "team": 670106,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86306,
+      86309,
+      86324
+     ],
+     "from_turn": 4,
+     "to_turn": 5,
+     "teams": [
+      {
+       "team": 670150,
+       "weight": 1
+      },
+      {
+       "team": 670151,
+       "weight": 1
+      },
+      {
+       "team": 670152,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      86306,
+      86309,
+      86324
+     ],
+     "from_turn": 6,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 670153,
+       "weight": 1
+      },
+      {
+       "team": 670154,
+       "weight": 1
+      },
+      {
+       "team": 670155,
+       "weight": 1
+      }
+     ]
+    }
+   ]
+  },
+  "11603": {
+   "_name": "Leaping from Penrose Stairs (CK ranking)",
+   "_source": "CK Ranking Sheet (Mechanics, Prespawns, Spawns). Positions are polar around the HQ 79444 (they match the stc's: 660005 at (4,0) / (4,120) / (4,240), 660004 at (3,55) ...). Spawns come only from the hidden nodes: the inner ring (79457 / 79458 / 79459, 660015-660017 every turn), the middle ring (upper right 79486, upper left 79485, left 79508, lower left 79512, lower right 79513, right 79510: their own teams, turns 1-3 and 4-7), the outer upright triangle (79478 / 79479 / 79480: 660036-38, then 660060-62) and inverted triangle (79482 / 79481 / 79483: 660039-41, then 660063-65). Bosses: Hebe 660002 at (5,150) = 79553 on turn 3, Styx 660003 at (5,30) = 79554 on turn 5 (Morridow is the stc's prespawn on 79555). ASSUMED: 'right triangle' = the upright one (90 / 210 / 330 degrees); each band's teams equally likely; the hidden nodes spawn while still hidden (enemy_owned off).",
+   "spawns": [
+    {
+     "spots": [
+      79457,
+      79458,
+      79459
+     ],
+     "from_turn": 1,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 660015,
+       "weight": 1
+      },
+      {
+       "team": 660016,
+       "weight": 1
+      },
+      {
+       "team": 660017,
+       "weight": 1
+      }
+     ],
+     "enemy_owned": false
+    },
+    {
+     "spots": [
+      79486
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 660018,
+       "weight": 1
+      },
+      {
+       "team": 660019,
+       "weight": 1
+      },
+      {
+       "team": 660020,
+       "weight": 1
+      }
+     ],
+     "enemy_owned": false
+    },
+    {
+     "spots": [
+      79486
+     ],
+     "from_turn": 4,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 660042,
+       "weight": 1
+      },
+      {
+       "team": 660043,
+       "weight": 1
+      },
+      {
+       "team": 660044,
+       "weight": 1
+      }
+     ],
+     "enemy_owned": false
+    },
+    {
+     "spots": [
+      79485
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 660027,
+       "weight": 1
+      },
+      {
+       "team": 660028,
+       "weight": 1
+      },
+      {
+       "team": 660029,
+       "weight": 1
+      }
+     ],
+     "enemy_owned": false
+    },
+    {
+     "spots": [
+      79485
+     ],
+     "from_turn": 4,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 660051,
+       "weight": 1
+      },
+      {
+       "team": 660052,
+       "weight": 1
+      },
+      {
+       "team": 660053,
+       "weight": 1
+      }
+     ],
+     "enemy_owned": false
+    },
+    {
+     "spots": [
+      79508
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 660021,
+       "weight": 1
+      },
+      {
+       "team": 660022,
+       "weight": 1
+      },
+      {
+       "team": 660023,
+       "weight": 1
+      }
+     ],
+     "enemy_owned": false
+    },
+    {
+     "spots": [
+      79508
+     ],
+     "from_turn": 4,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 660045,
+       "weight": 1
+      },
+      {
+       "team": 660046,
+       "weight": 1
+      },
+      {
+       "team": 660047,
+       "weight": 1
+      }
+     ],
+     "enemy_owned": false
+    },
+    {
+     "spots": [
+      79512
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 660030,
+       "weight": 1
+      },
+      {
+       "team": 660031,
+       "weight": 1
+      },
+      {
+       "team": 660032,
+       "weight": 1
+      }
+     ],
+     "enemy_owned": false
+    },
+    {
+     "spots": [
+      79512
+     ],
+     "from_turn": 4,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 660054,
+       "weight": 1
+      },
+      {
+       "team": 660055,
+       "weight": 1
+      },
+      {
+       "team": 660056,
+       "weight": 1
+      }
+     ],
+     "enemy_owned": false
+    },
+    {
+     "spots": [
+      79513
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 660024,
+       "weight": 1
+      },
+      {
+       "team": 660025,
+       "weight": 1
+      },
+      {
+       "team": 660026,
+       "weight": 1
+      }
+     ],
+     "enemy_owned": false
+    },
+    {
+     "spots": [
+      79513
+     ],
+     "from_turn": 4,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 660048,
+       "weight": 1
+      },
+      {
+       "team": 660049,
+       "weight": 1
+      },
+      {
+       "team": 660050,
+       "weight": 1
+      }
+     ],
+     "enemy_owned": false
+    },
+    {
+     "spots": [
+      79510
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 660033,
+       "weight": 1
+      },
+      {
+       "team": 660034,
+       "weight": 1
+      },
+      {
+       "team": 660035,
+       "weight": 1
+      }
+     ],
+     "enemy_owned": false
+    },
+    {
+     "spots": [
+      79510
+     ],
+     "from_turn": 4,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 660057,
+       "weight": 1
+      },
+      {
+       "team": 660058,
+       "weight": 1
+      },
+      {
+       "team": 660059,
+       "weight": 1
+      }
+     ],
+     "enemy_owned": false
+    },
+    {
+     "spots": [
+      79478,
+      79479,
+      79480
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 660036,
+       "weight": 1
+      },
+      {
+       "team": 660037,
+       "weight": 1
+      },
+      {
+       "team": 660038,
+       "weight": 1
+      }
+     ],
+     "enemy_owned": false
+    },
+    {
+     "spots": [
+      79478,
+      79479,
+      79480
+     ],
+     "from_turn": 4,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 660060,
+       "weight": 1
+      },
+      {
+       "team": 660061,
+       "weight": 1
+      },
+      {
+       "team": 660062,
+       "weight": 1
+      }
+     ],
+     "enemy_owned": false
+    },
+    {
+     "spots": [
+      79482,
+      79481,
+      79483
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 660039,
+       "weight": 1
+      },
+      {
+       "team": 660040,
+       "weight": 1
+      },
+      {
+       "team": 660041,
+       "weight": 1
+      }
+     ],
+     "enemy_owned": false
+    },
+    {
+     "spots": [
+      79482,
+      79481,
+      79483
+     ],
+     "from_turn": 4,
+     "to_turn": 7,
+     "teams": [
+      {
+       "team": 660063,
+       "weight": 1
+      },
+      {
+       "team": 660064,
+       "weight": 1
+      },
+      {
+       "team": 660065,
+       "weight": 1
+      }
+     ],
+     "enemy_owned": false
+    },
+    {
+     "spots": [
+      79553
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 660002,
+       "weight": 1
+      }
+     ],
+     "max": 1,
+     "enemy_owned": false
+    },
+    {
+     "spots": [
+      79554
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "teams": [
+      {
+       "team": 660003,
+       "weight": 1
+      }
+     ],
+     "max": 1,
+     "enemy_owned": false
+    }
+   ]
+  },
+  "11988": {
+   "_name": "Steel Rain Salute (SRS ranking)",
+   "_source": "Steel Rain Salute Spreadsheet (Map Overview, Spawns: 'Fireworks Not Detonated'). Every enemy heliport spawns each enemy turn. Bottom left (the six on the left: 97464, 97474, 97478, 97484, 97489, 97491): 800228-800232. Bottom right: heliport 1, the bottom-right one (97407), the bosses 800202 / 800203 / 800205 on turns 1 / 2 / 4 and 800224-800227 on 3 and 5; the other four (97402, 97410, 97424, 97437) 800224-800227. Top right (97442, 97451, 97453, 97458): 800221-800223. Lit heliports (special spot 800005, which the Detonator 800002 -> 800005 puts on each heliport a firework marked with 800003) spawn the sheet's 'Enhanced by Fireworks' tables instead: bottom left close (97464, 97474) 800244-800250 equally, medium (97478, 97484) 1/9 each but 800249 / 800250 2/9, long (97489, 97491) 800247 / 800248 1/6, 800249 / 800250 1/3; bottom right 1 on turns 3 and 5, and central (97410, 97424) 800238-800243 equally, edge (97402, 97437) 1/9 x3 and 2/9 x3; top right 800233-800237. ASSUMED: close / medium / long and central / edge by distance from the HQ 97390 (the sheet's PPT isn't included). NOT DONE: the hidden paths' guards (800214-800220): the stc has no hidden nodes for them.",
+   "spawns": [
+    {
+     "spots": [
+      97464,
+      97474,
+      97478,
+      97484,
+      97489,
+      97491
+     ],
+     "from_turn": 1,
+     "to_turn": 5,
+     "teams": [
+      {
+       "team": 800228,
+       "weight": 1
+      },
+      {
+       "team": 800229,
+       "weight": 1
+      },
+      {
+       "team": 800230,
+       "weight": 1
+      },
+      {
+       "team": 800231,
+       "weight": 1
+      },
+      {
+       "team": 800232,
+       "weight": 1
+      }
+     ],
+     "unless_special": 800005
+    },
+    {
+     "spots": [
+      97407
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "teams": [
+      {
+       "team": 800202,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      97407
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "teams": [
+      {
+       "team": 800203,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      97407
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 800224,
+       "weight": 1
+      },
+      {
+       "team": 800225,
+       "weight": 1
+      },
+      {
+       "team": 800226,
+       "weight": 1
+      },
+      {
+       "team": 800227,
+       "weight": 1
+      }
+     ],
+     "unless_special": 800005
+    },
+    {
+     "spots": [
+      97407
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "teams": [
+      {
+       "team": 800205,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      97407
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "teams": [
+      {
+       "team": 800224,
+       "weight": 1
+      },
+      {
+       "team": 800225,
+       "weight": 1
+      },
+      {
+       "team": 800226,
+       "weight": 1
+      },
+      {
+       "team": 800227,
+       "weight": 1
+      }
+     ],
+     "unless_special": 800005
+    },
+    {
+     "spots": [
+      97402,
+      97410,
+      97424,
+      97437
+     ],
+     "from_turn": 1,
+     "to_turn": 5,
+     "teams": [
+      {
+       "team": 800224,
+       "weight": 1
+      },
+      {
+       "team": 800225,
+       "weight": 1
+      },
+      {
+       "team": 800226,
+       "weight": 1
+      },
+      {
+       "team": 800227,
+       "weight": 1
+      }
+     ],
+     "unless_special": 800005
+    },
+    {
+     "spots": [
+      97442,
+      97451,
+      97453,
+      97458
+     ],
+     "from_turn": 1,
+     "to_turn": 5,
+     "teams": [
+      {
+       "team": 800221,
+       "weight": 1
+      },
+      {
+       "team": 800222,
+       "weight": 1
+      },
+      {
+       "team": 800223,
+       "weight": 1
+      }
+     ],
+     "unless_special": 800005
+    },
+    {
+     "spots": [
+      97464,
+      97474
+     ],
+     "from_turn": 1,
+     "to_turn": 5,
+     "if_special": 800005,
+     "teams": [
+      {
+       "team": 800244,
+       "weight": 1
+      },
+      {
+       "team": 800245,
+       "weight": 1
+      },
+      {
+       "team": 800246,
+       "weight": 1
+      },
+      {
+       "team": 800247,
+       "weight": 1
+      },
+      {
+       "team": 800248,
+       "weight": 1
+      },
+      {
+       "team": 800249,
+       "weight": 1
+      },
+      {
+       "team": 800250,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      97478,
+      97484
+     ],
+     "from_turn": 1,
+     "to_turn": 5,
+     "if_special": 800005,
+     "teams": [
+      {
+       "team": 800244,
+       "weight": 1
+      },
+      {
+       "team": 800245,
+       "weight": 1
+      },
+      {
+       "team": 800246,
+       "weight": 1
+      },
+      {
+       "team": 800247,
+       "weight": 1
+      },
+      {
+       "team": 800248,
+       "weight": 1
+      },
+      {
+       "team": 800249,
+       "weight": 2
+      },
+      {
+       "team": 800250,
+       "weight": 2
+      }
+     ]
+    },
+    {
+     "spots": [
+      97489,
+      97491
+     ],
+     "from_turn": 1,
+     "to_turn": 5,
+     "if_special": 800005,
+     "teams": [
+      {
+       "team": 800247,
+       "weight": 1
+      },
+      {
+       "team": 800248,
+       "weight": 1
+      },
+      {
+       "team": 800249,
+       "weight": 2
+      },
+      {
+       "team": 800250,
+       "weight": 2
+      }
+     ]
+    },
+    {
+     "spots": [
+      97407
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "if_special": 800005,
+     "teams": [
+      {
+       "team": 800238,
+       "weight": 1
+      },
+      {
+       "team": 800239,
+       "weight": 1
+      },
+      {
+       "team": 800240,
+       "weight": 1
+      },
+      {
+       "team": 800241,
+       "weight": 1
+      },
+      {
+       "team": 800242,
+       "weight": 1
+      },
+      {
+       "team": 800243,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      97407
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "if_special": 800005,
+     "teams": [
+      {
+       "team": 800238,
+       "weight": 1
+      },
+      {
+       "team": 800239,
+       "weight": 1
+      },
+      {
+       "team": 800240,
+       "weight": 1
+      },
+      {
+       "team": 800241,
+       "weight": 1
+      },
+      {
+       "team": 800242,
+       "weight": 1
+      },
+      {
+       "team": 800243,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      97410,
+      97424
+     ],
+     "from_turn": 1,
+     "to_turn": 5,
+     "if_special": 800005,
+     "teams": [
+      {
+       "team": 800238,
+       "weight": 1
+      },
+      {
+       "team": 800239,
+       "weight": 1
+      },
+      {
+       "team": 800240,
+       "weight": 1
+      },
+      {
+       "team": 800241,
+       "weight": 1
+      },
+      {
+       "team": 800242,
+       "weight": 1
+      },
+      {
+       "team": 800243,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      97402,
+      97437
+     ],
+     "from_turn": 1,
+     "to_turn": 5,
+     "if_special": 800005,
+     "teams": [
+      {
+       "team": 800238,
+       "weight": 1
+      },
+      {
+       "team": 800239,
+       "weight": 1
+      },
+      {
+       "team": 800240,
+       "weight": 1
+      },
+      {
+       "team": 800241,
+       "weight": 2
+      },
+      {
+       "team": 800242,
+       "weight": 2
+      },
+      {
+       "team": 800243,
+       "weight": 2
+      }
+     ]
+    },
+    {
+     "spots": [
+      97442,
+      97451,
+      97453,
+      97458
+     ],
+     "from_turn": 1,
+     "to_turn": 5,
+     "if_special": 800005,
+     "teams": [
+      {
+       "team": 800233,
+       "weight": 1
+      },
+      {
+       "team": 800234,
+       "weight": 1
+      },
+      {
+       "team": 800235,
+       "weight": 1
+      },
+      {
+       "team": 800236,
+       "weight": 1
+      },
+      {
+       "team": 800237,
+       "weight": 1
+      }
+     ]
+    }
+   ]
+  },
+  "11549": {
+   "_name": "Operation Mistbuster+ (Mirror Stage+ ranking)",
+   "_source": "Mirror Stage+ sheet (Map Info, Prespawns, Spawns); the map is deterministic. Area 1 (layer 1): each of the five bottom heliports its own team on turns 1-3 (690028 left 6650038, 690035 center-left 6650036, 690034 center 6650035, 690036 center-right 6650037, 690029 right 6650039; matched by their stc prespawns 6650001-6650005). Area 2 (layer 2, top right): the three right heliports 690045 / 690049 / 690050 (top to bottom) 6650040 / 6650041 / 6650042 on turns 2-4, once unlocked. Area 4 (layer 3): left pair 690113 (upper) / 690114 (lower) 6650045 / 6650046, right pair 690118 / 690119 6650047 / 6650048, turns 3-6. Those seven heliports' prespawns (6650010-6650012, 6650027-6650030) aren't in the stc, so they are put on at the start, on the hidden nodes (walled in until revealed). NOT DONE: the other A2-A4 prespawns of the sheet (no heliport to place them by), the NPC that turns into 6650049 / 6650009, and 6650043 on turn 6.",
+   "spawns": [
+    {
+     "spots": [
+      690028
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 6650038,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      690035
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 6650036,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      690034
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 6650035,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      690036
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 6650037,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      690029
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 6650039,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      690045
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 6650010,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      690045
+     ],
+     "from_turn": 2,
+     "to_turn": 4,
+     "teams": [
+      {
+       "team": 6650040,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      690049
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 6650011,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      690049
+     ],
+     "from_turn": 2,
+     "to_turn": 4,
+     "teams": [
+      {
+       "team": 6650041,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      690050
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 6650012,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      690050
+     ],
+     "from_turn": 2,
+     "to_turn": 4,
+     "teams": [
+      {
+       "team": 6650042,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      690113
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 6650027,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      690113
+     ],
+     "from_turn": 3,
+     "to_turn": 6,
+     "teams": [
+      {
+       "team": 6650045,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      690114
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 6650028,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      690114
+     ],
+     "from_turn": 3,
+     "to_turn": 6,
+     "teams": [
+      {
+       "team": 6650046,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      690118
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 6650029,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      690118
+     ],
+     "from_turn": 3,
+     "to_turn": 6,
+     "teams": [
+      {
+       "team": 6650047,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      690119
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 6650030,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      690119
+     ],
+     "from_turn": 3,
+     "to_turn": 6,
+     "teams": [
+      {
+       "team": 6650048,
+       "weight": 1
+      }
+     ]
+    }
+   ]
+  },
+  "10675": {
+   "_name": "Operation Mistbuster (MS ranking, Hole 2)",
+   "_source": "Assassin Eclipse's MS Ranking Notes, Hole 2 (deterministic: each heliport spawns one comp). Area 1 (turns 1-3): H1-H5 = 93631 / 93638 / 93637 / 93639 / 93632 (prespawns ID04 / 02 / 01 / 03 / 05 in the stc) spawn ID38 / 36 / 35 / 37 / 39. Area 2 (turns 4-6): H6-H8 = 93648 / 93652 / 93653 spawn ID40-42 over their prespawns ID10-12. Area 4 (turns 8-10): ID27 / 28 / 29 / 30 prespawn and ID45 / 46 / 47 / 48 spawn on 93716 / 93717 / 93721 / 93722 (the same nodes as Mistbuster+ 11549, whose sheet places them: left upper / lower, right upper / lower). The hidden heliports' prespawns aren't in the stc, so they go on at the start (walled in until revealed). Teams are 444400XX. Area 2 / 3 prespawns (placed on the guide's labelled maps, nodes matched by layout; the patrols' places from the Mirror Stage+ sheet's 'Area left of HQ' left / upper / right / lower, its prespawns being the same map's): B5 93643 ID17, X6 93651 ID19 (Narciss), X12 93663 ID13, X14 93660 ID14 (85124 CE, the user), X11 93658 ID15, X9 93662 ID16 (94046 CE, the user); C2 93669 ID23, C11 93677 ID22, C4 93675 ID20, C9 93682 ID18, Y1 93685 ID21, Y2 93683 ID24, Y5 93671 ID25, Y7 93687 ID26. Area 4: ID43 on D11 93690, hidden until turn 10 (the guide; the user's 88746 CE Gunner). NOT DONE: Area 4's ID31-34 (the guide gives no nodes) and ID49.",
+   "spawns": [
+    {
+     "spots": [
+      93631
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 44440038,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93638
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 44440036,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93637
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 44440035,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93639
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 44440037,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93632
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 44440039,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93648
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440010,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93648
+     ],
+     "from_turn": 4,
+     "to_turn": 6,
+     "teams": [
+      {
+       "team": 44440040,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93652
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440011,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93652
+     ],
+     "from_turn": 4,
+     "to_turn": 6,
+     "teams": [
+      {
+       "team": 44440041,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93653
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440012,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93653
+     ],
+     "from_turn": 4,
+     "to_turn": 6,
+     "teams": [
+      {
+       "team": 44440042,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93716
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440027,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93716
+     ],
+     "from_turn": 8,
+     "to_turn": 10,
+     "teams": [
+      {
+       "team": 44440045,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93717
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440028,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93717
+     ],
+     "from_turn": 8,
+     "to_turn": 10,
+     "teams": [
+      {
+       "team": 44440046,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93721
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440029,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93721
+     ],
+     "from_turn": 8,
+     "to_turn": 10,
+     "teams": [
+      {
+       "team": 44440047,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93722
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440030,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93722
+     ],
+     "from_turn": 8,
+     "to_turn": 10,
+     "teams": [
+      {
+       "team": 44440048,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93663
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440013,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93662
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440016,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93658
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440015,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93660
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440014,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93643
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440017,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93651
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440019,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93669
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440023,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93677
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440022,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93675
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440020,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93682
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440018,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93685
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440021,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93683
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440024,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93687
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440026,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93671
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440025,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      93690
+     ],
+     "start": true,
+     "teams": [
+      {
+       "team": 44440043,
+       "weight": 1
+      }
+     ]
+    }
+   ]
+  },
+  "10522": {
+   "_name": "Trap of Espionage (DR ranking, Hole 3)",
+   "_source": "Assassin Eclipse's DR Ranking Notes, Hole 3. The six red heliports of layer 1 (92621, 92622, 92623, 92630, 92631, 92632; the stc's Alert prespawns id09 / 10 / 11 sit on them) spawn from enemy turn 2: id12-14 on turn 2, id15-17 on turn 3, id18-20 on turn 4 (teams 94114xx). ASSUMED: equal odds. The Ouroboros bosses: id21 (9411421) on X18 = 92622 at enemy turn 2 with 8-11 of our kills ('will not spawn if you reach the threshold of the 2nd'), id22 (9411422) on X9 = 92630 from 12 kills, at enemy turn 2 or 3. X labels from the layer-2 image's scheme (rows top to bottom, left to right; side pads and the 6 centre crates unlabelled), checked by symmetry and the guide's X1/X2, X8/X2, X16+X11 -> X20/X7 hints. ASSUMED: the second threshold is 12 (the guide: 'between 9 and 15'). NOT DONE: the centre triangle Ouroboros and crate recapture.",
+   "spawns": [
+    {
+     "spot": 92622,
+     "teams": [
+      {
+       "team": 9411421,
+       "weight": 1
+      }
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "min_kills": 8,
+     "max_kills": 11,
+     "max": 1,
+     "enemy_owned": false,
+     "_boss": "id21"
+    },
+    {
+     "spot": 92630,
+     "teams": [
+      {
+       "team": 9411422,
+       "weight": 1
+      }
+     ],
+     "from_turn": 2,
+     "to_turn": 3,
+     "min_kills": 12,
+     "max": 1,
+     "enemy_owned": false,
+     "_boss": "id22"
+    },
+    {
+     "spots": [
+      92621,
+      92622,
+      92623,
+      92630,
+      92631,
+      92632
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "teams": [
+      {
+       "team": 9411412,
+       "weight": 1
+      },
+      {
+       "team": 9411413,
+       "weight": 1
+      },
+      {
+       "team": 9411414,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      92621,
+      92622,
+      92623,
+      92630,
+      92631,
+      92632
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 9411415,
+       "weight": 1
+      },
+      {
+       "team": 9411416,
+       "weight": 1
+      },
+      {
+       "team": 9411417,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      92621,
+      92622,
+      92623,
+      92630,
+      92631,
+      92632
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "teams": [
+      {
+       "team": 9411418,
+       "weight": 1
+      },
+      {
+       "team": 9411419,
+       "weight": 1
+      },
+      {
+       "team": 9411420,
+       "weight": 1
+      }
+     ]
+    }
+   ]
+  },
+  "11497": {
+   "_name": "Vortex of Secrets+ (DR+ ranking)",
+   "_source": "DR+ Ranking Notes (Overview, Spawns). Only layer 3's six enemy heliports spawn (600191, 600193, 600198, 600199, 600209, 600316, all hidden at the start), every enemy turn: 6630131/32 on turn 1, 32/33 on 2, 33/34 on 3, 34/35 on 4, 35/36 on 5. 'While a hidden area is locked everything in it stands still: heliports don't spawn', so they spawn only once revealed as the enemy's. ASSUMED: the two teams of a turn equally likely.",
+   "spawns": [
+    {
+     "spots": [
+      600191,
+      600193,
+      600198,
+      600199,
+      600209,
+      600316
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "teams": [
+      {
+       "team": 6630131,
+       "weight": 1
+      },
+      {
+       "team": 6630132,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      600191,
+      600193,
+      600198,
+      600199,
+      600209,
+      600316
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "teams": [
+      {
+       "team": 6630132,
+       "weight": 1
+      },
+      {
+       "team": 6630133,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      600191,
+      600193,
+      600198,
+      600199,
+      600209,
+      600316
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "teams": [
+      {
+       "team": 6630133,
+       "weight": 1
+      },
+      {
+       "team": 6630134,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      600191,
+      600193,
+      600198,
+      600199,
+      600209,
+      600316
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "teams": [
+      {
+       "team": 6630134,
+       "weight": 1
+      },
+      {
+       "team": 6630135,
+       "weight": 1
+      }
+     ]
+    },
+    {
+     "spots": [
+      600191,
+      600193,
+      600198,
+      600199,
+      600209,
+      600316
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "teams": [
+      {
+       "team": 6630135,
+       "weight": 1
+      },
+      {
+       "team": 6630136,
+       "weight": 1
+      }
+     ]
+    }
+   ]
+  },
+  "10520": {
+   "_name": "Vortex of Secrets (DR ranking, Hole 1)",
+   "_source": "Assassin Eclipse's DR Ranking Notes, Hole 1 (X/Y/Z labels checked link by link against mis's labelled map, rank_guides/DR_1_map.png). No heliport spawns. Each enemy turn a Dinergate on X23 (92415) while the 114k Phantom (9411201) holds X36 (92406): on turn 1 the plain one (9411209, CE 89: 'worth 8 points'), there when the triangle opens on turn 2; after that the Xmas Dinergate (9411210), the same 99 CE (the user, from a live video). Prespawns the stc lacks: Gaia (Destroyer 9411206) on the heliport X6 (92435); 2 Phantoms (9411202, 9411207) patrolling the square X3/X4/X7/X8 (92437-92440); on layer 2 the Red Bean (GolyatPlus 9411205) on the heliport Y4 (92481); on layer 3 the Pyxis (9411204) on the heliport Z5 (92500) and 2 Phantoms (9411203, 9411208) patrolling Z2/Z3/Z6/Z7 (92502-92505). The layer-2 middle Phantoms (9411211) are already on the map.",
+   "spawns": [
+    {
+     "spot": 92415,
+     "teams": [
+      {
+       "team": 9411209,
+       "weight": 1
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "while_alive": 9411201,
+     "enemy_owned": false
+    },
+    {
+     "spot": 92415,
+     "teams": [
+      {
+       "team": 9411210,
+       "weight": 1
+      }
+     ],
+     "from_turn": 2,
+     "while_alive": 9411201,
+     "enemy_owned": false
+    },
+    {
+     "spot": 92435,
+     "teams": [
+      {
+       "team": 9411206,
+       "weight": 1
+      }
+     ],
+     "start": true
+    },
+    {
+     "spot": 92437,
+     "teams": [
+      {
+       "team": 9411202,
+       "weight": 1
+      }
+     ],
+     "start": true
+    },
+    {
+     "spot": 92439,
+     "teams": [
+      {
+       "team": 9411207,
+       "weight": 1
+      }
+     ],
+     "start": true
+    },
+    {
+     "spot": 92481,
+     "teams": [
+      {
+       "team": 9411205,
+       "weight": 1
+      }
+     ],
+     "start": true
+    },
+    {
+     "spot": 92500,
+     "teams": [
+      {
+       "team": 9411204,
+       "weight": 1
+      }
+     ],
+     "start": true
+    },
+    {
+     "spot": 92502,
+     "teams": [
+      {
+       "team": 9411203,
+       "weight": 1
+      }
+     ],
+     "start": true
+    },
+    {
+     "spot": 92504,
+     "teams": [
+      {
+       "team": 9411208,
+       "weight": 1
+      }
+     ],
+     "start": true
+    }
+   ]
+  },
+  "10766": {
+   "_name": "Hurricane Rescue+ (CT+ ranking)",
+   "_source": "Assassin Eclipse's CT+ Ranking Notes (IDxx = 450100xx, the guide's CEs match the stc). Node labels from the guide's 'map with node names' (imgur scLlzKM), matched to spot ids by grid position; the stc's own prespawns and artillery confirm them (T10 ID80, T16/T18/T20 ID47-49, B14/B15/B17 ID44-46, artillery on P19/P27/P29/P37). Turn tables as laid out in the guide's tables. The Defection heliports only spawn once the Phase Patroller (ID86 / ID87) is dead; the inner-ring and Tankpen heliports aren't heliports in the stc until Defection converts them, which isn't modelled yet (waiting for a recorded log), so they spawn on those nodes whenever they aren't ours. The Playpen's 44 prespawns and the Defection Patrollers are hostile allied forces from the stc's ally_team_id (recorded 2026-11-11), not spawn rules. Defection conversions (spot_trans on Patroller 45010086/87 kills) are server-only and modelled in missions.KILL_SPOT_TRANS; allied forces on a heliport block spawns there (live turn 3).",
+   "spawns": [
+    {
+     "spots": [
+      93798,
+      93809,
+      93826,
+      93819
+     ],
+     "teams": [
+      {
+       "team": 45010059,
+       "weight": 1
+      }
+     ],
+     "from_turn": 2,
+     "to_turn": 4,
+     "every": 2,
+     "_area": "Playpen outer ring, timed heliports: ID59 on turns 2 and 4 while red"
+    },
+    {
+     "spot": 93779,
+     "teams": [
+      {
+       "team": 45010007,
+       "weight": 1
+      }
+     ],
+     "from_turn": 1,
+     "_area": "Playpen centre: P33 spawns ID07 every turn"
+    },
+    {
+     "spot": 93911,
+     "teams": [
+      {
+       "team": 45010062,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Triangle B14/B15/B17"
+    },
+    {
+     "spot": 93912,
+     "teams": [
+      {
+       "team": 45010064,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Triangle B14/B15/B17"
+    },
+    {
+     "spot": 93910,
+     "teams": [
+      {
+       "team": 45010063,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Triangle B14/B15/B17"
+    },
+    {
+     "spot": 93911,
+     "teams": [
+      {
+       "team": 45010065,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Triangle B14/B15/B17"
+    },
+    {
+     "spot": 93912,
+     "teams": [
+      {
+       "team": 45010067,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Triangle B14/B15/B17"
+    },
+    {
+     "spot": 93910,
+     "teams": [
+      {
+       "team": 45010066,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Triangle B14/B15/B17"
+    },
+    {
+     "spot": 93911,
+     "teams": [
+      {
+       "team": 45010068,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Triangle B14/B15/B17"
+    },
+    {
+     "spot": 93912,
+     "teams": [
+      {
+       "team": 45010070,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Triangle B14/B15/B17"
+    },
+    {
+     "spot": 93910,
+     "teams": [
+      {
+       "team": 45010069,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Triangle B14/B15/B17"
+    },
+    {
+     "spot": 93807,
+     "teams": [
+      {
+       "team": 45010012,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Playpen middle ring NW/NE/SW/SE, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93794,
+     "teams": [
+      {
+       "team": 45010015,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Playpen middle ring NW/NE/SW/SE, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93816,
+     "teams": [
+      {
+       "team": 45010013,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Playpen middle ring NW/NE/SW/SE, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93825,
+     "teams": [
+      {
+       "team": 45010014,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Playpen middle ring NW/NE/SW/SE, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93807,
+     "teams": [
+      {
+       "team": 45010016,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Playpen middle ring NW/NE/SW/SE, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93794,
+     "teams": [
+      {
+       "team": 45010019,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Playpen middle ring NW/NE/SW/SE, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93816,
+     "teams": [
+      {
+       "team": 45010017,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Playpen middle ring NW/NE/SW/SE, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93825,
+     "teams": [
+      {
+       "team": 45010018,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Playpen middle ring NW/NE/SW/SE, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93807,
+     "teams": [
+      {
+       "team": 45010020,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Playpen middle ring NW/NE/SW/SE, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93794,
+     "teams": [
+      {
+       "team": 45010023,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Playpen middle ring NW/NE/SW/SE, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93816,
+     "teams": [
+      {
+       "team": 45010021,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Playpen middle ring NW/NE/SW/SE, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93825,
+     "teams": [
+      {
+       "team": 45010022,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Playpen middle ring NW/NE/SW/SE, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93780,
+     "teams": [
+      {
+       "team": 45010028,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Playpen inner ring top/left/right/bottom, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93782,
+     "teams": [
+      {
+       "team": 45010029,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Playpen inner ring top/left/right/bottom, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93781,
+     "teams": [
+      {
+       "team": 45010031,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Playpen inner ring top/left/right/bottom, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93783,
+     "teams": [
+      {
+       "team": 45010030,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Playpen inner ring top/left/right/bottom, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93780,
+     "teams": [
+      {
+       "team": 45010032,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Playpen inner ring top/left/right/bottom, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93782,
+     "teams": [
+      {
+       "team": 45010033,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Playpen inner ring top/left/right/bottom, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93781,
+     "teams": [
+      {
+       "team": 45010035,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Playpen inner ring top/left/right/bottom, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93783,
+     "teams": [
+      {
+       "team": 45010034,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Playpen inner ring top/left/right/bottom, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93780,
+     "teams": [
+      {
+       "team": 45010036,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Playpen inner ring top/left/right/bottom, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93782,
+     "teams": [
+      {
+       "team": 45010037,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Playpen inner ring top/left/right/bottom, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93781,
+     "teams": [
+      {
+       "team": 45010039,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Playpen inner ring top/left/right/bottom, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93783,
+     "teams": [
+      {
+       "team": 45010038,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Playpen inner ring top/left/right/bottom, after Defection Phase 1",
+     "after_killed": 45010086
+    },
+    {
+     "spot": 93933,
+     "teams": [
+      {
+       "team": 45010050,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93934,
+     "teams": [
+      {
+       "team": 45010051,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93935,
+     "teams": [
+      {
+       "team": 45010052,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93867,
+     "teams": [
+      {
+       "team": 45010052,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93861,
+     "teams": [
+      {
+       "team": 45010050,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93853,
+     "teams": [
+      {
+       "team": 45010051,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93936,
+     "teams": [
+      {
+       "team": 45010051,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93937,
+     "teams": [
+      {
+       "team": 45010052,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93938,
+     "teams": [
+      {
+       "team": 45010050,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 3,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93933,
+     "teams": [
+      {
+       "team": 45010053,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93934,
+     "teams": [
+      {
+       "team": 45010054,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93935,
+     "teams": [
+      {
+       "team": 45010055,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93867,
+     "teams": [
+      {
+       "team": 45010055,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93861,
+     "teams": [
+      {
+       "team": 45010053,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93853,
+     "teams": [
+      {
+       "team": 45010054,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93936,
+     "teams": [
+      {
+       "team": 45010054,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93937,
+     "teams": [
+      {
+       "team": 45010055,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93938,
+     "teams": [
+      {
+       "team": 45010053,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 4,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93933,
+     "teams": [
+      {
+       "team": 45010056,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93934,
+     "teams": [
+      {
+       "team": 45010057,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93935,
+     "teams": [
+      {
+       "team": 45010058,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93867,
+     "teams": [
+      {
+       "team": 45010058,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93861,
+     "teams": [
+      {
+       "team": 45010056,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93853,
+     "teams": [
+      {
+       "team": 45010057,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93936,
+     "teams": [
+      {
+       "team": 45010057,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93937,
+     "teams": [
+      {
+       "team": 45010058,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93938,
+     "teams": [
+      {
+       "team": 45010056,
+       "weight": 1
+      }
+     ],
+     "from_turn": 5,
+     "to_turn": 5,
+     "_area": "Tankpen heliports by row (upper/middle/bottom) and column, after Defection Phase 2",
+     "after_killed": 45010087
+    },
+    {
+     "spot": 93911,
+     "teams": [
+      {
+       "team": 45010086,
+       "weight": 1
+      }
+     ],
+     "from_turn": 1,
+     "min_kills": 5,
+     "max": 1,
+     "enemy_owned": false,
+     "_area": "Defection Phase 1: the Patroller on B14 once we have 5 kills and B14 is empty"
+    },
+    {
+     "spot": 93780,
+     "teams": [
+      {
+       "team": 45010087,
+       "weight": 1
+      }
+     ],
+     "from_turn": 1,
+     "min_kills": 10,
+     "max": 1,
+     "after_killed": 45010086,
+     "enemy_owned": false,
+     "_area": "Defection Phase 2: the Patroller on P19 once we have 10 kills, Phase 1 done and P19 empty"
+    }
+   ]
+  },
+  "11117": {
+   "_name": "Todesfuge (LS ranking, map 1)",
+   "_source": "Fuwish's heliport spawn table for 死亡赋格 in the NGA LS map 2 review (rank_guides/LS Map 2 Ranking Notes CN.htm): per quadrant, two teams on enemy turns 1-2 and two on 3-4, given by CE; each CE matches exactly one 65491xx team in the stc. The quadrant's four enemy heliports are the stc's belong-2 heliports in that quadrant of the map (the guide's prespawn coordinates, (x, y) on a 500 grid from the bottom-left, put its 80k stacks on the four centre heliports, which never spawn). Equal odds between the two teams. Each quadrant's four heliports hold its stc standing forces (allies 65491x0-x2) until its mission skill (NW 6540008, NE 6540009, SW 6540010, SE 6540011) removes them; heliports with a force on them spawn nothing, so a quadrant spawns only once opened. Turn bands are map turns, not counted from a quadrant's opening (confirmed by the user).",
+   "spawns": [
+    {
+     "spots": [
+      66655,
+      66670,
+      66702,
+      66704
+     ],
+     "teams": [
+      {
+       "team": 6549137,
+       "weight": 1
+      },
+      {
+       "team": 6549136,
+       "weight": 1
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 2,
+     "_area": "SW (左下) quadrant heliports, enemy turns 1-2"
+    },
+    {
+     "spots": [
+      66655,
+      66670,
+      66702,
+      66704
+     ],
+     "teams": [
+      {
+       "team": 6549138,
+       "weight": 1
+      },
+      {
+       "team": 6549139,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_area": "SW (左下) quadrant heliports, enemy turns 3-4"
+    },
+    {
+     "spots": [
+      66656,
+      66689,
+      66693,
+      66695
+     ],
+     "teams": [
+      {
+       "team": 6549117,
+       "weight": 1
+      },
+      {
+       "team": 6549116,
+       "weight": 1
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 2,
+     "_area": "NW (左上) quadrant heliports, enemy turns 1-2"
+    },
+    {
+     "spots": [
+      66656,
+      66689,
+      66693,
+      66695
+     ],
+     "teams": [
+      {
+       "team": 6549119,
+       "weight": 1
+      },
+      {
+       "team": 6549118,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_area": "NW (左上) quadrant heliports, enemy turns 3-4"
+    },
+    {
+     "spots": [
+      66657,
+      66707,
+      66710,
+      66712
+     ],
+     "teams": [
+      {
+       "team": 6549126,
+       "weight": 1
+      },
+      {
+       "team": 6549127,
+       "weight": 1
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 2,
+     "_area": "NE (右上) quadrant heliports, enemy turns 1-2"
+    },
+    {
+     "spots": [
+      66657,
+      66707,
+      66710,
+      66712
+     ],
+     "teams": [
+      {
+       "team": 6549129,
+       "weight": 1
+      },
+      {
+       "team": 6549128,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_area": "NE (右上) quadrant heliports, enemy turns 3-4"
+    },
+    {
+     "spots": [
+      66654,
+      66673,
+      66684,
+      66717
+     ],
+     "teams": [
+      {
+       "team": 6549147,
+       "weight": 1
+      },
+      {
+       "team": 6549146,
+       "weight": 1
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 2,
+     "_area": "SE (右下) quadrant heliports, enemy turns 1-2"
+    },
+    {
+     "spots": [
+      66654,
+      66673,
+      66684,
+      66717
+     ],
+     "teams": [
+      {
+       "team": 6549148,
+       "weight": 1
+      },
+      {
+       "team": 6549149,
+       "weight": 1
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_area": "SE (右下) quadrant heliports, enemy turns 3-4"
+    }
+   ]
+  },
+  "10418": {
+   "_name": "Labyrinthine Defense (PL ranking)",
+   "_source": "gflinfo's 'PL: Labyrinthine Defense Enemy Compositions' (linked from Assassin Eclipse's PL guide): spawns ID49-52 on turns 1-3, ID53-56 on 4-6, ID57-60 on 7-8; IDxx = 3630xx (the page's CEs are the old EN values; ours come from the stc). The page doesn't say which heliport spawns which, so every enemy heliport (belong 2) rolls the turn's pool, equal odds.",
+   "spawns": [
+    {
+     "spots": [
+      90622,
+      90623,
+      90624,
+      90625,
+      90626,
+      90627,
+      90628,
+      90629,
+      90641,
+      90654,
+      90703
+     ],
+     "teams": [
+      {
+       "team": 363049,
+       "weight": 1
+      },
+      {
+       "team": 363050,
+       "weight": 1
+      },
+      {
+       "team": 363051,
+       "weight": 1
+      },
+      {
+       "team": 363052,
+       "weight": 1
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "_area": "KCCO heliports, enemy turns 1-3"
+    },
+    {
+     "spots": [
+      90622,
+      90623,
+      90624,
+      90625,
+      90626,
+      90627,
+      90628,
+      90629,
+      90641,
+      90654,
+      90703
+     ],
+     "teams": [
+      {
+       "team": 363053,
+       "weight": 1
+      },
+      {
+       "team": 363054,
+       "weight": 1
+      },
+      {
+       "team": 363055,
+       "weight": 1
+      },
+      {
+       "team": 363056,
+       "weight": 1
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 6,
+     "_area": "KCCO heliports, enemy turns 4-6"
+    },
+    {
+     "spots": [
+      90622,
+      90623,
+      90624,
+      90625,
+      90626,
+      90627,
+      90628,
+      90629,
+      90641,
+      90654,
+      90703
+     ],
+     "teams": [
+      {
+       "team": 363057,
+       "weight": 1
+      },
+      {
+       "team": 363058,
+       "weight": 1
+      },
+      {
+       "team": 363059,
+       "weight": 1
+      },
+      {
+       "team": 363060,
+       "weight": 1
+      }
+     ],
+     "from_turn": 7,
+     "to_turn": 0,
+     "_area": "KCCO heliports, enemy turns 7-end"
+    }
+   ]
+  },
+  "11118": {
+   "_name": "Waterfall",
+   "_source": "Ranking guide (LS Visual Guide.jpeg labels, the CN table's three regions; grid A-M = stc x -3600 + 600n, rows 1-9 = y 3600 - 600(n-1)). Left = columns A-E, left of F (confirmed by the user) (D1, C9, and A4/A5/A7/B3 once they are heliports); middle = right of F, row 6 and below (I7, I9, K7, M6); upper right = right of F, above row 6 (H3, H5, J1, J3, J5, L3, L4, L5, M2, K3). Teams of a band are equally likely; the last band runs on past the guide's turn 5. A4/A5/A7/B3/K3 turning into heliports with 6549265 when enemy turn 3 ends (the user's footage) is missions.TURN_SPOT_TRANS. Turn bands are map turns (confirmed).",
+   "spawns": [
+    {
+     "spot": 66764,
+     "teams": [
+      {
+       "team": 6549262
+      },
+      {
+       "team": 6549261
+      }
+     ],
+     "from_turn": 1,
+     "_region": "left",
+     "to_turn": 2
+    },
+    {
+     "spot": 66798,
+     "teams": [
+      {
+       "team": 6549262
+      },
+      {
+       "team": 6549261
+      }
+     ],
+     "from_turn": 1,
+     "_region": "left",
+     "to_turn": 2
+    },
+    {
+     "spot": 66698,
+     "teams": [
+      {
+       "team": 6549262
+      },
+      {
+       "team": 6549261
+      }
+     ],
+     "from_turn": 1,
+     "_region": "left",
+     "to_turn": 2
+    },
+    {
+     "spot": 66714,
+     "teams": [
+      {
+       "team": 6549262
+      },
+      {
+       "team": 6549261
+      }
+     ],
+     "from_turn": 1,
+     "_region": "left",
+     "to_turn": 2
+    },
+    {
+     "spot": 66716,
+     "teams": [
+      {
+       "team": 6549262
+      },
+      {
+       "team": 6549261
+      }
+     ],
+     "from_turn": 1,
+     "_region": "left",
+     "to_turn": 2
+    },
+    {
+     "spot": 66757,
+     "teams": [
+      {
+       "team": 6549262
+      },
+      {
+       "team": 6549261
+      }
+     ],
+     "from_turn": 1,
+     "_region": "left",
+     "to_turn": 2
+    },
+    {
+     "spot": 66764,
+     "teams": [
+      {
+       "team": 6549264
+      },
+      {
+       "team": 6549263
+      }
+     ],
+     "from_turn": 3,
+     "_region": "left",
+     "to_turn": 4
+    },
+    {
+     "spot": 66798,
+     "teams": [
+      {
+       "team": 6549264
+      },
+      {
+       "team": 6549263
+      }
+     ],
+     "from_turn": 3,
+     "_region": "left",
+     "to_turn": 4
+    },
+    {
+     "spot": 66698,
+     "teams": [
+      {
+       "team": 6549264
+      },
+      {
+       "team": 6549263
+      }
+     ],
+     "from_turn": 3,
+     "_region": "left",
+     "to_turn": 4
+    },
+    {
+     "spot": 66714,
+     "teams": [
+      {
+       "team": 6549264
+      },
+      {
+       "team": 6549263
+      }
+     ],
+     "from_turn": 3,
+     "_region": "left",
+     "to_turn": 4
+    },
+    {
+     "spot": 66716,
+     "teams": [
+      {
+       "team": 6549264
+      },
+      {
+       "team": 6549263
+      }
+     ],
+     "from_turn": 3,
+     "_region": "left",
+     "to_turn": 4
+    },
+    {
+     "spot": 66757,
+     "teams": [
+      {
+       "team": 6549264
+      },
+      {
+       "team": 6549263
+      }
+     ],
+     "from_turn": 3,
+     "_region": "left",
+     "to_turn": 4
+    },
+    {
+     "spot": 66764,
+     "teams": [
+      {
+       "team": 6549265
+      },
+      {
+       "team": 6549266
+      },
+      {
+       "team": 6549267
+      }
+     ],
+     "from_turn": 5,
+     "_region": "left"
+    },
+    {
+     "spot": 66798,
+     "teams": [
+      {
+       "team": 6549265
+      },
+      {
+       "team": 6549266
+      },
+      {
+       "team": 6549267
+      }
+     ],
+     "from_turn": 5,
+     "_region": "left"
+    },
+    {
+     "spot": 66698,
+     "teams": [
+      {
+       "team": 6549265
+      },
+      {
+       "team": 6549266
+      },
+      {
+       "team": 6549267
+      }
+     ],
+     "from_turn": 5,
+     "_region": "left"
+    },
+    {
+     "spot": 66714,
+     "teams": [
+      {
+       "team": 6549265
+      },
+      {
+       "team": 6549266
+      },
+      {
+       "team": 6549267
+      }
+     ],
+     "from_turn": 5,
+     "_region": "left"
+    },
+    {
+     "spot": 66716,
+     "teams": [
+      {
+       "team": 6549265
+      },
+      {
+       "team": 6549266
+      },
+      {
+       "team": 6549267
+      }
+     ],
+     "from_turn": 5,
+     "_region": "left"
+    },
+    {
+     "spot": 66757,
+     "teams": [
+      {
+       "team": 6549265
+      },
+      {
+       "team": 6549266
+      },
+      {
+       "team": 6549267
+      }
+     ],
+     "from_turn": 5,
+     "_region": "left"
+    },
+    {
+     "spot": 66742,
+     "teams": [
+      {
+       "team": 6549251
+      },
+      {
+       "team": 6549252
+      }
+     ],
+     "from_turn": 1,
+     "_region": "middle",
+     "to_turn": 1
+    },
+    {
+     "spot": 66800,
+     "teams": [
+      {
+       "team": 6549251
+      },
+      {
+       "team": 6549252
+      }
+     ],
+     "from_turn": 1,
+     "_region": "middle",
+     "to_turn": 1
+    },
+    {
+     "spot": 66780,
+     "teams": [
+      {
+       "team": 6549251
+      },
+      {
+       "team": 6549252
+      }
+     ],
+     "from_turn": 1,
+     "_region": "middle",
+     "to_turn": 1
+    },
+    {
+     "spot": 66810,
+     "teams": [
+      {
+       "team": 6549251
+      },
+      {
+       "team": 6549252
+      }
+     ],
+     "from_turn": 1,
+     "_region": "middle",
+     "to_turn": 1
+    },
+    {
+     "spot": 66742,
+     "teams": [
+      {
+       "team": 6549254
+      },
+      {
+       "team": 6549253
+      }
+     ],
+     "from_turn": 2,
+     "_region": "middle",
+     "to_turn": 3
+    },
+    {
+     "spot": 66800,
+     "teams": [
+      {
+       "team": 6549254
+      },
+      {
+       "team": 6549253
+      }
+     ],
+     "from_turn": 2,
+     "_region": "middle",
+     "to_turn": 3
+    },
+    {
+     "spot": 66780,
+     "teams": [
+      {
+       "team": 6549254
+      },
+      {
+       "team": 6549253
+      }
+     ],
+     "from_turn": 2,
+     "_region": "middle",
+     "to_turn": 3
+    },
+    {
+     "spot": 66810,
+     "teams": [
+      {
+       "team": 6549254
+      },
+      {
+       "team": 6549253
+      }
+     ],
+     "from_turn": 2,
+     "_region": "middle",
+     "to_turn": 3
+    },
+    {
+     "spot": 66742,
+     "teams": [
+      {
+       "team": 6549255
+      },
+      {
+       "team": 6549256
+      },
+      {
+       "team": 6549257
+      }
+     ],
+     "from_turn": 4,
+     "_region": "middle"
+    },
+    {
+     "spot": 66800,
+     "teams": [
+      {
+       "team": 6549255
+      },
+      {
+       "team": 6549256
+      },
+      {
+       "team": 6549257
+      }
+     ],
+     "from_turn": 4,
+     "_region": "middle"
+    },
+    {
+     "spot": 66780,
+     "teams": [
+      {
+       "team": 6549255
+      },
+      {
+       "team": 6549256
+      },
+      {
+       "team": 6549257
+      }
+     ],
+     "from_turn": 4,
+     "_region": "middle"
+    },
+    {
+     "spot": 66810,
+     "teams": [
+      {
+       "team": 6549255
+      },
+      {
+       "team": 6549256
+      },
+      {
+       "team": 6549257
+      }
+     ],
+     "from_turn": 4,
+     "_region": "middle"
+    },
+    {
+     "spot": 66758,
+     "teams": [
+      {
+       "team": 6549242
+      },
+      {
+       "team": 6549241
+      }
+     ],
+     "from_turn": 1,
+     "_region": "upper right",
+     "to_turn": 1
+    },
+    {
+     "spot": 66739,
+     "teams": [
+      {
+       "team": 6549242
+      },
+      {
+       "team": 6549241
+      }
+     ],
+     "from_turn": 1,
+     "_region": "upper right",
+     "to_turn": 1
+    },
+    {
+     "spot": 66773,
+     "teams": [
+      {
+       "team": 6549242
+      },
+      {
+       "team": 6549241
+      }
+     ],
+     "from_turn": 1,
+     "_region": "upper right",
+     "to_turn": 1
+    },
+    {
+     "spot": 66774,
+     "teams": [
+      {
+       "team": 6549242
+      },
+      {
+       "team": 6549241
+      }
+     ],
+     "from_turn": 1,
+     "_region": "upper right",
+     "to_turn": 1
+    },
+    {
+     "spot": 66776,
+     "teams": [
+      {
+       "team": 6549242
+      },
+      {
+       "team": 6549241
+      }
+     ],
+     "from_turn": 1,
+     "_region": "upper right",
+     "to_turn": 1
+    },
+    {
+     "spot": 66804,
+     "teams": [
+      {
+       "team": 6549242
+      },
+      {
+       "team": 6549241
+      }
+     ],
+     "from_turn": 1,
+     "_region": "upper right",
+     "to_turn": 1
+    },
+    {
+     "spot": 66803,
+     "teams": [
+      {
+       "team": 6549242
+      },
+      {
+       "team": 6549241
+      }
+     ],
+     "from_turn": 1,
+     "_region": "upper right",
+     "to_turn": 1
+    },
+    {
+     "spot": 66802,
+     "teams": [
+      {
+       "team": 6549242
+      },
+      {
+       "team": 6549241
+      }
+     ],
+     "from_turn": 1,
+     "_region": "upper right",
+     "to_turn": 1
+    },
+    {
+     "spot": 66806,
+     "teams": [
+      {
+       "team": 6549242
+      },
+      {
+       "team": 6549241
+      }
+     ],
+     "from_turn": 1,
+     "_region": "upper right",
+     "to_turn": 1
+    },
+    {
+     "spot": 66783,
+     "teams": [
+      {
+       "team": 6549242
+      },
+      {
+       "team": 6549241
+      }
+     ],
+     "from_turn": 1,
+     "_region": "upper right",
+     "to_turn": 1
+    },
+    {
+     "spot": 66758,
+     "teams": [
+      {
+       "team": 6549243
+      },
+      {
+       "team": 6549244
+      }
+     ],
+     "from_turn": 2,
+     "_region": "upper right",
+     "to_turn": 3
+    },
+    {
+     "spot": 66739,
+     "teams": [
+      {
+       "team": 6549243
+      },
+      {
+       "team": 6549244
+      }
+     ],
+     "from_turn": 2,
+     "_region": "upper right",
+     "to_turn": 3
+    },
+    {
+     "spot": 66773,
+     "teams": [
+      {
+       "team": 6549243
+      },
+      {
+       "team": 6549244
+      }
+     ],
+     "from_turn": 2,
+     "_region": "upper right",
+     "to_turn": 3
+    },
+    {
+     "spot": 66774,
+     "teams": [
+      {
+       "team": 6549243
+      },
+      {
+       "team": 6549244
+      }
+     ],
+     "from_turn": 2,
+     "_region": "upper right",
+     "to_turn": 3
+    },
+    {
+     "spot": 66776,
+     "teams": [
+      {
+       "team": 6549243
+      },
+      {
+       "team": 6549244
+      }
+     ],
+     "from_turn": 2,
+     "_region": "upper right",
+     "to_turn": 3
+    },
+    {
+     "spot": 66804,
+     "teams": [
+      {
+       "team": 6549243
+      },
+      {
+       "team": 6549244
+      }
+     ],
+     "from_turn": 2,
+     "_region": "upper right",
+     "to_turn": 3
+    },
+    {
+     "spot": 66803,
+     "teams": [
+      {
+       "team": 6549243
+      },
+      {
+       "team": 6549244
+      }
+     ],
+     "from_turn": 2,
+     "_region": "upper right",
+     "to_turn": 3
+    },
+    {
+     "spot": 66802,
+     "teams": [
+      {
+       "team": 6549243
+      },
+      {
+       "team": 6549244
+      }
+     ],
+     "from_turn": 2,
+     "_region": "upper right",
+     "to_turn": 3
+    },
+    {
+     "spot": 66806,
+     "teams": [
+      {
+       "team": 6549243
+      },
+      {
+       "team": 6549244
+      }
+     ],
+     "from_turn": 2,
+     "_region": "upper right",
+     "to_turn": 3
+    },
+    {
+     "spot": 66783,
+     "teams": [
+      {
+       "team": 6549243
+      },
+      {
+       "team": 6549244
+      }
+     ],
+     "from_turn": 2,
+     "_region": "upper right",
+     "to_turn": 3
+    },
+    {
+     "spot": 66758,
+     "teams": [
+      {
+       "team": 6549245
+      },
+      {
+       "team": 6549246
+      },
+      {
+       "team": 6549247
+      }
+     ],
+     "from_turn": 4,
+     "_region": "upper right"
+    },
+    {
+     "spot": 66739,
+     "teams": [
+      {
+       "team": 6549245
+      },
+      {
+       "team": 6549246
+      },
+      {
+       "team": 6549247
+      }
+     ],
+     "from_turn": 4,
+     "_region": "upper right"
+    },
+    {
+     "spot": 66773,
+     "teams": [
+      {
+       "team": 6549245
+      },
+      {
+       "team": 6549246
+      },
+      {
+       "team": 6549247
+      }
+     ],
+     "from_turn": 4,
+     "_region": "upper right"
+    },
+    {
+     "spot": 66774,
+     "teams": [
+      {
+       "team": 6549245
+      },
+      {
+       "team": 6549246
+      },
+      {
+       "team": 6549247
+      }
+     ],
+     "from_turn": 4,
+     "_region": "upper right"
+    },
+    {
+     "spot": 66776,
+     "teams": [
+      {
+       "team": 6549245
+      },
+      {
+       "team": 6549246
+      },
+      {
+       "team": 6549247
+      }
+     ],
+     "from_turn": 4,
+     "_region": "upper right"
+    },
+    {
+     "spot": 66804,
+     "teams": [
+      {
+       "team": 6549245
+      },
+      {
+       "team": 6549246
+      },
+      {
+       "team": 6549247
+      }
+     ],
+     "from_turn": 4,
+     "_region": "upper right"
+    },
+    {
+     "spot": 66803,
+     "teams": [
+      {
+       "team": 6549245
+      },
+      {
+       "team": 6549246
+      },
+      {
+       "team": 6549247
+      }
+     ],
+     "from_turn": 4,
+     "_region": "upper right"
+    },
+    {
+     "spot": 66802,
+     "teams": [
+      {
+       "team": 6549245
+      },
+      {
+       "team": 6549246
+      },
+      {
+       "team": 6549247
+      }
+     ],
+     "from_turn": 4,
+     "_region": "upper right"
+    },
+    {
+     "spot": 66806,
+     "teams": [
+      {
+       "team": 6549245
+      },
+      {
+       "team": 6549246
+      },
+      {
+       "team": 6549247
+      }
+     ],
+     "from_turn": 4,
+     "_region": "upper right"
+    },
+    {
+     "spot": 66783,
+     "teams": [
+      {
+       "team": 6549245
+      },
+      {
+       "team": 6549246
+      },
+      {
+       "team": 6549247
+      }
+     ],
+     "from_turn": 4,
+     "_region": "upper right"
+    }
+   ]
+  },
+  "11002": {
+   "_name": "One-Dimensional Manifold (FP ranking, map 1)",
+   "_source": "Assassin Eclipse's FP Ranking Notes: 'Strelets on the 4 North Heliports, Punisher Rodels on the other 3 ... no spawn RNG'. Strelets = 6510106 (9 Strelets), Punisher Rodels = 6510107 (Defender + Rodelero): the map's only 65101xx teams that aren't prespawns. North = the y 2000 heliports. Every enemy turn (the guide's totals, 8 Strelets and 6 Rodels over 3 turns, fit two each with prespawns clogging some at first).",
+   "spawns": [
+    {
+     "spot": 65229,
+     "teams": [
+      {
+       "team": 6510106
+      }
+     ],
+     "from_turn": 1,
+     "_label": "north"
+    },
+    {
+     "spot": 65240,
+     "teams": [
+      {
+       "team": 6510106
+      }
+     ],
+     "from_turn": 1,
+     "_label": "north"
+    },
+    {
+     "spot": 65241,
+     "teams": [
+      {
+       "team": 6510106
+      }
+     ],
+     "from_turn": 1,
+     "_label": "north"
+    },
+    {
+     "spot": 65242,
+     "teams": [
+      {
+       "team": 6510106
+      }
+     ],
+     "from_turn": 1,
+     "_label": "north"
+    },
+    {
+     "spot": 65205,
+     "teams": [
+      {
+       "team": 6510107
+      }
+     ],
+     "from_turn": 1,
+     "_label": "centre / SW"
+    },
+    {
+     "spot": 65227,
+     "teams": [
+      {
+       "team": 6510107
+      }
+     ],
+     "from_turn": 1,
+     "_label": "centre / SW"
+    },
+    {
+     "spot": 65233,
+     "teams": [
+      {
+       "team": 6510107
+      }
+     ],
+     "from_turn": 1,
+     "_label": "centre / SW"
+    }
+   ]
+  },
+  "11003": {
+   "_name": "Two-Dimensional Torus-1 (FP ranking, map 2g)",
+   "_source": "Assassin Eclipse's FP Ranking Notes: 'Strelet Rodoleros in the West/East Heliports, Maccabee Strelets in the South Heliports'. Strelet Rodoleros = 6510208 (6 Strelets 3 Rodeleros), Maccabee Strelets = 6510209 (3 Maccabees 4 Strelets). West/East = the y 1200 heliports, South = y -400 and below. Every enemy turn.",
+   "spawns": [
+    {
+     "spot": 65284,
+     "teams": [
+      {
+       "team": 6510208
+      }
+     ],
+     "from_turn": 1,
+     "_label": "west / east"
+    },
+    {
+     "spot": 65286,
+     "teams": [
+      {
+       "team": 6510208
+      }
+     ],
+     "from_turn": 1,
+     "_label": "west / east"
+    },
+    {
+     "spot": 65290,
+     "teams": [
+      {
+       "team": 6510208
+      }
+     ],
+     "from_turn": 1,
+     "_label": "west / east"
+    },
+    {
+     "spot": 65292,
+     "teams": [
+      {
+       "team": 6510208
+      }
+     ],
+     "from_turn": 1,
+     "_label": "west / east"
+    },
+    {
+     "spot": 65269,
+     "teams": [
+      {
+       "team": 6510209
+      }
+     ],
+     "from_turn": 1,
+     "_label": "south"
+    },
+    {
+     "spot": 65270,
+     "teams": [
+      {
+       "team": 6510209
+      }
+     ],
+     "from_turn": 1,
+     "_label": "south"
+    },
+    {
+     "spot": 65272,
+     "teams": [
+      {
+       "team": 6510209
+      }
+     ],
+     "from_turn": 1,
+     "_label": "south"
+    },
+    {
+     "spot": 65274,
+     "teams": [
+      {
+       "team": 6510209
+      }
+     ],
+     "from_turn": 1,
+     "_label": "south"
+    }
+   ]
+  },
+  "11008": {
+   "_name": "Three-Dimensional Manifold G-4 (FP ranking, map 3g4)",
+   "_source": "Assassin Eclipse's FP Ranking Notes, 3g4 Enemies: per area, three teams on turn 1, three on turn 2, three on turns 3-4, matched to 65192xx by the guide's CE (effect_ext). The guide's East '69657' is 6519213 (69567) and its East turn 3-4 '78226 2 Cherubs 1 Grenadier 30 Nyto SGs' repeats SW's CE, so it is taken as the area's remaining team 6519216 (73170). Grid: A-L = x -3000 + 500n (L at 2500-2750), rows 1-9 = y 2500 - 500(n-1); NW/N B3 B4 F1 H1 F3 H3, SW D3 C6 A8 E8 B9 D9, E J1 L2 L4 L6. Morridow (6519904) and RPK-16 (6519902) first. A9 is five stacked identical 'Hiding' nodes; RPK uses 65514.",
+   "spawns": [
+    {
+     "one_of": true,
+     "teams": [
+      {
+       "team": 6519904
+      }
+     ],
+     "from_turn": 1,
+     "min_kills": 30,
+     "max": 1,
+     "_label": "Morridow: any open enemy heliport once we have 30 kills at the end of our turn",
+     "spots": [
+      65517,
+      65516,
+      65526,
+      65524,
+      65481,
+      65484,
+      65482,
+      65466,
+      65515,
+      65450,
+      65506,
+      65456,
+      65532,
+      65535,
+      65537,
+      65522
+     ]
+    },
+    {
+     "spot": 65514,
+     "teams": [
+      {
+       "team": 6519902
+      }
+     ],
+     "our_turn": true,
+     "from_turn": 4,
+     "to_turn": 4,
+     "enemy_owned": false,
+     "min_casts": {
+      "6510089": 9
+     },
+     "max": 1,
+     "_label": "RPK-16 on A9 at the start of turn 4 with 9+ emails (control panel skill 6510089), if A9 is vacant"
+    },
+    {
+     "spot": 65517,
+     "teams": [
+      {
+       "team": 6519249
+      },
+      {
+       "team": 6519250
+      },
+      {
+       "team": 6519251
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "_region": "NW/N"
+    },
+    {
+     "spot": 65516,
+     "teams": [
+      {
+       "team": 6519249
+      },
+      {
+       "team": 6519250
+      },
+      {
+       "team": 6519251
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "_region": "NW/N"
+    },
+    {
+     "spot": 65526,
+     "teams": [
+      {
+       "team": 6519249
+      },
+      {
+       "team": 6519250
+      },
+      {
+       "team": 6519251
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "_region": "NW/N"
+    },
+    {
+     "spot": 65524,
+     "teams": [
+      {
+       "team": 6519249
+      },
+      {
+       "team": 6519250
+      },
+      {
+       "team": 6519251
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "_region": "NW/N"
+    },
+    {
+     "spot": 65481,
+     "teams": [
+      {
+       "team": 6519249
+      },
+      {
+       "team": 6519250
+      },
+      {
+       "team": 6519251
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "_region": "NW/N"
+    },
+    {
+     "spot": 65484,
+     "teams": [
+      {
+       "team": 6519249
+      },
+      {
+       "team": 6519250
+      },
+      {
+       "team": 6519251
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "_region": "NW/N"
+    },
+    {
+     "spot": 65517,
+     "teams": [
+      {
+       "team": 6519251
+      },
+      {
+       "team": 6519252
+      },
+      {
+       "team": 6519253
+      }
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "_region": "NW/N"
+    },
+    {
+     "spot": 65516,
+     "teams": [
+      {
+       "team": 6519251
+      },
+      {
+       "team": 6519252
+      },
+      {
+       "team": 6519253
+      }
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "_region": "NW/N"
+    },
+    {
+     "spot": 65526,
+     "teams": [
+      {
+       "team": 6519251
+      },
+      {
+       "team": 6519252
+      },
+      {
+       "team": 6519253
+      }
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "_region": "NW/N"
+    },
+    {
+     "spot": 65524,
+     "teams": [
+      {
+       "team": 6519251
+      },
+      {
+       "team": 6519252
+      },
+      {
+       "team": 6519253
+      }
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "_region": "NW/N"
+    },
+    {
+     "spot": 65481,
+     "teams": [
+      {
+       "team": 6519251
+      },
+      {
+       "team": 6519252
+      },
+      {
+       "team": 6519253
+      }
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "_region": "NW/N"
+    },
+    {
+     "spot": 65484,
+     "teams": [
+      {
+       "team": 6519251
+      },
+      {
+       "team": 6519252
+      },
+      {
+       "team": 6519253
+      }
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "_region": "NW/N"
+    },
+    {
+     "spot": 65517,
+     "teams": [
+      {
+       "team": 6519253
+      },
+      {
+       "team": 6519254
+      },
+      {
+       "team": 6519255
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_region": "NW/N"
+    },
+    {
+     "spot": 65516,
+     "teams": [
+      {
+       "team": 6519253
+      },
+      {
+       "team": 6519254
+      },
+      {
+       "team": 6519255
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_region": "NW/N"
+    },
+    {
+     "spot": 65526,
+     "teams": [
+      {
+       "team": 6519253
+      },
+      {
+       "team": 6519254
+      },
+      {
+       "team": 6519255
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_region": "NW/N"
+    },
+    {
+     "spot": 65524,
+     "teams": [
+      {
+       "team": 6519253
+      },
+      {
+       "team": 6519254
+      },
+      {
+       "team": 6519255
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_region": "NW/N"
+    },
+    {
+     "spot": 65481,
+     "teams": [
+      {
+       "team": 6519253
+      },
+      {
+       "team": 6519254
+      },
+      {
+       "team": 6519255
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_region": "NW/N"
+    },
+    {
+     "spot": 65484,
+     "teams": [
+      {
+       "team": 6519253
+      },
+      {
+       "team": 6519254
+      },
+      {
+       "team": 6519255
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_region": "NW/N"
+    },
+    {
+     "spot": 65482,
+     "teams": [
+      {
+       "team": 6519228
+      },
+      {
+       "team": 6519229
+      },
+      {
+       "team": 6519230
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "_region": "SW"
+    },
+    {
+     "spot": 65466,
+     "teams": [
+      {
+       "team": 6519228
+      },
+      {
+       "team": 6519229
+      },
+      {
+       "team": 6519230
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "_region": "SW"
+    },
+    {
+     "spot": 65515,
+     "teams": [
+      {
+       "team": 6519228
+      },
+      {
+       "team": 6519229
+      },
+      {
+       "team": 6519230
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "_region": "SW"
+    },
+    {
+     "spot": 65450,
+     "teams": [
+      {
+       "team": 6519228
+      },
+      {
+       "team": 6519229
+      },
+      {
+       "team": 6519230
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "_region": "SW"
+    },
+    {
+     "spot": 65506,
+     "teams": [
+      {
+       "team": 6519228
+      },
+      {
+       "team": 6519229
+      },
+      {
+       "team": 6519230
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "_region": "SW"
+    },
+    {
+     "spot": 65456,
+     "teams": [
+      {
+       "team": 6519228
+      },
+      {
+       "team": 6519229
+      },
+      {
+       "team": 6519230
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "_region": "SW"
+    },
+    {
+     "spot": 65482,
+     "teams": [
+      {
+       "team": 6519229
+      },
+      {
+       "team": 6519230
+      },
+      {
+       "team": 6519231
+      }
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "_region": "SW"
+    },
+    {
+     "spot": 65466,
+     "teams": [
+      {
+       "team": 6519229
+      },
+      {
+       "team": 6519230
+      },
+      {
+       "team": 6519231
+      }
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "_region": "SW"
+    },
+    {
+     "spot": 65515,
+     "teams": [
+      {
+       "team": 6519229
+      },
+      {
+       "team": 6519230
+      },
+      {
+       "team": 6519231
+      }
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "_region": "SW"
+    },
+    {
+     "spot": 65450,
+     "teams": [
+      {
+       "team": 6519229
+      },
+      {
+       "team": 6519230
+      },
+      {
+       "team": 6519231
+      }
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "_region": "SW"
+    },
+    {
+     "spot": 65506,
+     "teams": [
+      {
+       "team": 6519229
+      },
+      {
+       "team": 6519230
+      },
+      {
+       "team": 6519231
+      }
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "_region": "SW"
+    },
+    {
+     "spot": 65456,
+     "teams": [
+      {
+       "team": 6519229
+      },
+      {
+       "team": 6519230
+      },
+      {
+       "team": 6519231
+      }
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "_region": "SW"
+    },
+    {
+     "spot": 65482,
+     "teams": [
+      {
+       "team": 6519231
+      },
+      {
+       "team": 6519232
+      },
+      {
+       "team": 6519233
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_region": "SW"
+    },
+    {
+     "spot": 65466,
+     "teams": [
+      {
+       "team": 6519231
+      },
+      {
+       "team": 6519232
+      },
+      {
+       "team": 6519233
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_region": "SW"
+    },
+    {
+     "spot": 65515,
+     "teams": [
+      {
+       "team": 6519231
+      },
+      {
+       "team": 6519232
+      },
+      {
+       "team": 6519233
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_region": "SW"
+    },
+    {
+     "spot": 65450,
+     "teams": [
+      {
+       "team": 6519231
+      },
+      {
+       "team": 6519232
+      },
+      {
+       "team": 6519233
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_region": "SW"
+    },
+    {
+     "spot": 65506,
+     "teams": [
+      {
+       "team": 6519231
+      },
+      {
+       "team": 6519232
+      },
+      {
+       "team": 6519233
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_region": "SW"
+    },
+    {
+     "spot": 65456,
+     "teams": [
+      {
+       "team": 6519231
+      },
+      {
+       "team": 6519232
+      },
+      {
+       "team": 6519233
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_region": "SW"
+    },
+    {
+     "spot": 65532,
+     "teams": [
+      {
+       "team": 6519211
+      },
+      {
+       "team": 6519212
+      },
+      {
+       "team": 6519213
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "_region": "E"
+    },
+    {
+     "spot": 65535,
+     "teams": [
+      {
+       "team": 6519211
+      },
+      {
+       "team": 6519212
+      },
+      {
+       "team": 6519213
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "_region": "E"
+    },
+    {
+     "spot": 65537,
+     "teams": [
+      {
+       "team": 6519211
+      },
+      {
+       "team": 6519212
+      },
+      {
+       "team": 6519213
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "_region": "E"
+    },
+    {
+     "spot": 65522,
+     "teams": [
+      {
+       "team": 6519211
+      },
+      {
+       "team": 6519212
+      },
+      {
+       "team": 6519213
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 1,
+     "_region": "E"
+    },
+    {
+     "spot": 65532,
+     "teams": [
+      {
+       "team": 6519212
+      },
+      {
+       "team": 6519213
+      },
+      {
+       "team": 6519214
+      }
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "_region": "E"
+    },
+    {
+     "spot": 65535,
+     "teams": [
+      {
+       "team": 6519212
+      },
+      {
+       "team": 6519213
+      },
+      {
+       "team": 6519214
+      }
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "_region": "E"
+    },
+    {
+     "spot": 65537,
+     "teams": [
+      {
+       "team": 6519212
+      },
+      {
+       "team": 6519213
+      },
+      {
+       "team": 6519214
+      }
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "_region": "E"
+    },
+    {
+     "spot": 65522,
+     "teams": [
+      {
+       "team": 6519212
+      },
+      {
+       "team": 6519213
+      },
+      {
+       "team": 6519214
+      }
+     ],
+     "from_turn": 2,
+     "to_turn": 2,
+     "_region": "E"
+    },
+    {
+     "spot": 65532,
+     "teams": [
+      {
+       "team": 6519214
+      },
+      {
+       "team": 6519215
+      },
+      {
+       "team": 6519216
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_region": "E"
+    },
+    {
+     "spot": 65535,
+     "teams": [
+      {
+       "team": 6519214
+      },
+      {
+       "team": 6519215
+      },
+      {
+       "team": 6519216
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_region": "E"
+    },
+    {
+     "spot": 65537,
+     "teams": [
+      {
+       "team": 6519214
+      },
+      {
+       "team": 6519215
+      },
+      {
+       "team": 6519216
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_region": "E"
+    },
+    {
+     "spot": 65522,
+     "teams": [
+      {
+       "team": 6519214
+      },
+      {
+       "team": 6519215
+      },
+      {
+       "team": 6519216
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 4,
+     "_region": "E"
+    }
+   ]
+  },
+  "10508": {
+   "_name": "Hornet's Nest+ (Singu+ ranking)",
+   "_source": "Assassin Eclipse's Singu+ Ranking Guide and jesse's annotated map (labels matched to the stc node for node). SF heliports R13 R21 B36 B38 (R/B: turns 1-5 unarmored, 6-10 armored) and G3 G5 Y16 Y24 (G/Y: the reverse); the guide gives no team list, so the teams are split by armour: 390122-133 on turns 1-5, 390134-139 (scaling from turn 6) on 6-8, 390140-145 (from turn 9) on 9-10. They spawn only once activated: four hidden buildings worked from the console (390106 R, 390107 G, 390108 B, 390109 Y; skills 390133/135/137/139, 'stay in hell') put special spot 900001 on their quadrant's two SF heliports (recorded 2026-11-12), and the rules need it (if_special). Reinforcements are the console's own stc skills (allyteam_summoner on Alpha/Beta/Gamma), not this table. KCCO heliports R1 R3 G22 G33 B8 B19 Y34 Y36 (belong 0) spawn the three KCCO variants as third-party forces (stc ally teams 390103 Typhons+Aegis, 390104 Hydras+Cerynitis, 390105 Dactyls+Aegis+Cerynitis). Boss heliports R4 G1 G2 Y33 B39 B40: Dreamer 390147 at 30 kills, Judge 390146 at 60, both 390148 at 90 (the guide's 'suspected' counts), on one of the six drawn blind, skipped if it's clogged or captured.",
+   "spawns": [
+    {
+     "spots": [
+      91657,
+      91659,
+      91658,
+      91654,
+      91655,
+      91656
+     ],
+     "one_of": true,
+     "blind": true,
+     "teams": [
+      {
+       "team": 390147
+      }
+     ],
+     "min_kills": 30,
+     "max": 1,
+     "_label": "Dreamer"
+    },
+    {
+     "spots": [
+      91657,
+      91659,
+      91658,
+      91654,
+      91655,
+      91656
+     ],
+     "one_of": true,
+     "blind": true,
+     "teams": [
+      {
+       "team": 390146
+      }
+     ],
+     "min_kills": 60,
+     "max": 1,
+     "_label": "Judge"
+    },
+    {
+     "spots": [
+      91657,
+      91659,
+      91658,
+      91654,
+      91655,
+      91656
+     ],
+     "one_of": true,
+     "blind": true,
+     "teams": [
+      {
+       "team": 390148
+      }
+     ],
+     "min_kills": 90,
+     "max": 1,
+     "_label": "Dreamer + Judge"
+    },
+    {
+     "spots": [
+      91633,
+      91631,
+      91651,
+      91650
+     ],
+     "teams": [
+      {
+       "team": 390125
+      },
+      {
+       "team": 390126
+      },
+      {
+       "team": 390127
+      },
+      {
+       "team": 390131
+      },
+      {
+       "team": 390132
+      },
+      {
+       "team": 390133
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 5,
+     "_region": "SF R/B",
+     "if_special": 900001
+    },
+    {
+     "spots": [
+      91633,
+      91631,
+      91651,
+      91650
+     ],
+     "teams": [
+      {
+       "team": 390134
+      },
+      {
+       "team": 390135
+      },
+      {
+       "team": 390136
+      }
+     ],
+     "from_turn": 6,
+     "to_turn": 8,
+     "_region": "SF R/B",
+     "if_special": 900001
+    },
+    {
+     "spots": [
+      91633,
+      91631,
+      91651,
+      91650
+     ],
+     "teams": [
+      {
+       "team": 390140
+      },
+      {
+       "team": 390141
+      },
+      {
+       "team": 390142
+      }
+     ],
+     "from_turn": 9,
+     "_region": "SF R/B",
+     "if_special": 900001
+    },
+    {
+     "spots": [
+      91623,
+      91622,
+      91608,
+      91610
+     ],
+     "teams": [
+      {
+       "team": 390122
+      },
+      {
+       "team": 390123
+      },
+      {
+       "team": 390124
+      },
+      {
+       "team": 390128
+      },
+      {
+       "team": 390129
+      },
+      {
+       "team": 390130
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 5,
+     "_region": "SF G/Y",
+     "if_special": 900001
+    },
+    {
+     "spots": [
+      91623,
+      91622,
+      91608,
+      91610
+     ],
+     "teams": [
+      {
+       "team": 390137
+      },
+      {
+       "team": 390138
+      },
+      {
+       "team": 390139
+      }
+     ],
+     "from_turn": 6,
+     "to_turn": 8,
+     "_region": "SF G/Y",
+     "if_special": 900001
+    },
+    {
+     "spots": [
+      91623,
+      91622,
+      91608,
+      91610
+     ],
+     "teams": [
+      {
+       "team": 390143
+      },
+      {
+       "team": 390144
+      },
+      {
+       "team": 390145
+      }
+     ],
+     "from_turn": 9,
+     "_region": "SF G/Y",
+     "if_special": 900001
+    },
+    {
+     "spots": [
+      91636,
+      91637,
+      91619,
+      91617,
+      91645,
+      91647,
+      91605,
+      91606
+     ],
+     "ally": true,
+     "owner": 0,
+     "teams": [
+      {
+       "team": 390103
+      },
+      {
+       "team": 390104
+      },
+      {
+       "team": 390105
+      }
+     ],
+     "from_turn": 1,
+     "_region": "KCCO"
+    }
+   ]
+  },
+  "11116": {
+   "_name": "Reign of Chaos+ (Isomer+ ranking)",
+   "_source": "Isomer+ Ranking Notes (xVarz / BLT) helipad spawn tables, teams 940409xx matched by CE. Regions from the map: Paradeus N = the three top heliports (P2/P5/P8), SW / SE = the three each side below (P22/P43/P52, P30/P49/P53), NW / NE heavy = type-7 95246 (P17) / 95243 (P21); ELID patrol Za1/3/5 left (53/54, ccw route) and Zb1/3/5 right (55/56, cw), ELID expand Za7/Za8 bottom middle; KCCO K3/K6/K11/K13 (belong 0) and SF2 (95275, belong 0) are third parties, so their spawns are stc ally teams (KCCO 94040959-966; SF bosses 94040970-976 = enemy 67-73, one a turn). The table's N '43259' is taken as ID24 (45329, same comp); NW turn 3's 45164 as ID35 (ID48 has the same CE); ELID expand's 32152 is ID09 (the prespawn's team). Mercurows (ID74) on enemy turn 4, Nimogen (ID75) on enemy turn 6 ('now spawn on T4E and T6E').",
+   "spawns": [
+    {
+     "spots": [
+      95246
+     ],
+     "teams": [
+      {
+       "team": 94040974
+      }
+     ],
+     "from_turn": 4,
+     "_region": "NW heavy: Mercurows at the end of enemy turn 4",
+     "to_turn": 4
+    },
+    {
+     "spots": [
+      95243
+     ],
+     "teams": [
+      {
+       "team": 94040975
+      }
+     ],
+     "from_turn": 6,
+     "_region": "NE heavy: Nimogen at the end of enemy turn 6",
+     "to_turn": 6
+    },
+    {
+     "spots": [
+      95260,
+      95268,
+      95269
+     ],
+     "teams": [
+      {
+       "team": 94040918
+      },
+      {
+       "team": 94040919
+      },
+      {
+       "team": 94040920
+      },
+      {
+       "team": 94040917
+      }
+     ],
+     "from_turn": 1,
+     "_region": "Paradeus N",
+     "to_turn": 2
+    },
+    {
+     "spots": [
+      95260,
+      95268,
+      95269
+     ],
+     "teams": [
+      {
+       "team": 94040921
+      },
+      {
+       "team": 94040923
+      },
+      {
+       "team": 94040924
+      },
+      {
+       "team": 94040922
+      }
+     ],
+     "from_turn": 3,
+     "_region": "Paradeus N",
+     "to_turn": 4
+    },
+    {
+     "spots": [
+      95260,
+      95268,
+      95269
+     ],
+     "teams": [
+      {
+       "team": 94040925
+      },
+      {
+       "team": 94040926
+      },
+      {
+       "team": 94040927
+      },
+      {
+       "team": 94040928
+      }
+     ],
+     "from_turn": 5,
+     "_region": "Paradeus N",
+     "to_turn": 7
+    },
+    {
+     "spots": [
+      95271,
+      95250,
+      95286
+     ],
+     "teams": [
+      {
+       "team": 94040932
+      },
+      {
+       "team": 94040929
+      },
+      {
+       "team": 94040931
+      },
+      {
+       "team": 94040930
+      }
+     ],
+     "from_turn": 1,
+     "_region": "Paradeus SW",
+     "to_turn": 2
+    },
+    {
+     "spots": [
+      95271,
+      95250,
+      95286
+     ],
+     "teams": [
+      {
+       "team": 94040934
+      },
+      {
+       "team": 94040936
+      },
+      {
+       "team": 94040935
+      },
+      {
+       "team": 94040933
+      }
+     ],
+     "from_turn": 3,
+     "_region": "Paradeus SW",
+     "to_turn": 4
+    },
+    {
+     "spots": [
+      95271,
+      95250,
+      95286
+     ],
+     "teams": [
+      {
+       "team": 94040939
+      },
+      {
+       "team": 94040938
+      },
+      {
+       "team": 94040937
+      },
+      {
+       "team": 94040940
+      }
+     ],
+     "from_turn": 5,
+     "_region": "Paradeus SW",
+     "to_turn": 7
+    },
+    {
+     "spots": [
+      95270,
+      95255,
+      95289
+     ],
+     "teams": [
+      {
+       "team": 94040941
+      },
+      {
+       "team": 94040942
+      },
+      {
+       "team": 94040943
+      },
+      {
+       "team": 94040944
+      }
+     ],
+     "from_turn": 1,
+     "_region": "Paradeus SE",
+     "to_turn": 2
+    },
+    {
+     "spots": [
+      95270,
+      95255,
+      95289
+     ],
+     "teams": [
+      {
+       "team": 94040945
+      },
+      {
+       "team": 94040948
+      },
+      {
+       "team": 94040947
+      },
+      {
+       "team": 94040946
+      }
+     ],
+     "from_turn": 3,
+     "_region": "Paradeus SE",
+     "to_turn": 4
+    },
+    {
+     "spots": [
+      95270,
+      95255,
+      95289
+     ],
+     "teams": [
+      {
+       "team": 94040950
+      },
+      {
+       "team": 94040951
+      },
+      {
+       "team": 94040949
+      },
+      {
+       "team": 94040952
+      }
+     ],
+     "from_turn": 5,
+     "_region": "Paradeus SE",
+     "to_turn": 7
+    },
+    {
+     "spots": [
+      95246
+     ],
+     "teams": [
+      {
+       "team": 94040918
+      },
+      {
+       "team": 94040919
+      },
+      {
+       "team": 94040920
+      },
+      {
+       "team": 94040917
+      }
+     ],
+     "from_turn": 1,
+     "_region": "Paradeus NW heavy",
+     "to_turn": 2
+    },
+    {
+     "spots": [
+      95246
+     ],
+     "teams": [
+      {
+       "team": 94040921
+      },
+      {
+       "team": 94040935
+      },
+      {
+       "team": 94040924
+      },
+      {
+       "team": 94040922
+      }
+     ],
+     "from_turn": 3,
+     "_region": "Paradeus NW heavy",
+     "to_turn": 3
+    },
+    {
+     "spots": [
+      95246
+     ],
+     "teams": [
+      {
+       "team": 94040928
+      },
+      {
+       "team": 94040927
+      },
+      {
+       "team": 94040926
+      },
+      {
+       "team": 94040951
+      }
+     ],
+     "from_turn": 5,
+     "_region": "Paradeus NW heavy",
+     "to_turn": 7
+    },
+    {
+     "spots": [
+      95243
+     ],
+     "teams": [
+      {
+       "team": 94040941
+      },
+      {
+       "team": 94040942
+      },
+      {
+       "team": 94040943
+      },
+      {
+       "team": 94040944
+      }
+     ],
+     "from_turn": 1,
+     "_region": "Paradeus NE heavy",
+     "to_turn": 2
+    },
+    {
+     "spots": [
+      95243
+     ],
+     "teams": [
+      {
+       "team": 94040947
+      },
+      {
+       "team": 94040948
+      },
+      {
+       "team": 94040945
+      },
+      {
+       "team": 94040946
+      }
+     ],
+     "from_turn": 3,
+     "_region": "Paradeus NE heavy",
+     "to_turn": 4
+    },
+    {
+     "spots": [
+      95243
+     ],
+     "teams": [
+      {
+       "team": 94040952
+      },
+      {
+       "team": 94040949
+      },
+      {
+       "team": 94040950
+      },
+      {
+       "team": 94040937
+      }
+     ],
+     "from_turn": 5,
+     "_region": "Paradeus NE heavy",
+     "to_turn": 5
+    },
+    {
+     "spots": [
+      95243
+     ],
+     "teams": [
+      {
+       "team": 94040952
+      },
+      {
+       "team": 94040949
+      },
+      {
+       "team": 94040950
+      },
+      {
+       "team": 94040937
+      }
+     ],
+     "from_turn": 7,
+     "_region": "Paradeus NE heavy",
+     "to_turn": 7
+    },
+    {
+     "spots": [
+      95280,
+      95292,
+      95298
+     ],
+     "teams": [
+      {
+       "team": 94040953
+      },
+      {
+       "team": 94040954
+      }
+     ],
+     "from_turn": 1,
+     "_region": "ELID Za patrol",
+     "to_turn": 7
+    },
+    {
+     "spots": [
+      95296,
+      95283,
+      95303
+     ],
+     "teams": [
+      {
+       "team": 94040955
+      },
+      {
+       "team": 94040956
+      }
+     ],
+     "from_turn": 1,
+     "_region": "ELID Zb patrol",
+     "to_turn": 7
+    },
+    {
+     "spots": [
+      95304
+     ],
+     "teams": [
+      {
+       "team": 94040957
+      },
+      {
+       "team": 94040909
+      }
+     ],
+     "from_turn": 1,
+     "_region": "ELID expand",
+     "to_turn": 7
+    },
+    {
+     "spots": [
+      95306
+     ],
+     "teams": [
+      {
+       "team": 94040958
+      },
+      {
+       "team": 94040909
+      }
+     ],
+     "from_turn": 1,
+     "_region": "ELID expand",
+     "to_turn": 7
+    },
+    {
+     "spots": [
+      95325,
+      95323,
+      95313,
+      95317
+     ],
+     "teams": [
+      {
+       "team": 94040962
+      },
+      {
+       "team": 94040959
+      },
+      {
+       "team": 94040961
+      },
+      {
+       "team": 94040960
+      }
+     ],
+     "from_turn": 1,
+     "_region": "KCCO",
+     "to_turn": 3,
+     "ally": true,
+     "owner": 0
+    },
+    {
+     "spots": [
+      95325,
+      95323,
+      95313,
+      95317
+     ],
+     "teams": [
+      {
+       "team": 94040963
+      },
+      {
+       "team": 94040965
+      },
+      {
+       "team": 94040966
+      },
+      {
+       "team": 94040964
+      }
+     ],
+     "from_turn": 4,
+     "_region": "KCCO",
+     "to_turn": 7,
+     "ally": true,
+     "owner": 0
+    },
+    {
+     "spots": [
+      95275
+     ],
+     "teams": [
+      {
+       "team": 94040970
+      }
+     ],
+     "from_turn": 1,
+     "_region": "SF boss",
+     "to_turn": 1,
+     "ally": true,
+     "owner": 0
+    },
+    {
+     "spots": [
+      95275
+     ],
+     "teams": [
+      {
+       "team": 94040971
+      }
+     ],
+     "from_turn": 2,
+     "_region": "SF boss",
+     "to_turn": 2,
+     "ally": true,
+     "owner": 0
+    },
+    {
+     "spots": [
+      95275
+     ],
+     "teams": [
+      {
+       "team": 94040972
+      }
+     ],
+     "from_turn": 3,
+     "_region": "SF boss",
+     "to_turn": 3,
+     "ally": true,
+     "owner": 0
+    },
+    {
+     "spots": [
+      95275
+     ],
+     "teams": [
+      {
+       "team": 94040973
+      }
+     ],
+     "from_turn": 4,
+     "_region": "SF boss",
+     "to_turn": 4,
+     "ally": true,
+     "owner": 0
+    },
+    {
+     "spots": [
+      95275
+     ],
+     "teams": [
+      {
+       "team": 94040974
+      }
+     ],
+     "from_turn": 5,
+     "_region": "SF boss",
+     "to_turn": 5,
+     "ally": true,
+     "owner": 0
+    },
+    {
+     "spots": [
+      95275
+     ],
+     "teams": [
+      {
+       "team": 94040975
+      }
+     ],
+     "from_turn": 6,
+     "_region": "SF boss",
+     "to_turn": 6,
+     "ally": true,
+     "owner": 0
+    },
+    {
+     "spots": [
+      95275
+     ],
+     "teams": [
+      {
+       "team": 94040976
+      }
+     ],
+     "from_turn": 7,
+     "_region": "SF boss",
+     "to_turn": 7,
+     "ally": true,
+     "owner": 0
+    }
+   ]
+  },
+  "10253": {
+   "_name": "Reign of Chaos (Isomer ranking)",
+   "_source": "GFL Armory Isomer Notes sheet (Para / KCCO / CF / SF Zone tabs, SpawnStats): Paradeus heliports (P2/P5/P8/P17H/P21H/P22/P30/P43/P46H/P49/P52/P53, the 12 holding Paradeus prespawns) spawn normal squads on turns 1-3, '+' squads on 4-7, '++' squads on 8-9; teams matched by composition (groups and members). ELID heliports: 'a 50/50 chance of spawning either a Armed or Unarmed Zombie Squad', each zone's own patrol/expand variant (Zombie2 = armed). KCCO (belong 0, third party, stc ally teams): K6 = 12493 and K3 = 12495 (the ally teams' patrol routes; K6-only AR Cyclops / Hydra Aegis and K3-only Typhon Big / Hydra Cyclops agree), K13/K11 = 12483/12487 (seek AI 103). SF2 (12445): ally 316007, which the stc turns into Scarecrow ... M16 by turn. Mercurows / Nimogen as before (Ceia's guide, 90 / 110 kills). ASSUMED: equal odds within a pool.",
+   "spawns": [
+    {
+     "spots": [
+      12416,
+      12413
+     ],
+     "one_of": true,
+     "teams": [
+      {
+       "team": 316094
+      }
+     ],
+     "min_kills": 90,
+     "max": 1,
+     "_label": "Mercurows at 90 kills",
+     "from_turn": 1
+    },
+    {
+     "spots": [
+      12416,
+      12413
+     ],
+     "one_of": true,
+     "teams": [
+      {
+       "team": 316093
+      }
+     ],
+     "min_kills": 110,
+     "max": 1,
+     "_label": "Nimogen at 110 kills",
+     "from_turn": 1
+    },
+    {
+     "spots": [
+      12413,
+      12416,
+      12419,
+      12420,
+      12425,
+      12430,
+      12438,
+      12439,
+      12440,
+      12441,
+      12456,
+      12459
+     ],
+     "teams": [
+      {
+       "team": 316051
+      },
+      {
+       "team": 316066
+      },
+      {
+       "team": 316067
+      },
+      {
+       "team": 316068
+      },
+      {
+       "team": 316075
+      },
+      {
+       "team": 316076
+      },
+      {
+       "team": 316077
+      },
+      {
+       "team": 316084
+      },
+      {
+       "team": 316085
+      },
+      {
+       "team": 316086
+      },
+      {
+       "team": 316049
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "_region": "Paradeus: Strelet A-C, Rodelero A-D, Doppelsoldner A-C, Mixed Zombie"
+    },
+    {
+     "spots": [
+      12413,
+      12416,
+      12419,
+      12420,
+      12425,
+      12430,
+      12438,
+      12439,
+      12440,
+      12441,
+      12456,
+      12459
+     ],
+     "teams": [
+      {
+       "team": 316087
+      },
+      {
+       "team": 316088
+      },
+      {
+       "team": 316069
+      },
+      {
+       "team": 316070
+      },
+      {
+       "team": 316071
+      },
+      {
+       "team": 316078
+      },
+      {
+       "team": 316080
+      },
+      {
+       "team": 316079
+      },
+      {
+       "team": 316089
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 7,
+     "_region": "Paradeus: Strelet+ D, Rodelero+ E-G, Doppelsoldner+ D-G, Mixed Zombie+"
+    },
+    {
+     "spots": [
+      12413,
+      12416,
+      12419,
+      12420,
+      12425,
+      12430,
+      12438,
+      12439,
+      12440,
+      12441,
+      12456,
+      12459
+     ],
+     "teams": [
+      {
+       "team": 316081
+      },
+      {
+       "team": 316082
+      },
+      {
+       "team": 316083
+      },
+      {
+       "team": 316090
+      },
+      {
+       "team": 316073
+      },
+      {
+       "team": 316091
+      },
+      {
+       "team": 316072
+      },
+      {
+       "team": 316074
+      },
+      {
+       "team": 316092
+      }
+     ],
+     "from_turn": 8,
+     "to_turn": 9,
+     "_region": "Paradeus: Strelet++ E-G, Rodelero++ H, Doppelsoldner++ H/I, Uhlan++ A-C"
+    },
+    {
+     "spots": [
+      12450,
+      12462,
+      12468
+     ],
+     "teams": [
+      {
+       "team": 316058
+      },
+      {
+       "team": 316059
+      }
+     ],
+     "_region": "ELID Za patrol: armed or unarmed zombies",
+     "from_turn": 1,
+     "to_turn": 9
+    },
+    {
+     "spots": [
+      12453,
+      12466,
+      12473
+     ],
+     "teams": [
+      {
+       "team": 316060
+      },
+      {
+       "team": 316061
+      }
+     ],
+     "_region": "ELID Zb patrol: armed or unarmed zombies",
+     "from_turn": 1,
+     "to_turn": 9
+    },
+    {
+     "spots": [
+      12474
+     ],
+     "teams": [
+      {
+       "team": 316062
+      },
+      {
+       "team": 316063
+      }
+     ],
+     "_region": "ELID Za8 expand: armed or unarmed zombies",
+     "from_turn": 1,
+     "to_turn": 9
+    },
+    {
+     "spots": [
+      12476
+     ],
+     "teams": [
+      {
+       "team": 316064
+      },
+      {
+       "team": 316065
+      }
+     ],
+     "_region": "ELID Zb7 expand: armed or unarmed zombies",
+     "from_turn": 1,
+     "to_turn": 9
+    },
+    {
+     "spots": [
+      12493
+     ],
+     "ally": true,
+     "owner": 0,
+     "_region": "KCCO K6 (rear, patrols to K9)",
+     "teams": [
+      {
+       "team": 316011
+      },
+      {
+       "team": 316013
+      },
+      {
+       "team": 316014
+      },
+      {
+       "team": 316017
+      },
+      {
+       "team": 316018
+      },
+      {
+       "team": 316021
+      },
+      {
+       "team": 316022
+      },
+      {
+       "team": 316025
+      },
+      {
+       "team": 316026
+      },
+      {
+       "team": 316029
+      },
+      {
+       "team": 316030
+      },
+      {
+       "team": 316033
+      },
+      {
+       "team": 316034
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 9
+    },
+    {
+     "spots": [
+      12495
+     ],
+     "ally": true,
+     "owner": 0,
+     "_region": "KCCO K3 (rear, patrols to K2)",
+     "teams": [
+      {
+       "team": 316012
+      },
+      {
+       "team": 316015
+      },
+      {
+       "team": 316016
+      },
+      {
+       "team": 316019
+      },
+      {
+       "team": 316020
+      },
+      {
+       "team": 316023
+      },
+      {
+       "team": 316024
+      },
+      {
+       "team": 316027
+      },
+      {
+       "team": 316028
+      },
+      {
+       "team": 316031
+      },
+      {
+       "team": 316032
+      },
+      {
+       "team": 316035
+      },
+      {
+       "team": 316036
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 9
+    },
+    {
+     "spots": [
+      12483,
+      12487
+     ],
+     "ally": true,
+     "owner": 0,
+     "_region": "KCCO K13/K11 (front, seek the nearest enemy)",
+     "teams": [
+      {
+       "team": 316037
+      },
+      {
+       "team": 316038
+      },
+      {
+       "team": 316039
+      },
+      {
+       "team": 316040
+      },
+      {
+       "team": 316041
+      },
+      {
+       "team": 316042
+      },
+      {
+       "team": 316043
+      },
+      {
+       "team": 316044
+      },
+      {
+       "team": 316045
+      },
+      {
+       "team": 316046
+      },
+      {
+       "team": 316047
+      },
+      {
+       "team": 316048
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 9
+    },
+    {
+     "spots": [
+      12445
+     ],
+     "ally": true,
+     "owner": 0,
+     "teams": [
+      {
+       "team": 316007
+      }
+     ],
+     "_region": "SF2: a ringleader-less squad once the first is beaten; the stc turns it into the turn's ringleader (ally_team 316007 betray by turn)",
+     "from_turn": 1,
+     "to_turn": 9
+    }
+   ]
+  },
+  "10800": {
+   "_name": "City of Nightmares (Poincaré Recurrence ranking)",
+   "_source": "PR Ranking Notes (xVarz): enemy node IDs 4801xx; per-region heliport tables for turns 1-3 / 4-6 / 7-10 (heavy and normal helis). Regions from the map (NW A1-D4, SW A5-E10, NE E1-J5, SE F6-J10): heavy = type-7 heliports, normal = type-3; the neutral 'limited' heliports (D5 73960, A10 73983, J4 73941, E1 73954) and the SE ones we start on only spawn once the enemy holds them. Bosses are the stc's: each radar built adds a 480108 stack on D4 and Grig (480142) / Bramedb (480143) come at 4 / 7 stacks (3 / 6 radars) if D4 is empty. ASSUMED: equal odds within a band.",
+   "spawns": [
+    {
+     "spots": [
+      73984,
+      73996,
+      73999
+     ],
+     "teams": [
+      {
+       "team": 480137
+      },
+      {
+       "team": 480138
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "_region": "NW heavy"
+    },
+    {
+     "spots": [
+      73989,
+      73994
+     ],
+     "teams": [
+      {
+       "team": 480134
+      },
+      {
+       "team": 480135
+      },
+      {
+       "team": 480136
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "_region": "NW normal"
+    },
+    {
+     "spots": [
+      73984,
+      73996,
+      73999
+     ],
+     "teams": [
+      {
+       "team": 480186
+      },
+      {
+       "team": 480187
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 6,
+     "_region": "NW heavy"
+    },
+    {
+     "spots": [
+      73989,
+      73994
+     ],
+     "teams": [
+      {
+       "team": 480180
+      },
+      {
+       "team": 480181
+      },
+      {
+       "team": 480182
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 6,
+     "_region": "NW normal"
+    },
+    {
+     "spots": [
+      73984,
+      73996,
+      73999
+     ],
+     "teams": [
+      {
+       "team": 480188
+      },
+      {
+       "team": 480189
+      }
+     ],
+     "from_turn": 7,
+     "to_turn": 10,
+     "_region": "NW heavy"
+    },
+    {
+     "spots": [
+      73989,
+      73994
+     ],
+     "teams": [
+      {
+       "team": 480183
+      },
+      {
+       "team": 480184
+      },
+      {
+       "team": 480185
+      }
+     ],
+     "from_turn": 7,
+     "to_turn": 10,
+     "_region": "NW normal"
+    },
+    {
+     "spots": [
+      73978
+     ],
+     "teams": [
+      {
+       "team": 480117
+      },
+      {
+       "team": 480118
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "_region": "SW heavy"
+    },
+    {
+     "spots": [
+      73960,
+      73962,
+      73964,
+      73974,
+      73976,
+      73983
+     ],
+     "teams": [
+      {
+       "team": 480114
+      },
+      {
+       "team": 480115
+      },
+      {
+       "team": 480116
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "_region": "SW normal"
+    },
+    {
+     "spots": [
+      73978
+     ],
+     "teams": [
+      {
+       "team": 480166
+      },
+      {
+       "team": 480167
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 6,
+     "_region": "SW heavy"
+    },
+    {
+     "spots": [
+      73960,
+      73962,
+      73964,
+      73974,
+      73976,
+      73983
+     ],
+     "teams": [
+      {
+       "team": 480160
+      },
+      {
+       "team": 480161
+      },
+      {
+       "team": 480162
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 6,
+     "_region": "SW normal"
+    },
+    {
+     "spots": [
+      73978
+     ],
+     "teams": [
+      {
+       "team": 480178
+      },
+      {
+       "team": 480179
+      }
+     ],
+     "from_turn": 7,
+     "to_turn": 10,
+     "_region": "SW heavy"
+    },
+    {
+     "spots": [
+      73960,
+      73962,
+      73964,
+      73974,
+      73976,
+      73983
+     ],
+     "teams": [
+      {
+       "team": 480173
+      },
+      {
+       "team": 480174
+      },
+      {
+       "team": 480175
+      }
+     ],
+     "from_turn": 7,
+     "to_turn": 10,
+     "_region": "SW normal"
+    },
+    {
+     "spots": [
+      73959
+     ],
+     "teams": [
+      {
+       "team": 480127
+      },
+      {
+       "team": 480128
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "_region": "NE heavy"
+    },
+    {
+     "spots": [
+      73937,
+      73939,
+      73941,
+      73949,
+      73951,
+      73954
+     ],
+     "teams": [
+      {
+       "team": 480124
+      },
+      {
+       "team": 480125
+      },
+      {
+       "team": 480126
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "_region": "NE normal"
+    },
+    {
+     "spots": [
+      73959
+     ],
+     "teams": [
+      {
+       "team": 480176
+      },
+      {
+       "team": 480177
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 6,
+     "_region": "NE heavy"
+    },
+    {
+     "spots": [
+      73937,
+      73939,
+      73941,
+      73949,
+      73951,
+      73954
+     ],
+     "teams": [
+      {
+       "team": 480170
+      },
+      {
+       "team": 480171
+      },
+      {
+       "team": 480172
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 6,
+     "_region": "NE normal"
+    },
+    {
+     "spots": [
+      73959
+     ],
+     "teams": [
+      {
+       "team": 480168
+      },
+      {
+       "team": 480169
+      }
+     ],
+     "from_turn": 7,
+     "to_turn": 10,
+     "_region": "NE heavy"
+    },
+    {
+     "spots": [
+      73937,
+      73939,
+      73941,
+      73949,
+      73951,
+      73954
+     ],
+     "teams": [
+      {
+       "team": 480163
+      },
+      {
+       "team": 480164
+      },
+      {
+       "team": 480165
+      }
+     ],
+     "from_turn": 7,
+     "to_turn": 10,
+     "_region": "NE normal"
+    },
+    {
+     "spots": [
+      73914,
+      73922,
+      73927
+     ],
+     "teams": [
+      {
+       "team": 480107
+      },
+      {
+       "team": 480108
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "_region": "SE heavy"
+    },
+    {
+     "spots": [
+      73907,
+      73910,
+      73915,
+      73920,
+      73929,
+      73934,
+      73935
+     ],
+     "teams": [
+      {
+       "team": 480104
+      },
+      {
+       "team": 480105
+      },
+      {
+       "team": 480106
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "_region": "SE normal"
+    },
+    {
+     "spots": [
+      73914,
+      73922,
+      73927
+     ],
+     "teams": [
+      {
+       "team": 480156
+      },
+      {
+       "team": 480157
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 6,
+     "_region": "SE heavy"
+    },
+    {
+     "spots": [
+      73907,
+      73910,
+      73915,
+      73920,
+      73929,
+      73934,
+      73935
+     ],
+     "teams": [
+      {
+       "team": 480150
+      },
+      {
+       "team": 480151
+      },
+      {
+       "team": 480152
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 6,
+     "_region": "SE normal"
+    },
+    {
+     "spots": [
+      73914,
+      73922,
+      73927
+     ],
+     "teams": [
+      {
+       "team": 480158
+      },
+      {
+       "team": 480159
+      }
+     ],
+     "from_turn": 7,
+     "to_turn": 10,
+     "_region": "SE heavy"
+    },
+    {
+     "spots": [
+      73907,
+      73910,
+      73915,
+      73920,
+      73929,
+      73934,
+      73935
+     ],
+     "teams": [
+      {
+       "team": 480153
+      },
+      {
+       "team": 480154
+      },
+      {
+       "team": 480155
+      }
+     ],
+     "from_turn": 7,
+     "to_turn": 10,
+     "_region": "SE normal"
+    }
+   ]
+  },
+  "10417": {
+   "_name": "Escape Acceleration EX-I (Polarized Light ranking, map 2)",
+   "_source": "Anon's Guide to PL Ranking (map 2 roster), with Assassin Eclipse's PL guide (map 2 breakdown) and the Korean translation of Anon's guide. KCCO is the enemy side: SW heliports 90989/90993/90994/90996, NE 90959/90961/90963/90966; 'At first, the SW quadrant will spawn unarmored KCCO while the NE quadrant spawns armored KCCO. This switches the first time on Turn 4, then a second time on Turn 8.' Armored: Aegis 362931, Minotaurus 362930 (stc TeslaTrooper), Coeus 362933, Kratos 362932; unarmored: Cyclops 362928, Centaurus+Orthrus 362929, Centaurus+Cyclops SG 362927, Orthrus+Cyclops 362926 (stc Archer = Centaurus, Beast = Orthrus); from turn 11 the armored pool adds 362936 and the unarmored 362935. The 'mystery' armored trio (362934 from turn 3, 362937 from 6, 362938 from 8) comes one a turn on a KCCO heliport. Paradeus (NW 90939/90944/90949) and SF (SE 90981/90982/90986, and Agent's heliport 90933 'once she's gone') are third parties here (belong 0), so they spawn the stc's ally teams 362945-948 / 362939-943 as forces. ASSUMED: equal odds within a pool; the trio's heliport is drawn each turn (the guide: 'seemingly random but stays consistent throughout the run'); KCCO growth per turn is the stc's correction_turn (+5 levels a turn), which the client applies in battle. SF also gets 362944 (Manticore + Nemeum, an stc SF ally team the guide doesn't list; the player: the guide may be incomplete).",
+   "spawns": [
+    {
+     "spots": [
+      90989,
+      90993,
+      90994,
+      90996,
+      90959,
+      90961,
+      90963,
+      90966
+     ],
+     "one_of": true,
+     "teams": [
+      {
+       "team": 362934
+      }
+     ],
+     "from_turn": 3,
+     "to_turn": 5,
+     "_region": "KCCO mystery armor (one a turn, either quadrant): Cerynitis + Hydra from turn 3"
+    },
+    {
+     "spots": [
+      90989,
+      90993,
+      90994,
+      90996,
+      90959,
+      90961,
+      90963,
+      90966
+     ],
+     "one_of": true,
+     "teams": [
+      {
+       "team": 362934
+      },
+      {
+       "team": 362937
+      }
+     ],
+     "from_turn": 6,
+     "to_turn": 7,
+     "_region": "KCCO mystery armor: + the 205k Minotaurus from turn 6"
+    },
+    {
+     "spots": [
+      90989,
+      90993,
+      90994,
+      90996,
+      90959,
+      90961,
+      90963,
+      90966
+     ],
+     "one_of": true,
+     "teams": [
+      {
+       "team": 362934
+      },
+      {
+       "team": 362937
+      },
+      {
+       "team": 362938
+      }
+     ],
+     "from_turn": 8,
+     "to_turn": 13,
+     "_region": "KCCO mystery armor: + Kratos from turn 8"
+    },
+    {
+     "spots": [
+      90989,
+      90993,
+      90994,
+      90996
+     ],
+     "teams": [
+      {
+       "team": 362928
+      },
+      {
+       "team": 362929
+      },
+      {
+       "team": 362927
+      },
+      {
+       "team": 362926
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "_region": "KCCO SW: unarmored"
+    },
+    {
+     "spots": [
+      90959,
+      90961,
+      90963,
+      90966
+     ],
+     "teams": [
+      {
+       "team": 362931
+      },
+      {
+       "team": 362930
+      },
+      {
+       "team": 362933
+      },
+      {
+       "team": 362932
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 3,
+     "_region": "KCCO NE: armored"
+    },
+    {
+     "spots": [
+      90989,
+      90993,
+      90994,
+      90996
+     ],
+     "teams": [
+      {
+       "team": 362931
+      },
+      {
+       "team": 362930
+      },
+      {
+       "team": 362933
+      },
+      {
+       "team": 362932
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 7,
+     "_region": "KCCO SW: armored"
+    },
+    {
+     "spots": [
+      90959,
+      90961,
+      90963,
+      90966
+     ],
+     "teams": [
+      {
+       "team": 362928
+      },
+      {
+       "team": 362929
+      },
+      {
+       "team": 362927
+      },
+      {
+       "team": 362926
+      }
+     ],
+     "from_turn": 4,
+     "to_turn": 7,
+     "_region": "KCCO NE: unarmored"
+    },
+    {
+     "spots": [
+      90989,
+      90993,
+      90994,
+      90996
+     ],
+     "teams": [
+      {
+       "team": 362928
+      },
+      {
+       "team": 362929
+      },
+      {
+       "team": 362927
+      },
+      {
+       "team": 362926
+      }
+     ],
+     "from_turn": 8,
+     "to_turn": 10,
+     "_region": "KCCO SW: unarmored"
+    },
+    {
+     "spots": [
+      90959,
+      90961,
+      90963,
+      90966
+     ],
+     "teams": [
+      {
+       "team": 362931
+      },
+      {
+       "team": 362930
+      },
+      {
+       "team": 362933
+      },
+      {
+       "team": 362932
+      }
+     ],
+     "from_turn": 8,
+     "to_turn": 10,
+     "_region": "KCCO NE: armored"
+    },
+    {
+     "spots": [
+      90989,
+      90993,
+      90994,
+      90996
+     ],
+     "teams": [
+      {
+       "team": 362928
+      },
+      {
+       "team": 362929
+      },
+      {
+       "team": 362927
+      },
+      {
+       "team": 362926
+      },
+      {
+       "team": 362935
+      }
+     ],
+     "from_turn": 11,
+     "to_turn": 13,
+     "_region": "KCCO SW: unarmored"
+    },
+    {
+     "spots": [
+      90959,
+      90961,
+      90963,
+      90966
+     ],
+     "teams": [
+      {
+       "team": 362931
+      },
+      {
+       "team": 362930
+      },
+      {
+       "team": 362933
+      },
+      {
+       "team": 362932
+      },
+      {
+       "team": 362936
+      }
+     ],
+     "from_turn": 11,
+     "to_turn": 13,
+     "_region": "KCCO NE: armored"
+    },
+    {
+     "spots": [
+      90939,
+      90944,
+      90949
+     ],
+     "ally": true,
+     "owner": 0,
+     "teams": [
+      {
+       "team": 362946
+      },
+      {
+       "team": 362945
+      },
+      {
+       "team": 362948
+      },
+      {
+       "team": 362947
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 13,
+     "_region": "Paradeus NW (third party)"
+    },
+    {
+     "spots": [
+      90981,
+      90982,
+      90986,
+      90933
+     ],
+     "ally": true,
+     "owner": 0,
+     "teams": [
+      {
+       "team": 362942
+      },
+      {
+       "team": 362940
+      },
+      {
+       "team": 362941
+      },
+      {
+       "team": 362939
+      },
+      {
+       "team": 362943
+      },
+      {
+       "team": 362944
+      }
+     ],
+     "from_turn": 1,
+     "to_turn": 13,
+     "_region": "Sangvis Ferri SE and Agent's central heliport once she is gone (third party)"
+    }
+   ]
+  },
+  "10155": {
+   "_name": "Hurricane Rescue",
+   "_source": "Ceia's CT Preparation Guide (Military Defection): 'Kill the enemies spawned by the 2 helipads at the Command Tower. Destroy the Command Tower. An enemy will spawn at the Command Tower on the next turn after destruction.' and 'Enemies do NOT respawn from helipads'; the player: those are the only 3 spawns. The Command Tower is building 8 on 8180; its two helipads are 8178 / 8179 (the stc's 900001 spawn points). The tower's spawn is a Doppelsoldner ('Gundam', 91086) or Rodelero ('Rodel', 91087) squad: the teams whose deaths set off the stc's Defection betrayals (ally 92020 / 92021). ASSUMED: the helipads spawn on enemy turn 1, each one of 91080 / 91081 (the map's only other spawn-only teams; the guide doesn't name them); equal odds. spawn_points false: the stc spawn points spawn nothing beyond these rules.",
+   "spawn_points": false,
+   "spawns": [
+    {
+     "spots": [
+      8178,
+      8179
+     ],
+     "teams": [
+      {
+       "team": 91080
+      },
+      {
+       "team": 91081
+      }
+     ],
+     "from_turn": 1,
+     "max": 1,
+     "_region": "Command Tower helipads: one spawn each"
+    },
+    {
+     "spot": 8180,
+     "teams": [
+      {
+       "team": 91086
+      },
+      {
+       "team": 91087
+      }
+     ],
+     "after_destroyed": 8180,
+     "max": 1,
+     "enemy_owned": false,
+     "_region": "Command Tower: one spawn the enemy turn after it is destroyed (Doppelsoldner or Rodelero)"
+    }
+   ]
+  }
+ }
+}

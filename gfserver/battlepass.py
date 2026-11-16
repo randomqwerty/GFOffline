@@ -1,0 +1,148 @@
+"""Frontline Protocol (the battle pass).
+
+Seasons are stc event_battlepass rows (start_time..end_time; rotate_switch "1,<days>" repeats the
+window every <days> days). The pass exp is the count of the season's pt_item_id (10606), which
+the daily and weekly quest prizes pay; the level is exp / game_config battlepass_lvup_exp + 1
+(PassOrderUserData$$GetCurrentPassLevel: level 1 at 0 exp), up to battlepass_lv_upperlimit, and every
+further battlepass_lvup_exp after the top level is one extra bundle (gift_extra). The paid track (gift_paytounlock) needs the first unlock_itemid item.
+Reply formats (from the client's handlers):
+  Battlepass/index {} -> {"battlepass_with_user": [{"id", "battlepass_id", "free_bonus", "paid_bonus",
+      "extra_bonus", "is_expired", "start_time"}], "battlepass_pt_item": {"<item>": count}}
+      (PassOrderUserData$$SetData: claimed levels as comma lists, extra_bonus the extras claimed)
+  Battlepass/getBonus {"battlepass_id", "type": 1 free / 2 paid / 3 extra, "param": level} ->
+      {"bonus": {"<level>": <package>}} (RequestGetBonus)
+  Battlepass/getAllBonus {"battlepass_id"} -> {"free_bonus": {...}, "paid_bonus": {...},
+      "extra_bonus": {...}} (RequestGetAllBonus)
+A new season's record starts with the pass exp at 0.
+"""
+import time
+from functools import lru_cache
+
+from . import quests, squads, stc
+
+FREE, PAID, EXTRA = 1, 2, 3
+FMT = "%Y-%m-%d %H:%M:%S"
+
+
+@lru_cache(maxsize=1)
+def _seasons():
+    return {int(r["id"]): r for r in stc.table("event_battlepass") if int(r["id"]) > 0}
+
+
+def _stamp(text):
+    return int(time.mktime(time.strptime(str(text), FMT)))
+
+
+def _window(row, now):
+    """The season's (start, end) around now, or None when it isn't running."""
+    start, end = _stamp(row["start_time"]), _stamp(row["end_time"])
+    mode, _, days = str(row.get("rotate_switch") or "").partition(",")
+    if mode.strip() == "1" and days.strip().isdigit() and int(days) > 0 and now > end:
+        step = int(days) * 86400
+        k = (now - start) // step
+        start, end = start + k * step, end + k * step
+    return (start, end) if start <= now <= end else None
+
+
+def current(now=None):
+    """The running season row and its window; fixed-date seasons win over rotating ones."""
+    now = int(now or time.time())
+    running = [(bool(r.get("rotate_switch")), sid, r) for sid, r in _seasons().items() if _window(r, now)]
+    if not running:
+        return None, None
+    _, sid, row = min(running)
+    return row, _window(row, now)
+
+
+def _cfg(name, default):
+    return int(quests._config().get(name) or default)
+
+
+def _levels(text):
+    return {int(p.split(":")[0]): int(p.split(":")[1]) for p in str(text or "").split(",") if ":" in p}
+
+
+def _record(state, row, now):
+    recs = state.setdefault("battlepass_with_user", [])
+    rec = next((r for r in recs if str(r["battlepass_id"]) == str(row["id"])), None)
+    if rec is None:
+        for old in recs:
+            old["is_expired"] = "1"
+        squads._item(state, str(row["pt_item_id"]))["number"] = "0"
+        rec = {"id": str(len(recs) + 1), "user_id": str(state["user_info"].get("user_id", "")), "battlepass_id": str(row["id"]), "free_bonus": "", "paid_bonus": "",
+               "extra_bonus": "0", "is_expired": "0", "start_time": str(now)}
+        recs.append(rec)
+    return rec
+
+
+def _exp(state, row):
+    return int(squads._item(state, str(row["pt_item_id"]))["number"])
+
+
+def _paid(state, row):
+    unlock = str(row.get("unlock_itemid") or "").split(";")[0]
+    return unlock.strip().isdigit() and int(squads._item(state, unlock)["number"]) > 0
+
+
+def index(state, body, now=None):
+    now = int(now or time.time())
+    row, _ = current(now)
+    if row is None:
+        return {"battlepass_with_user": state.get("battlepass_with_user") or [], "battlepass_pt_item": {}}
+    _record(state, row, now)
+    items = [str(row["pt_item_id"])] + [i for i in str(row.get("unlock_itemid") or "").split(";") if i.strip().isdigit()]
+    return {"battlepass_with_user": state["battlepass_with_user"],
+            "battlepass_pt_item": {i: int(squads._item(state, i)["number"]) for i in items}}
+
+
+def _claim(state, row, rec, kind, level):
+    """Pay one level of a track (or one extra bundle); returns the package, or None."""
+    step, top = _cfg("battlepass_lvup_exp", 30), _cfg("battlepass_lv_upperlimit", 45)
+    level_now = _exp(state, row) // step + 1
+    reached = min(top, level_now)
+    if kind == EXTRA:
+        if int(rec["extra_bonus"]) >= max(0, level_now - top):
+            return None
+        rec["extra_bonus"] = str(int(rec["extra_bonus"]) + 1)
+        return quests.grant(state, quests._reward(quests.prizes().get(int(row["gift_extra"] or 0), {})))
+    field, track = ("free_bonus", "gift_free") if kind == FREE else ("paid_bonus", "gift_paytounlock")
+    prizes = _levels(row[track])
+    claimed = {int(x) for x in str(rec[field]).split(",") if x.strip().isdigit()}
+    if level not in prizes or level > reached or level in claimed or (kind == PAID and not _paid(state, row)):
+        return None
+    rec[field] = ",".join(str(x) for x in sorted(claimed | {level}))
+    return quests.grant(state, quests._reward(quests.prizes().get(prizes[level], {})))
+
+
+def get_bonus(state, body, now=None):
+    body, now = body or {}, int(now or time.time())
+    row, _ = current(now)
+    # nothing to give (not reached, claimed, another season) still answers, with no bonus: no reply
+    # drops the connection
+    if row is None or str(body.get("battlepass_id")) != str(row["id"]):
+        return {"bonus": {}}
+    rec, kind, level = _record(state, row, now), int(body.get("type") or FREE), int(body.get("param") or 0)
+    if kind == EXTRA:
+        out = {}
+        while (pkg := _claim(state, row, rec, EXTRA, 0)) is not None:
+            out[str(int(rec["extra_bonus"]))] = pkg
+        return {"bonus": out}
+    pkg = _claim(state, row, rec, kind, level)
+    return {"bonus": {} if pkg is None else {str(level): pkg}}
+
+
+def get_all_bonus(state, body, now=None):
+    body, now = body or {}, int(now or time.time())
+    row, _ = current(now)
+    if row is None or str(body.get("battlepass_id")) != str(row["id"]):
+        return {"free_bonus": {}, "paid_bonus": {}, "extra_bonus": {}}
+    rec = _record(state, row, now)
+    out = {"free_bonus": {}, "paid_bonus": {}, "extra_bonus": {}}
+    for kind, key, track in ((FREE, "free_bonus", "gift_free"), (PAID, "paid_bonus", "gift_paytounlock")):
+        for level in sorted(_levels(row[track])):
+            pkg = _claim(state, row, rec, kind, level)
+            if pkg is not None:
+                out[key][str(level)] = pkg
+    while (pkg := _claim(state, row, rec, EXTRA, 0)) is not None:
+        out["extra_bonus"][str(int(rec["extra_bonus"]))] = pkg
+    return out

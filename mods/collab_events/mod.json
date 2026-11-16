@@ -1,0 +1,423 @@
+{
+ "name": "collab_events",
+ "description": "Keeps every collaboration event playable from the campaign list, with its banner.",
+ "version": "5",
+ "enabled": false,
+ "banners": [
+  {
+   "event": 90001,
+   "pic": "Pics/Icons/OPS/missionselect_GloryDay"
+  },
+  {
+   "event": 90005,
+   "pic": "Pics/Icons/OPS/missionselect_VA11"
+  },
+  {
+   "event": 90006,
+   "pic": "Pics/Icons/OPS/missionselect_GunslingerGirl"
+  },
+  {
+   "event": 90007,
+   "pic": "Pics/Icons/OPS/missionselect_TheDivision"
+  },
+  {
+   "event": 90008,
+   "pic": "Pics/Icons/OPS/DropkickonMyDevil"
+  },
+  {
+   "event": 35,
+   "pic": "Pics/Icons/OPS/missionselect_ZLSR"
+  },
+  {
+   "event": 48,
+   "pic": "Pics/Icons/OPS/missionselect_2024Ghost"
+  },
+  {
+   "event": 58,
+   "pic": "Pics/Icons/OPS/missionselect_breakout"
+  },
+  {
+   "event": 90009,
+   "pic": "Pics/Icons/OPS/missionselect_RabbitHunt"
+  }
+ ],
+ "_comment": "Lists the collaboration events in the permanent campaign (normal_activity: one tag per collab, at most 4 chapters a tag) and makes them permanent (mission_event type 2). Banners: the event list loads Pics/Title/<bg_code>, so each collab's mission-select image (Pics/Icons/OPS) gets a second path there (\"art\"). story_util: Operation Rabbit Hunt (BlazBlue / Guilty Gear, campaign -8) lost its rows in the EN tables, so its maps played no story; its story files are still in the game. Rows 98001-98004 restore them, laid out like the other old events' (start -8-<stage>-1, first-clear -8-<stage>-2First, later clears -8-<stage>-2End where there is one), titled with the map's own name.",
+ "tables": {
+  "normal_activity": [
+   {
+    "id": 101,
+    "campaign_id": -19,
+    "tag": "normal_activity-10000101",
+    "order": 201,
+    "name": "normal_activity-20000101",
+    "chapter_name": "normal_activity-30000101",
+    "bg_code": "collab_missionselect_GloryDay",
+    "bg_config": "#000000C7,#3D415166,#2B9487,#FFFFFFFF",
+    "desc": "normal_activity-40000101",
+    "scene_name": "",
+    "event_prize_level": 0,
+    "rank_id": ""
+   },
+   {
+    "id": 102,
+    "campaign_id": -20,
+    "tag": "normal_activity-10000102",
+    "order": 201,
+    "name": "normal_activity-20000102",
+    "chapter_name": "normal_activity-30000102",
+    "bg_code": "collab_missionselect_GloryDay",
+    "bg_config": "#000000C7,#3D415166,#2B9487,#FFFFFFFF",
+    "desc": "normal_activity-40000102",
+    "scene_name": "",
+    "event_prize_level": 0,
+    "rank_id": ""
+   },
+   {
+    "id": 103,
+    "campaign_id": -21,
+    "tag": "normal_activity-10000103",
+    "order": 201,
+    "name": "normal_activity-20000103",
+    "chapter_name": "normal_activity-30000103",
+    "bg_code": "collab_missionselect_GloryDay",
+    "bg_config": "#000000C7,#3D415166,#2B9487,#FFFFFFFF",
+    "desc": "normal_activity-40000103",
+    "scene_name": "",
+    "event_prize_level": 0,
+    "rank_id": ""
+   },
+   {
+    "id": 104,
+    "campaign_id": -22,
+    "tag": "normal_activity-10000104",
+    "order": 201,
+    "name": "normal_activity-20000104",
+    "chapter_name": "normal_activity-30000104",
+    "bg_code": "collab_missionselect_GloryDay",
+    "bg_config": "#000000C7,#3D415166,#2B9487,#FFFFFFFF",
+    "desc": "normal_activity-40000104",
+    "scene_name": "",
+    "event_prize_level": 0,
+    "rank_id": ""
+   },
+   {
+    "id": 105,
+    "campaign_id": -32,
+    "tag": "normal_activity-10000105",
+    "order": 202,
+    "name": "normal_activity-20000105",
+    "chapter_name": "normal_activity-30000105",
+    "bg_code": "collab_missionselect_VA11",
+    "bg_config": "#000000C7,#3D415166,#D92B1A,#FFFFFFFF",
+    "desc": "normal_activity-40000105",
+    "scene_name": "",
+    "event_prize_level": 0,
+    "rank_id": ""
+   },
+   {
+    "id": 106,
+    "campaign_id": -38,
+    "tag": "normal_activity-10000106",
+    "order": 203,
+    "name": "normal_activity-20000106",
+    "chapter_name": "normal_activity-30000106",
+    "bg_code": "collab_missionselect_GunslingerGirl",
+    "bg_config": "#000000C7,#3D415166,#A3BD13,#FFFFFFFF",
+    "desc": "normal_activity-40000106",
+    "scene_name": "",
+    "event_prize_level": 0,
+    "rank_id": ""
+   },
+   {
+    "id": 107,
+    "campaign_id": -43,
+    "tag": "normal_activity-10000107",
+    "order": 204,
+    "name": "normal_activity-20000107",
+    "chapter_name": "normal_activity-30000107",
+    "bg_code": "collab_missionselect_TheDivision",
+    "bg_config": "#000000C7,#3D415166,#FF5200,#FFFFFFFF",
+    "desc": "normal_activity-40000107",
+    "scene_name": "",
+    "event_prize_level": 0,
+    "rank_id": ""
+   },
+   {
+    "id": 108,
+    "campaign_id": -46,
+    "tag": "normal_activity-10000108",
+    "order": 205,
+    "name": "normal_activity-20000108",
+    "chapter_name": "normal_activity-30000108",
+    "bg_code": "collab_DropkickonMyDevil",
+    "bg_config": "#000000C7,#3D415166,#E64801,#FFFFFFFF",
+    "desc": "normal_activity-40000108",
+    "scene_name": "",
+    "event_prize_level": 0,
+    "rank_id": ""
+   },
+   {
+    "id": 109,
+    "campaign_id": -57,
+    "tag": "normal_activity-10000109",
+    "order": 206,
+    "name": "normal_activity-20000109",
+    "chapter_name": "normal_activity-30000109",
+    "bg_code": "collab_missionselect_ZLSR",
+    "bg_config": "#000000C7,#3D415166,#FA3F9C,#FFFFFFFF",
+    "desc": "normal_activity-40000109",
+    "scene_name": "",
+    "event_prize_level": 0,
+    "rank_id": ""
+   },
+   {
+    "id": 110,
+    "campaign_id": -64,
+    "tag": "normal_activity-10000110",
+    "order": 207,
+    "name": "normal_activity-20000110",
+    "chapter_name": "normal_activity-30000110",
+    "bg_code": "collab_missionselect_2024Ghost",
+    "bg_config": "#000000C7,#3D415166,#0084FF,#FFFFFFFF",
+    "desc": "normal_activity-40000110",
+    "scene_name": "",
+    "event_prize_level": 0,
+    "rank_id": ""
+   },
+   {
+    "id": 111,
+    "campaign_id": -73,
+    "tag": "normal_activity-10000111",
+    "order": 208,
+    "name": "normal_activity-20000111",
+    "chapter_name": "normal_activity-30000111",
+    "bg_code": "collab_missionselect_breakout",
+    "bg_config": "#000000C7,#3D415166,#FF4800,#FFFFFFFF",
+    "desc": "normal_activity-40000111",
+    "scene_name": "",
+    "event_prize_level": 0,
+    "rank_id": ""
+   },
+   {
+    "id": 112,
+    "campaign_id": -8,
+    "tag": "normal_activity-10000112",
+    "order": 209,
+    "name": "normal_activity-20000112",
+    "chapter_name": "normal_activity-30000112",
+    "bg_code": "collab_missionselect_RabbitHunt",
+    "bg_config": "#000000C7,#3D415166,#B43939FF,#FFFFFFFF",
+    "desc": "normal_activity-40000112",
+    "scene_name": "",
+    "event_prize_level": 0,
+    "rank_id": ""
+   }
+  ],
+  "mission_event": [
+   {
+    "id": 90001,
+    "type": 2,
+    "mission_campaign": "-19",
+    "event_name": "mission_event-10090001",
+    "init_mission_id": "10093"
+   },
+   {
+    "id": 90002,
+    "type": 2,
+    "mission_campaign": "-20",
+    "event_name": "mission_event-10090002",
+    "init_mission_id": "10096"
+   },
+   {
+    "id": 90003,
+    "type": 2,
+    "mission_campaign": "-21",
+    "event_name": "mission_event-10090003",
+    "init_mission_id": "10099"
+   },
+   {
+    "id": 90004,
+    "type": 2,
+    "mission_campaign": "-22",
+    "event_name": "mission_event-10090004",
+    "init_mission_id": "10102"
+   },
+   {
+    "id": 90005,
+    "type": 2,
+    "mission_campaign": "-32",
+    "event_name": "mission_event-10090005",
+    "init_mission_id": "10277"
+   },
+   {
+    "id": 90006,
+    "type": 2,
+    "mission_campaign": "-38",
+    "event_name": "mission_event-10090006",
+    "init_mission_id": "10484"
+   },
+   {
+    "id": 90007,
+    "type": 2,
+    "mission_campaign": "-43",
+    "event_name": "mission_event-10090007",
+    "init_mission_id": "10596"
+   },
+   {
+    "id": 90008,
+    "type": 2,
+    "mission_campaign": "-46",
+    "event_name": "mission_event-10090008",
+    "init_mission_id": "10767"
+   },
+   {
+    "id": 35,
+    "type": 2,
+    "draw_event_id": "",
+    "start_time": "",
+    "end_time": ""
+   },
+   {
+    "id": 48,
+    "type": 2,
+    "draw_event_id": "",
+    "start_time": "",
+    "end_time": ""
+   },
+   {
+    "id": 58,
+    "type": 2,
+    "draw_event_id": "",
+    "start_time": "",
+    "end_time": ""
+   },
+   {
+    "id": 90009,
+    "type": 2,
+    "mission_campaign": "-8",
+    "event_name": "mission_event-10090009",
+    "init_mission_id": "10027"
+   }
+  ],
+  "story_util": [
+   {
+    "id": 98001,
+    "mission_id": "10027",
+    "description": "mission-20010027",
+    "campaign": -8,
+    "bgm": "BGM_Frontline",
+    "title": "mission-10010027",
+    "is_util": 0,
+    "start": "-8-1-1",
+    "first": "-8-1-2First",
+    "end": "-8-1-2First"
+   },
+   {
+    "id": 98002,
+    "mission_id": "10026",
+    "description": "mission-20010026",
+    "campaign": -8,
+    "bgm": "BGM_Frontline",
+    "title": "mission-10010026",
+    "is_util": 0,
+    "start": "-8-2-1",
+    "first": "-8-2-2First",
+    "end": "-8-2-2End"
+   },
+   {
+    "id": 98003,
+    "mission_id": "10028",
+    "description": "mission-20010028",
+    "campaign": -8,
+    "bgm": "BGM_Frontline",
+    "title": "mission-10010028",
+    "is_util": 0,
+    "start": "-8-3-1",
+    "first": "-8-3-2First",
+    "end": "-8-3-2First"
+   },
+   {
+    "id": 98004,
+    "mission_id": "10029",
+    "description": "mission-20010029",
+    "campaign": -8,
+    "bgm": "BGM_Frontline",
+    "title": "mission-10010029",
+    "is_util": 0,
+    "start": "-8-4-1",
+    "first": "-8-4-2First",
+    "end": "-8-4-2End"
+   }
+  ]
+ },
+ "text": {
+  "normal_activity-10000101": "COLLAB|01",
+  "normal_activity-20000101": "DJMAX RESPECT",
+  "normal_activity-30000101": "Glory Day I",
+  "normal_activity-40000101": "Collaboration event",
+  "normal_activity-10000102": "COLLAB|01",
+  "normal_activity-20000102": "DJMAX RESPECT",
+  "normal_activity-30000102": "Glory Day II",
+  "normal_activity-40000102": "Collaboration event",
+  "normal_activity-10000103": "COLLAB|01",
+  "normal_activity-20000103": "DJMAX RESPECT",
+  "normal_activity-30000103": "Glory Day I EX",
+  "normal_activity-40000103": "Collaboration event",
+  "normal_activity-10000104": "COLLAB|01",
+  "normal_activity-20000104": "DJMAX RESPECT",
+  "normal_activity-30000104": "Glory Day II EX",
+  "normal_activity-40000104": "Collaboration event",
+  "normal_activity-10000105": "COLLAB|02",
+  "normal_activity-20000105": "VA-11 HALL-A",
+  "normal_activity-30000105": "VA-11 HALL-A",
+  "normal_activity-40000105": "Collaboration event",
+  "normal_activity-10000106": "COLLAB|03",
+  "normal_activity-20000106": "Gunslinger Girl",
+  "normal_activity-30000106": "Gunslinger Girl",
+  "normal_activity-40000106": "Collaboration event",
+  "normal_activity-10000107": "COLLAB|04",
+  "normal_activity-20000107": "Tom Clancy's The Division",
+  "normal_activity-30000107": "Tom Clancy's The Division",
+  "normal_activity-40000107": "Collaboration event",
+  "normal_activity-10000108": "COLLAB|05",
+  "normal_activity-20000108": "Dropkick on My Devil!",
+  "normal_activity-30000108": "Dropkick on My Devil!",
+  "normal_activity-40000108": "Collaboration event",
+  "normal_activity-10000109": "COLLAB|06",
+  "normal_activity-20000109": "Zombie Land Saga Revenge",
+  "normal_activity-30000109": "Zombie Land Saga Revenge",
+  "normal_activity-40000109": "Collaboration event",
+  "normal_activity-10000110": "COLLAB|07",
+  "normal_activity-20000110": "Ghost in the Shell",
+  "normal_activity-30000110": "Ghost in the Shell: SAC_2045",
+  "normal_activity-40000110": "Collaboration event",
+  "normal_activity-10000111": "COLLAB|08",
+  "normal_activity-20000111": "Arena Breakout",
+  "normal_activity-30000111": "Arena Breakout",
+  "normal_activity-40000111": "Collaboration event",
+  "mission_event-10090001": "Glory Day I",
+  "mission_event-10090002": "Glory Day II",
+  "mission_event-10090003": "Glory Day I EX",
+  "mission_event-10090004": "Glory Day II EX",
+  "mission_event-10090005": "VA-11 HALL-A",
+  "mission_event-10090006": "Gunslinger Girl",
+  "mission_event-10090007": "The Division",
+  "mission_event-10090008": "Dropkick on My Devil!",
+  "normal_activity-10000112": "COLLAB|09",
+  "normal_activity-20000112": "BlazBlue × Guilty Gear",
+  "normal_activity-30000112": "Operation Rabbit Hunt",
+  "normal_activity-40000112": "Collaboration event",
+  "mission_event-10090009": "Operation Rabbit Hunt"
+ },
+ "art": {
+  "Pics/Title/collab_missionselect_GloryDay.png": "Pics/Icons/OPS/missionselect_GloryDay.png",
+  "Pics/Title/collab_missionselect_VA11.png": "Pics/Icons/OPS/missionselect_VA11.png",
+  "Pics/Title/collab_missionselect_GunslingerGirl.png": "Pics/Icons/OPS/missionselect_GunslingerGirl.png",
+  "Pics/Title/collab_missionselect_TheDivision.png": "Pics/Icons/OPS/missionselect_TheDivision.png",
+  "Pics/Title/collab_DropkickonMyDevil.png": "Pics/Icons/OPS/DropkickonMyDevil.png",
+  "Pics/Title/collab_missionselect_ZLSR.png": "Pics/Icons/OPS/missionselect_ZLSR.png",
+  "Pics/Title/collab_missionselect_2024Ghost.png": "Pics/Icons/OPS/missionselect_2024Ghost.png",
+  "Pics/Title/collab_missionselect_breakout.png": "Pics/Icons/OPS/missionselect_breakout.png",
+  "Pics/Title/collab_missionselect_RabbitHunt.png": "Pics/Icons/OPS/missionselect_RabbitHunt.png"
+ }
+}

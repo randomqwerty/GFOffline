@@ -1,0 +1,20 @@
+[
+ {
+  "id": 1193,
+  "type": 5,
+  "arg": "1",
+  "code": "profilePic_souvenir_GGSD",
+  "item_name": "item-10001193",
+  "introduction": "item-20001193",
+  "rank": 1,
+  "sort": 0,
+  "initial_num": "",
+  "daily_limit": "",
+  "upper_limit": 0,
+  "consume_type": 0,
+  "item_access": "",
+  "detail_introduction": "item-30001193",
+  "is_hide_info": 0,
+  "type_sort": 0
+ }
+]
