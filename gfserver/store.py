@@ -14,6 +14,7 @@ class Store:
     def __init__(self, root=config.SAVE_DIR):
         self.root = root
         self.root.mkdir(parents=True, exist_ok=True)
+        self._editing = {}
         self.index_path = self.root / "accounts.json"
         self.index = json.loads(self.index_path.read_text("utf-8")) if self.index_path.exists() else {
             "next_uid": 100001, "by_openid": {}, "by_uid": {}}
@@ -88,6 +89,13 @@ class Store:
         return dict(acct) if acct else None
 
     # --- per-account game state (the Index/index document) ---
+
+    def editing(self, uid):
+        """Hold this from loading an account's save to writing it back. Requests run on their own threads and
+        the client sends some together: one that loaded the save before another wrote it would write the older
+        copy back, so a claimed mail came back unclaimed and an achievement was rewarded again."""
+        with self._lock:
+            return self._editing.setdefault(str(uid), threading.RLock())
 
     def _save_path(self, uid):
         return self.root / f"{int(uid)}.json"

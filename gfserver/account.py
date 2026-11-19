@@ -19,8 +19,11 @@ APPROXIMATION: the natural regen rate and cap are server-side; GF's commonly cit
 3 minutes is used, stopping at a cap that grows with commander level (REGEN_CAP_*).
 """
 import json
+import random
 import time
 from functools import lru_cache
+
+from . import archived
 
 REGEN_INTERVAL = 180
 REGEN_AMOUNT = {"mp": 3, "ammo": 3, "mre": 3, "part": 1}
@@ -227,7 +230,7 @@ def home(state, body, now=None):
              "gem": int(state["user_info"].get("gem") or 0), **recover_ssoc(state, body, now),
              # armor energy: the hourly rate is a server rule not in the client data
              "recover_energy": 0, "last_energy_recover_time": now,
-             "build_coin_flag": -4, "friend_messagelist": [], "friend_applylist": [],
+             "build_coin_flag": battery_flag(state, now), "friend_messagelist": [], "friend_applylist": [],
              "index_getmaillist": quests.mail_list(state, body), "push_message_list": [],
              "daily": q["daily"], "weekly": q["weekly"],
              "fetter_bounty_with_user": state.get("fetter_bounty_with_user") or [],
@@ -259,7 +262,7 @@ def list_todo(state, body):
 
 def mall_buy(state, body):
     """Mall/gemToResource, gemToItem, gemToGiftbag {"mall_id", "num", "is_special"}
-    (MallGood$$RequestBuy) -> {"status": 1, "prize": package} (MallGood$$RequestBuyGoodHandle).
+    (MallGood$$RequestBuy) -> {"status": 1, "prize": [package per good]} (MallGood$$RequestBuyGoodHandle).
     The goods come from catchdata mall_info (resources, item_ids, gift, prize_id) and cost gemprice
     gems each. Limits are the shop reply's rest_num and daily_quota (mall_tables). APPROXIMATION: discounts are not applied."""
     from . import quests, stc
@@ -268,19 +271,20 @@ def mall_buy(state, body):
     num = max(1, int(body.get("num") or 1))
     if row is None:
         return None
-    reward = {}
-    for _ in range(num):
-        parts = [quests._reward(row)]
-        if int(row.get("prize_id") or 0) in quests.prizes():
-            parts.append(quests._reward(quests.prizes()[int(row["prize_id"])]))
-        reward = quests._merge([reward] + parts)
+    parts = [quests._reward(row)]
+    if int(row.get("prize_id") or 0) in quests.prizes():
+        parts.append(quests._reward(quests.prizes()[int(row["prize_id"])]))
+    one = quests._merge(parts)
     cost = int(row.get("gemprice") or 0) * num
     ui = state["user_info"]
     if int(ui.get("gem") or 0) < cost or not _within_limits(state, str(row["id"]), num):
         return {"status": 0}
     ui["gem"] = str(int(ui.get("gem") or 0) - cost)
     _record_purchase(state, str(row["id"]), num)
-    return {"status": 1, "prize": quests.grant(state, reward)}
+    # "prize" is read as one package per good bought (MallGood.RequestBuyGoodHandle: prize[i], then its first
+    # entry), so it is a list, and left out when a package would be empty
+    prize = [quests.grant(state, one) for _ in range(num)]
+    return {"status": 1, "prize": prize} if all(prize) else {"status": 1}
 
 
 # Mall/staticTables {"is_special"} -> the shop (MallGoodResController$$RequestMallListHandler): an archived reply for this
@@ -421,8 +425,9 @@ def gem_to_max(state, body):
 # --- dorm pet exploration
 #
 # Explore/setTeam {"guns", "pets", "time_type", "is_auto"} and Explore/setItem {"item_list"} choose the
-# next run; Explore/start (body built elsewhere; nothing needed from it) -> {"next_time"} starts it:
-# a random area (stc explore_area) and destination, lasting explore_time_type.duration, with an affair
+# next run; Explore/start (no body) -> the run plus {"next_time"} starts it (RequestExploreStart reads the
+# reply as an ExploreAction, start_time/end_time/cancel_time unguarded, then takes the time type's mp/ammo/
+# mre/part and one of the chosen item itself; the save pays the same): a random area (stc explore_area) and destination, lasting explore_time_type.duration, with an affair
 # (stc explore_affair_server) every AFFAIR_EVERY seconds. A run is kept in "_explore"["run"] in the
 # ExploreAction format {"start_time", "end_time", "cancel_time", "affairs": [{"affair_id",
 # "affair_time"}], "gun_ids", "pet_ids", "area_id", "target_id", "item_id", "draw_event_prize"}.
@@ -430,11 +435,54 @@ def gem_to_max(state, body):
 #                      "items_taken", "next_explore_time", "next_time", "mp", "ammo", "mre", "part"}
 #                      (ExploreData$$DecodeExploreBalance reads every key unguarded)
 #   Explore/getEvent {"time"} -> {"event_list": [affair], "next_time", "is_prize"}
-#   Index/getExploreMail -> {"get_list": [], "out": package} pays a finished run (explore_time_type
-#                      resources) and clears it (RequestExploreGetReward)
+#   Index/getExploreMail -> {"get_list": [], "out": package} pays a finished run and clears it
+#                      (RequestExploreGetReward)
 #   Explore/cancel "1" ends the run without reward
-# APPROXIMATION: affair pacing and rewards beyond the time type's resources are server rules.
+# Explore/setItem's item_list is a queue: each run uses its first item and drops it (RequestExploreStart
+# removes it and takes one from the bag itself). The item's stc explore_item row: explore_time_down scales the
+# run's length, area_id_up "area:weight" weights the area picked (others weigh 1), reward1_up scales the
+# run's reward and mid_reward_up the rewards found on the way.
+# The run's dolls and pets go out as gun ids and pet furniture ids (ExploreAction arrGunInfoId / arrPetInfoId; recorded
+# live: setTeam's instance ids came back as "332", "40402", ...). Each pet steers the area: its furniture's extra_spine
+# explore_tag 1001 cat, 1002 dog, 1003 bird, 1004 other leads to area 1 City, 2 Snowfield, 3 Forest, 4 Wasteland.
+# Each area weighs 10, plus 20 per pet leading there (player report: one dog 10/30/10/10, a dog and a cat 30/30/10/10).
+# Each of the week's advantaged pets on the team (Explore/getAdaptiveTeam) gives a MYSTERY_CHANCE of a Mysterious
+# Location, which pays a third more of the main reward.
+# The time type's mp/ammo/mre/part are the run's cost; the reward is items (recorded: an 8-hour Forest run paid
+# "4003-421,4004-39,4002-39,6003-1,45-20,9-1,44-10": 421 = 316 x 4/3 of the area's loot, the rest found on the way).
+# Main reward: LOOT_PER_HOUR of the area's loot item (4001-4004, by area) per hour of the time type, times the
+# item's reward1_up. On the way, each affair has MID_CHANCE of one find from MID_FINDS, times mid_reward_up.
+# APPROXIMATION: MYSTERY_CHANCE (player estimate), MID_CHANCE and MID_FINDS (one recorded run and player reports;
+# the live list is server-side), and the affair pacing.
 AFFAIR_EVERY = 1800
+AREA_BASE, PET_PULL = 10, 20
+MYSTERY_CHANCE, MYSTERY_BONUS = 0.2, 4 / 3
+LOOT_PER_HOUR = 316 / 8
+MID_CHANCE = 0.35
+# (weight, package); "loot" is an hour of another area's loot, "food" one of the expedition items 6001-6009,
+# "equip" a random 5-star equipment from the basic production pool (the recommended recipes' list); 41 is tokens
+MID_FINDS = ((30, "loot"), (12, "food"), (10, {"item_ids": "45-20"}), (8, {"item_ids": "44-10"}), (4, {"item_ids": "9-1"}),
+             (8, {"core": 3}), (6, {"item_ids": "3-1"}), (6, {"item_ids": "4-1"}), (6, {"item_ids": "506-10"}),
+             (6, {"item_ids": "41-3"}), (2, "equip"))
+ADAPTIVE_PETS = 3
+
+
+def _pet_tags():
+    """pet furniture id -> its explore_tag (1001-1004)."""
+    from . import stc
+    spines = {int(r["id"]): str(r.get("explore_tag") or "") for r in stc.table("extra_spine")}
+    return {int(r["id"]): int(spines[int(r["bonus_id"])]) for r in stc.table("furniture")
+            if int(r.get("bonus_id") or 0) in spines and spines[int(r["bonus_id"])].isdigit()}
+
+
+def _instances(rows, key, ids):
+    by_id = {str(r.get("id")): str(r.get(key)) for r in rows if isinstance(r, dict)}
+    return [by_id.get(str(i), str(i)) for i in ids]
+
+
+def _explore_items():
+    from . import stc
+    return {int(r["id"]): r for r in stc.table("explore_item")}
 
 
 def _explore(state):
@@ -453,16 +501,34 @@ def explore_start(state, body, now=None, rng=None):
     now = int(now or time.time())
     e = _explore(state)
     tt = _time_types().get(int(e.get("time_type") or 1)) or _time_types()[1]
-    area = rng.choice([r["id"] for r in stc.table("explore_area")])
+    from . import squads
+    queue = [int(i) for i in e["items"] or [] if str(i).strip().lstrip("-").isdigit()]
+    item_id = queue.pop(0) if queue else 0
+    e["items"] = queue
+    effect = _explore_items().get(item_id, {}) if item_id and squads._spend(state, str(item_id), 1) else {}
+    guns = _instances(state.get("gun_with_user_info") or [], "gun_id", e["guns"])
+    pets = _instances(furniture(state), "furniture_id", e["pets"])
+    tags = _pet_tags()
+    areas = [r["id"] for r in stc.table("explore_area")]
+    up_area, _, up_weight = str(effect.get("area_id_up") or "").partition(":")
+    weights = [AREA_BASE + PET_PULL * sum(1 for p in pets if tags.get(int(p) if p.isdigit() else 0) == 1000 + int(a))
+               + (AREA_BASE * (int(up_weight or 1) - 1) if str(a) == up_area.strip() else 0) for a in areas]
+    area = rng.choices(areas, weights=weights)[0]
+    advantaged = {str(p) for p in explore_adaptive_team(state, {}, now)["pets"]}
+    mystery = rng.random() < MYSTERY_CHANCE * sum(1 for p in pets if p in advantaged)
     dests = [r["id"] for r in stc.table("explore_destination") if r["area_id"] == area] or [0]
     affairs = [r["id"] for r in stc.table("explore_affair_server")]
-    end = now + int(tt["duration"])
+    end = now + int(int(tt["duration"]) * float(effect.get("explore_time_down") or 1))
+    ui = state["user_info"]
+    for res in ("mp", "ammo", "mre", "part"):
+        ui[res] = str(max(0, int(ui.get(res) or 0) - int(tt.get(res) or 0)))
     e["run"] = {"start_time": now, "end_time": end, "cancel_time": 0,
                 "affairs": [{"affair_id": rng.choice(affairs), "affair_time": t} for t in range(now + AFFAIR_EVERY, end, AFFAIR_EVERY)],
-                "gun_ids": [str(g) for g in e["guns"]], "pet_ids": [str(p) for p in e["pets"]], "area_id": area,
-                "target_id": rng.choice(dests), "item_id": int((e["items"] or [0])[0]), "draw_event_prize": 0,
-                "time_type": int(tt["id"])}
-    return {"next_time": _next_affair(e["run"], now)}
+                "gun_ids": guns, "pet_ids": pets, "area_id": area, "mysterious": int(mystery),
+                "target_id": rng.choice(dests), "item_id": item_id if effect else 0, "draw_event_prize": 0,
+                "time_type": int(tt["id"]), "reward_up": float(effect.get("reward1_up") or 1),
+                "mid_reward_up": float(effect.get("mid_reward_up") or 1)}
+    return dict(e["run"], next_time=_next_affair(e["run"], now))
 
 
 def _next_affair(run, now):
@@ -489,42 +555,147 @@ def explore_get_event(state, body):
             "is_prize": int(now >= run["end_time"])}
 
 
+def _explore_finds(run, rng=None):
+    """The run's reward as a package: the area's loot, then what was found on the way."""
+    import random as _random
+    rng = rng or _random.Random(int(run.get("start_time") or 0))
+    tt = _time_types().get(int(run.get("time_type") or 1)) or _time_types()[1]
+    area = int(run.get("area_id") or 1)
+    hours = int(tt["duration"]) / 3600
+    main = LOOT_PER_HOUR * hours * float(run.get("reward_up") or 1) * (MYSTERY_BONUS if run.get("mysterious") else 1)
+    items = {4000 + area: round(main)}
+    extra = {}
+    mid = float(run.get("mid_reward_up") or 1)
+    for _ in run.get("affairs") or []:
+        if rng.random() >= MID_CHANCE:
+            continue
+        find = rng.choices([f for _, f in MID_FINDS], weights=[w for w, _ in MID_FINDS])[0]
+        if find == "loot":
+            other = rng.choice([a for a in (1, 2, 3, 4) if a != area])
+            find = {"item_ids": f"{4000 + other}-{round(LOOT_PER_HOUR * mid)}"}
+        elif find == "food":
+            find = {"item_ids": f"{rng.randint(6001, 6009)}-1"}
+        elif find == "equip":
+            from . import workshop
+            pick = rng.choice(sorted(workshop._equip_pool().get(5) or [0]))
+            if pick:
+                extra.setdefault("equip_ids", []).append(f"{pick}-1")
+            continue
+        for key, value in find.items():
+            if key == "item_ids":
+                iid, _, n = value.partition("-")
+                items[int(iid)] = items.get(int(iid), 0) + max(1, round(int(n) * mid))
+            else:
+                extra[key] = extra.get(key, 0) + max(1, round(value * mid))
+    if "equip_ids" in extra:
+        extra["equip_ids"] = ",".join(extra["equip_ids"])
+    return dict(extra, item_ids=",".join(f"{i}-{n}" for i, n in items.items()))
+
+
 def explore_reward(state, body):
     from . import quests
     e = _explore(state)
     run = e.get("run")
     if not run or time.time() < run["end_time"]:
         return {"get_list": [], "out": {}}
-    tt = _time_types().get(int(run.get("time_type") or 1)) or {}
-    pkg = quests.grant(state, {k: int(tt.get(k) or 0) for k in ("mp", "ammo", "mre", "part") if int(tt.get(k) or 0)})
+    pkg = quests.grant(state, _explore_finds(run))
     e.pop("run", None)
     quests.record(state, "explore")
     return {"get_list": [], "out": pkg}
 
 
 # Exploration shop (stc explore_mall: cost "<item>-<n>" choices split by "|", prize_id, quota per
-# clear_cycle: 1 a day, 2 a week, 3 a month, otherwise for good).
-#   Explore/getMallList {} -> [{"id", "num"}] (RequestExploreMallList: num is what was bought this
-#       cycle; n_time/start_time/end_time are optional)
+# clear_cycle: 1 a day, 2 a week, 3 a month, 4 a limit that grows each month, otherwise for good).
+#   Explore/getMallList {} -> [{"id", "start_time", "end_time", "n_time", "num"}] (RequestExploreMallList: num is
+#       what was bought this cycle; n_time the next reset, as live: the client drops a cycled good whose n_time
+#       has passed, so a list without it showed none of them)
 #   Explore/buy {"mall_id", "cost", "num"} -> {"status": 1} (ExploreMall$$RequestExchangeHandle: the
 #       client then gives the good's package num times and takes the cost itself). "cost" names the
 #       currency item when there is a choice. Counts are kept in explore_mall_with_user_info.
+# Resets follow the server day (00:00 UTC-8): the Items tab's monthly goods restock on the 1st. Clear cycle 4
+# (Fire-Control Components, increase "2,2,2025-03-18 00:00:00"): num counts every purchase since that date and the
+# limit is base + per x months since then (ExploreMall$$GetBuyCountMax), so what isn't bought carries over.
+# The live account's counts come from its archived Explore/getMallList, once.
+MALL_DAY_OFFSET = 8 * 3600
+
+
+def _server_time(now):
+    return time.gmtime(now - MALL_DAY_OFFSET)
+
 
 def _period(cycle, now):
-    t = time.localtime(now)
+    t = _server_time(now)
     return {1: time.strftime("%Y%j", t), 2: time.strftime("%Y%W", t), 3: time.strftime("%Y%m", t)}.get(int(cycle or 0), "")
+
+
+def _next_reset(cycle, now):
+    """The start of the next day / week / month, server time."""
+    import calendar
+    t = _server_time(now)
+    day = calendar.timegm((t.tm_year, t.tm_mon, t.tm_mday, 0, 0, 0)) + MALL_DAY_OFFSET
+    cycle = int(cycle or 0)
+    if cycle == 1:
+        return day + 86400
+    if cycle == 2:
+        return day + (7 - t.tm_wday) * 86400
+    if cycle in (3, 4):
+        year, month = (t.tm_year + 1, 1) if t.tm_mon == 12 else (t.tm_year, t.tm_mon + 1)
+        return calendar.timegm((year, month, 1, 0, 0, 0)) + MALL_DAY_OFFSET
+    return 0
+
+
+def _growing_limit(row, now):
+    """Clear cycle 4: base + per month since the start date."""
+    parts = str(row.get("increase") or "").split(",")
+    if len(parts) < 3:
+        return int(row.get("quota") or 0)
+    start = time.strptime(parts[2].strip()[:10], "%Y-%m-%d")
+    t = _server_time(now)
+    months = max(0, (t.tm_year - start.tm_year) * 12 + t.tm_mon - start.tm_mon)
+    return int(parts[0] or 0) + int(parts[1] or 0) * months
+
+
+def _mall_limit(row, now):
+    return _growing_limit(row, now) if int(row.get("clear_cycle") or 0) == 4 else int(row.get("quota") or 0)
+
+
+def _mall_import(state, counts, now):
+    saved = archived.read(str(state["user_info"].get("user_id", "")), "Explore/getMallList")
+    cycles = {str(x["id"]): x.get("clear_cycle") for x in _explore_mall()}
+    for r in saved if isinstance(saved, list) else []:
+        if not isinstance(r, dict) or not int(r.get("num") or 0) or str(r.get("id")) not in cycles:
+            continue
+        cycle = cycles[str(r["id"])]
+        # the cycle the archived count belongs to: the one before its next reset
+        when = int(r.get("n_time") or 0) - 1 if int(r.get("n_time") or 0) else now
+        period = _period(cycle, when)
+        num, have = int(r["num"]), counts.get(str(r["id"]))
+        if have is None or have[1] != period:
+            if have is None or period > have[1]:
+                counts[str(r["id"])] = [num, period]
+        else:
+            have[0] = max(have[0], num)
 
 
 def _mall_bought(state, row, now):
     counts = state.setdefault("explore_mall_with_user_info", {})
+    if not state.get("_explore_mall_imported"):
+        state["_explore_mall_imported"] = True
+        _mall_import(state, counts, now)
     num, period = counts.get(str(row["id"]), [0, ""])
     return num if period == _period(row.get("clear_cycle"), now) else 0
+
+
+def _explore_mall():
+    from . import stc
+    return stc.table("explore_mall")
 
 
 def explore_mall_list(state, body, now=None):
     from . import stc
     now = int(now or time.time())
-    return [{"id": int(r["id"]), "num": _mall_bought(state, r, now)} for r in stc.table("explore_mall")]
+    return [{"id": int(r["id"]), "start_time": 0, "end_time": 0, "n_time": _next_reset(r.get("clear_cycle"), now),
+             "num": _mall_bought(state, r, now)} for r in stc.table("explore_mall")]
 
 
 def explore_buy(state, body, now=None):
@@ -535,7 +706,8 @@ def explore_buy(state, body, now=None):
     if row is None:
         return None
     bought = _mall_bought(state, row, now)
-    if int(row.get("quota") or 0) and bought + num > int(row["quota"]):
+    limit = _mall_limit(row, now)
+    if (limit or int(row.get("clear_cycle") or 0) == 4) and bought + num > limit:
         return {"status": 0}
     options = [p.split("-") for p in str(row.get("cost") or "").split("|") if "-" in p]
     item, per = next((o for o in options if o[0] == str(body.get("cost"))), options[0] if options else ("0", "0"))
@@ -548,11 +720,11 @@ def explore_buy(state, body, now=None):
     return {"status": 1}
 
 
-# Explore/getAdaptiveTeam {} -> {"guns": ["<gun id>"], "pets": [], "start_time", "end_time"}
-# (ExplorationAdaptiveConfig: the week's bonus dolls; times as "Y-m-d H:M:S"). APPROXIMATION: the live
-# list is chosen server-side; here ADAPTIVE_GUNS dolls from the standard production pool, drawn
-# afresh each week (Monday to Sunday).
-ADAPTIVE_GUNS = 10
+# Explore/getAdaptiveTeam {} -> {"guns": ["<gun id>"], "pets": ["<pet furniture id>"], "start_time", "end_time"}
+# (ExplorationAdaptiveConfig: the week's advantaged dolls and pets; times as "Y-m-d H:M:S"). The week's picks
+# (Monday to Sunday): ADAPTIVE_GUNS dolls of each rarity from the standard production pool (player report:
+# 2/3/3/2 of 5/4/3/2 stars) and ADAPTIVE_PETS pets.
+ADAPTIVE_GUNS = {5: 2, 4: 3, 3: 3, 2: 2}
 
 
 def explore_adaptive_team(state, body, now=None):
@@ -562,10 +734,15 @@ def explore_adaptive_team(state, body, now=None):
     t = time.localtime(now)
     start = int(time.mktime((t.tm_year, t.tm_mon, t.tm_mday - t.tm_wday, 0, 0, 0, 0, 0, -1)))
     end = start + 7 * 86400 - 1
-    dolls = sorted({g for rank in factory.pool("standard").values() for g in rank})
-    picks = random.Random(start).sample(dolls, min(ADAPTIVE_GUNS, len(dolls)))
+    pool, rng = factory.pool("standard"), random.Random(start)
+    picks = []
+    for stars, n in ADAPTIVE_GUNS.items():
+        dolls = sorted(set(pool.get(stars) or []))
+        picks += rng.sample(dolls, min(n, len(dolls)))
     fmt = "%Y-%m-%d %H:%M:%S"
-    return {"guns": [str(g) for g in sorted(picks)], "pets": [],
+    pets = sorted(_pet_tags())
+    pet_picks = random.Random(start + 1).sample(pets, min(ADAPTIVE_PETS, len(pets)))
+    return {"guns": [str(g) for g in sorted(picks)], "pets": sorted(pet_picks),
             "start_time": time.strftime(fmt, time.localtime(start)), "end_time": time.strftime(fmt, time.localtime(end))}
 
 
@@ -631,41 +808,76 @@ def explore_set_item(state, body):
 # --- dorm batteries
 #
 # Dorm/get_build_coin {"v_user_id", "dorm_id"} -> {"build_coin", "build_coin_max", "remain_coin"}
-# (RequestGetBuildCoin; batteries are item 506, UserInfo$$get_buildCoin). APPROXIMATION: each dorm
-# can be collected once per window of game_config dorm_build_coin_range_time (hour lists split by
-# "|"), for 10 + comfort/1000 batteries (at most BATTERY_CAP); the live amounts are server-side.
+# (RequestGetBuildCoin; batteries are item 506, UserInfo$$get_buildCoin). v_user_id is a friend's
+# when visiting (friends.collect_battery), else the player's own condenser: it charges all the time and
+# is emptied by a collection, which only works inside the hours of game_config
+# dorm_build_coin_range_time ("10,11,12,13|18,...,24", server time UTC-8). Friend/dormInfo and
+# Index/home show it as current_build_coin / build_coin_flag (live: both "800").
+# APPROXIMATION: it charges each dorm's 10 + comfort/1000 every 12 hours and holds CONDENSER_PER_DORM
+# per dorm (user_info maxdorm); the live rates are server-side.
 BATTERY_ITEM = "506"
-BATTERY_CAP = 250
+CONDENSER_PER_DORM = 80
+SERVER_TZ = -8 * 3600
 
 
 def _battery_window(now):
     from . import stc
     cfg = next((r["parameter_value"] for r in stc.catch("game_config_info")
                 if r["parameter_name"] == "dorm_build_coin_range_time"), "10,11,12,13|18,19,20,21,22,23,24")
-    t = time.localtime(now)
+    t = time.gmtime(now + SERVER_TZ)
     for i, hours in enumerate(str(cfg).split("|")):
         if t.tm_hour in {int(h) % 24 for h in hours.split(",") if h.strip().isdigit()}:
             return f"{time.strftime('%Y-%m-%d', t)}#{i}"
     return None
 
 
-def get_build_coin(state, body, now=None):
+def _dorms(state):
+    return max(1, int((state.get("user_info") or {}).get("maxdorm") or 1))
+
+
+def condenser(state, now=None):
+    """Batteries waiting in the condenser, charged up to now."""
     now = int(now or time.time())
-    dorm = str((body or {}).get("dorm_id") or 1)
-    window = _battery_window(now)
-    taken = state.setdefault("_battery", {})
-    if window is None or taken.get(dorm) == window:
-        return {"build_coin": 0, "build_coin_max": BATTERY_CAP, "remain_coin": 0}
-    score = int(((state.get("dorm_score_info") or {}).get(dorm) or {}).get("score") or 0)
-    amount = min(BATTERY_CAP, 10 + score // 1000)
-    taken[dorm] = window
-    items = state.setdefault("item_with_user_info", [])
-    row = next((i for i in items if str(i["item_id"]) == BATTERY_ITEM), None)
-    if row is None:
-        row = {"item_id": BATTERY_ITEM, "number": "0", "last_recover_time": "0"}
-        items.append(row)
+    c = state.get("_condenser")
+    if c is None:
+        saved = archived.read(state["user_info"].get("user_id", ""), "Friend/dormInfo") or {}
+        c = state["_condenser"] = {"stored": float(saved.get("current_build_coin") or 0), "time": now}
+    scores = state.get("dorm_score_info") or {}
+    per_12h = sum(10 + int((scores.get(str(d)) or {}).get("score") or 0) // 1000 for d in range(1, _dorms(state) + 1))
+    cap = CONDENSER_PER_DORM * _dorms(state)
+    c["stored"] = min(cap, max(float(c["stored"]), float(c["stored"]) + per_12h * (now - int(c["time"])) / 43200))
+    c["time"] = now
+    return int(c["stored"])
+
+
+def battery_flag(state, now=None):
+    """build_coin_flag: what a collection would give now (0 outside the collection hours)."""
+    now = int(now or time.time())
+    stored = condenser(state, now)
+    return stored if _battery_window(now) is not None else 0
+
+
+def _add_batteries(state, amount):
+    from . import squads
+    row = squads._item(state, BATTERY_ITEM)
     row["number"] = str(int(row["number"]) + amount)
-    return {"build_coin": amount, "build_coin_max": BATTERY_CAP, "remain_coin": 0}
+
+
+def get_build_coin(state, body, now=None):
+    from . import friends
+    now = int(now or time.time())
+    body = body or {}
+    me = str(state["user_info"].get("user_id", ""))
+    visited = str(body.get("v_user_id") or "")
+    if visited not in ("", "0", me):
+        amount = friends.collect_battery(state, visited, now)
+        _add_batteries(state, amount)
+        return {"build_coin": amount, "build_coin_max": 0, "remain_coin": 0}
+    amount = battery_flag(state, now)
+    if amount:
+        state["_condenser"]["stored"] = 0.0
+        _add_batteries(state, amount)
+    return {"build_coin": amount, "build_coin_max": 0, "remain_coin": 0}
 
 
 # --- base facilities (Outhouse)
@@ -775,8 +987,78 @@ def establish_build(state, body):
     return _report_package(state, row) if body.get("is_quick") else {}
 
 
+# Pet adoption (DormPetAdoptionController): each pet facility, establish types PET_TYPES, offers one pet. Its
+# level's parameter_1 is "furniture,weight,batteries,gems|..." (furniture 0: nobody this time) and parameter_2
+# the matching pet names. The offers go out as Friend/dormInfo establish_build_result
+# [{"furniture_id", "build_coin", "gem", "establish_type", "pet_name", "build_tmp_data"}] (DormData$$ReadUserPet;
+# live sent the same), picked again every PET_REFRESH, or PET_AFTER_ADOPT after one is adopted.
+# Outhouse/establish_build_finish {"establish_type", "payway": "build_coin" | "gem"} adopts it and answers
+# {"furniture": [{"dorm_with_user_id", "furniture_id"}]} (RequestEstablishBuildEnd, which takes the price itself).
+PET_TYPES = ("102", "103", "104", "105")
+PET_REFRESH, PET_AFTER_ADOPT = 3 * 86400, 86400
+
+
+def _pet_roll(state, kind, rng):
+    from . import squads
+    row = squads._establish(state, kind)
+    parts = [p.split(",") for p in str(row.get("parameter_1") or "").split("|") if p.count(",") >= 3]
+    names = str(row.get("parameter_2") or "").split(",")
+    if not parts:
+        return None
+    i = rng.choices(range(len(parts)), weights=[max(0, int(p[1] or 0)) for p in parts] if any(int(p[1] or 0) for p in parts) else None)[0]
+    fid, _, coin, gem = parts[i][:4]
+    if not fid.strip() or int(fid) == 0:
+        return None
+    name = names[i] if i < len(names) else "0"
+    return {"furniture_id": fid, "build_coin": coin, "gem": gem, "establish_type": kind, "pet_name": name,
+            "build_tmp_data": [fid, coin, gem, kind, name]}
+
+
+def pet_offers(state, now=None, rng=random):
+    now = int(now or time.time())
+    pets = state.get("_pets")
+    if pets is None:
+        saved = archived.read(state["user_info"].get("user_id", ""), "Friend/dormInfo") or {}
+        live = {str(o.get("establish_type")): o for o in saved.get("establish_build_result") or [] if isinstance(o, dict)}
+        pets = state["_pets"] = {k: {"offer": live[k], "next": now + PET_REFRESH} for k in live}
+    for kind in PET_TYPES:
+        slot = pets.get(kind)
+        if slot is None or now >= int(slot["next"]):
+            pets[kind] = {"offer": _pet_roll(state, kind, rng), "next": now + PET_REFRESH}
+    return [pets[k]["offer"] for k in PET_TYPES if pets[k]["offer"]]
+
+
+def adopt_pet(state, body, now=None):
+    from . import squads
+    now = int(now or time.time())
+    kind = str((body or {}).get("establish_type") or "")
+    pet_offers(state, now)
+    slot = state["_pets"].get(kind) or {}
+    offer = slot.get("offer")
+    if not offer:
+        return None
+    by_gem = str((body or {}).get("payway")) == "gem"
+    price = int(offer["gem"] if by_gem else offer["build_coin"])
+    if by_gem:
+        if int(state["user_info"].get("gem") or 0) < price:
+            return None
+        state["user_info"]["gem"] = str(int(state["user_info"]["gem"]) - price)
+    else:
+        if int(squads._item(state, BATTERY_ITEM)["number"]) < price:
+            return None
+        squads._spend(state, BATTERY_ITEM, price)
+    pieces = furniture(state)
+    rec = {"id": str(max((int(f["id"]) for f in pieces), default=0) + 1), "dorm": "0",
+           "furniture_id": str(offer["furniture_id"]), "x": "0", "y": "0"}
+    pieces.append(rec)
+    state["_pets"][kind] = {"offer": None, "next": now + PET_AFTER_ADOPT}
+    return {"furniture": [{"dorm_with_user_id": int(rec["id"]), "furniture_id": int(rec["furniture_id"])}]}
+
+
 def establish_build_finish(state, body, now=None):
     from . import squads
+    if str((body or {}).get("establish_type") or "") in PET_TYPES:
+        return adopt_pet(state, body, now)
     row = next((r for r in state.get("outhouse_establish_info") or [] if str(r["establish_type"]) == REPORT_ROOM), None)
     if row is None or not _report_pending(row):
         return None
@@ -808,7 +1090,17 @@ CAFE_TABLES = {"comic": "coffeeshop_comic", "pv": "coffeeshop_pv"}
 
 
 def _cafe(state):
-    return state.setdefault("coffeeshop_with_user_info", {"comic": [], "pv": []})
+    """Owned comics and PVs; the first time, what the live account had bought (its archived
+    Dorm/coffeeshop_unlock_list replies, type 1 the comic stand and 2 the projector)."""
+    if "coffeeshop_with_user_info" not in state:
+        owned = {"comic": [], "pv": []}
+        uid = str(state["user_info"].get("user_id", ""))
+        for key in ("1", "2"):
+            saved = archived.read(uid, "Dorm/coffeeshop_unlock_list", key) or {}
+            for kind in CAFE_TABLES:
+                owned[kind] += [int(i) for i in saved.get(kind) or [] if str(i).isdigit() and int(i) not in owned[kind]]
+        state["coffeeshop_with_user_info"] = owned
+    return state["coffeeshop_with_user_info"]
 
 
 def cafe_list(state, body):
@@ -960,6 +1252,26 @@ def dorm_set_notice(state, body):
     body = body or {}
     state["dorm_notice_info"] = {k: str(body[k]) for k in NOTICE_KEYS if k in body}
     return "1"
+
+
+def dorm_info(state, recorded=None, now=None):
+    """Friend/dormInfo (DormConfigData$$DecodeFromJson): the dorm settings come from the account's archived live
+    reply (main dorm info.dorm_id, notice, is_show_commander, is_use_commander) with later changes on top; the
+    furniture is the account's own and the batteries its condenser. Offline there are no visitors."""
+    uid = str(state["user_info"].get("user_id", ""))
+    base = archived.read(uid, "Friend/dormInfo") or recorded or {
+        "info": {"praise_num": 0, "visit_num": 0, "user_id": uid, "dorm_id": "1"},
+        "establish_build_result": [], "reset_build_coin_data": [],
+        "notice": {"is_view_notice": "1", "notice": ""},
+        "is_show_commander": "1", "is_use_commander": "0", "is_sangvis_show_gun": "1"}
+    reply = dict(base, info=dict(base.get("info") or {}), in_mydorm_list=[], my_visit_list=[])
+    if state.get("_friend_dorm"):
+        reply["info"]["dorm_id"] = str(state["_friend_dorm"])
+    reply["establish_build_result"] = pet_offers(state, now)
+    reply["build_coin_flag"] = battery_flag(state, now)
+    reply["current_build_coin"] = str(condenser(state, now))
+    reply["furniture_with_user_info"] = furniture(state)
+    return dorm_notice(reply, state)
 
 
 def dorm_notice(reply, state):
@@ -1143,18 +1455,16 @@ SHARE_PRIZE = 10000      # prize "Weekly First Share" (30 gems)
 
 def dorm_share(state, body, now=None):
     """Dorm/share (no body) -> {"prize_id"} (RequestShareReward reads it unguarded and shows that
-    prize). The save keeps share_with_user_info.last_time as the start of the week last rewarded.
-    APPROXIMATION: the week starts Monday 00:00 local time, as in quests.py. A second share in the
-    same week gets an error reply, since prize_id 0 would point the client at no prize."""
-    import datetime
+    prize). share_with_user_info.last_time is when the next reward can be had: the client asks only once
+    the time is past it (Data$$CanGatSharePrize; live: 1794816000, a Monday 00:00 UTC-8). A reward moves it to
+    the next Monday, server time. Asked again before then, the reply is an error: prize_id 0 would point
+    the client at no prize."""
     from . import quests
     now = int(now or time.time())
-    day = datetime.datetime.fromtimestamp(now).date()
-    monday = int(time.mktime((day - datetime.timedelta(days=day.weekday())).timetuple()))
     rec = state.setdefault("share_with_user_info", {})
-    if int(rec.get("last_time") or 0) >= monday or SHARE_PRIZE not in quests.prizes():
+    if now <= int(rec.get("last_time") or 0) or SHARE_PRIZE not in quests.prizes():
         return None
-    rec["last_time"] = str(monday)
+    rec["last_time"] = _next_reset(2, now)
     quests.grant(state, quests._reward(quests.prizes()[SHARE_PRIZE]))
     return {"prize_id": SHARE_PRIZE}
 
@@ -1342,15 +1652,15 @@ def quick_buy_resource(state, body):
 
 
 def mall_buy_many(state, body):
-    """Mall/buyUniform / Mall/buyVehicleSkin {"mall_ids": [...]} -> {"status", "prize"} (RequestClothes)."""
-    from . import quests
+    """Mall/buyUniform / Mall/buyVehicleSkin {"mall_ids": [...]} -> {"status", "prize": [package per good]}
+    (RequestClothes reads prize[i] for the i-th good)."""
     pkgs = []
     for mid in (body or {}).get("mall_ids") or []:
         r = mall_buy(state, {"mall_id": mid, "num": 1})
         if not r or r.get("status") != 1:
             return {"status": 0}
-        pkgs.append(r["prize"])
-    return {"status": 1, "prize": quests._merge(pkgs)}
+        pkgs += r.get("prize") or [{}]
+    return {"status": 1, "prize": pkgs} if all(pkgs) else {"status": 1}
 
 
 def save_sangvis_preset(state, body):
@@ -1513,6 +1823,75 @@ def _activity_score(state, rank_id):
                if int(row["campaign"]) in camps and missions.score_rule(mid) is not None)
 
 
+# Leaderboards are the live ones the account archived (live_archive rank_boards: the standing boards by
+# RankingListType 1 kills, 2 data samples, 3 exercises, 4 dolls collected, 5 furniture collected, and the rank
+# table's own boards by rank_id), every visible place. The commander's entry is kept current: kills add the
+# enemy_die counted since, the collections ("have/total") are counted from the save and a rank_id board's mission
+# scores from the save's records, never below the live figure; when it changed the board is sorted again.
+# index is an offset into the board (RankingListItem.Init asks from a rank rounded down to tens).
+SCORE_KEYS = ("num", "duration", "trial", "score")
+
+
+def _score(value):
+    """A board figure: a number, or "have/total" for the collections. Returns (number, total or "")."""
+    head, _, total = str(value or "0").partition("/")
+    try:
+        return float(head or 0), total
+    except ValueError:
+        return 0.0, total
+
+
+def _board_score(state, body, live):
+    from . import quests
+    kind, rank_id = int(body.get("type") or 0), body.get("rank_id")
+    if rank_id:
+        return max(live, _activity_score(state, rank_id))
+    counters = quests._state(state)["counters"]
+    if kind == 1:
+        base = state.setdefault("_rank_base", {}).setdefault("1", counters.get("enemy_die", 0))
+        return live + counters.get("enemy_die", 0) - base
+    if kind == 4:
+        return max(live, len({str(g.get("gun_id")) for g in state.get("gun_with_user_info") or []}))
+    if kind == 5:
+        return max(live, len({str(f.get("furniture_id")) for f in furniture(state)}))
+    return live
+
+
+def _live_board(state, body, me, now):
+    saved = archived.read(me["user_id"], "Index/rank", archived.board_key(body))
+    if not isinstance(saved, dict) or not isinstance(saved.get("rank_list"), list):
+        return None
+    listed = [dict(r) for r in saved["rank_list"] if isinstance(r, dict)]
+    rows = [r for r in listed if str(r.get("user_id")) != me["user_id"]]
+    own = dict(saved.get("user_info") or {})
+    key = next((k for k in SCORE_KEYS if k in own), None) or next((k for r in rows for k in SCORE_KEYS if k in r), "num")
+    live, total = _score(own.get(key))
+    ident = {k: me[k] for k in ("user_id", "user_name", "user_level", "headpic_id", "frame_id")}
+    me = dict(own, **ident)
+    score = _board_score(state, body, live)
+    if total and total.isdigit():
+        score = min(score, int(total))
+    board = listed
+    if score != live:
+        me[key] = f"{int(score)}/{total}" if total else str(int(score))
+        merged = sorted(rows + [me], key=lambda r: -_score(r.get(key))[0])     # stable: ties keep the live order
+        pos = merged.index(me)
+        shown = int(_score(saved.get("count"))[0]) or len(listed)
+        if pos < len(rows) or len(rows) < len(listed) or len(rows) < shown:
+            board = merged[:max(shown, 1)]
+            for n, r in enumerate(board, 1):
+                r["rank"] = str(n)
+            me["rank"] = str(pos + 1)
+        else:
+            board = rows
+    else:
+        for r in board:
+            if str(r.get("user_id")) == me["user_id"]:
+                r.update(ident)
+    index, length = max(0, int(body.get("index") or 0)), int(body.get("length") or 20)
+    return dict(saved, rank_list=board[index:index + length], user_info=me, refresh_time=now + 7 * 86400)
+
+
 def rank(state, body, now=None):
     body, now = body or {}, int(now or time.time())
     ui, card = state["user_info"], _card(state)
@@ -1520,4 +1899,7 @@ def rank(state, body, now=None):
              "user_level": int(ui.get("lv") or 1), "server_name": "", "server_id": 0, "last_time": now,
              "headpic_id": int(card.get("headpic_id") or 0), "frame_id": int(card.get("frame_id") or 0),
              "score": str(_activity_score(state, body.get("rank_id")))}
+    board = _live_board(state, body, entry, now)
+    if board is not None:
+        return board
     return {"rank_list": [entry], "count": 1, "refresh_time": now + 7 * 86400, "rank_count": 1, "user_info": entry}

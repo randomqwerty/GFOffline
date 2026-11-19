@@ -24,6 +24,7 @@ APPROXIMATION: without an archived reply, a visit shows the player's own first r
 nothing because the reward isn't in the client. Friend/usercard is also what the search box sends, but it
 reads a list where the card is an object, so searching by id finds nobody.
 """
+import random
 import time
 from functools import lru_cache
 
@@ -108,13 +109,46 @@ def card(state, body):
             "medal_is_visible": 0, "team_info": [], "sangvis_info": [], "fairy_info": []}
 
 
-def _praised(state, now=None):
-    """Friends praised today."""
+def _today(state, key, now=None):
+    """Friend ids done today under state[key] (praised, batteries taken)."""
     day = (int(now or time.time()) - DAY_OFFSET) // 86400
-    record = state.setdefault("_friend_praise", {"day": day, "ids": []})
+    record = state.setdefault(key, {"day": day, "ids": []})
     if record["day"] != day:
         record.update(day=day, ids=[])
     return record["ids"]
+
+
+def _praised(state, now=None):
+    return _today(state, "_friend_praise", now)
+
+
+# Batteries from a friend's dorm: once a day per friend, one per dorm they have (friend row max_dorm), from
+# at most game_config friends_coefficients' first number (10) of friends a day (Data$$GetDailyVegetealMaxCount).
+# Friend/visit's build_coin_flag says how many are there (DormConfigData.buildCoinCanGet; the client
+# only asks when it is above 0); Dorm/get_build_coin with their v_user_id takes them. Index/index's
+# dorm_rest_friend_build_coin_count is what is left today (UserInfo.remainVegetealCount; the client counts it
+# down itself and shows the limit text at 0).
+def battery_limit():
+    first = str(_config("friends_coefficients", "10")).split(",")[0].strip()
+    return int(first) if first.isdigit() else 10
+
+
+def batteries_left(state, now=None):
+    return max(0, battery_limit() - len(_today(state, "_friend_battery", now)))
+
+
+def battery_flag(state, fid, now=None):
+    _, row = _find(state, fid)
+    if row is None or str(fid) in _today(state, "_friend_battery", now) or not batteries_left(state, now):
+        return 0
+    return max(1, _int(row.get("max_dorm")))
+
+
+def collect_battery(state, fid, now=None):
+    amount = battery_flag(state, fid, now)
+    if amount:
+        _today(state, "_friend_battery", now).append(str(fid))
+    return amount
 
 
 def visit(state, body):
@@ -124,14 +158,16 @@ def visit(state, body):
         return None
     saved = archived.read(_me(state), "Friend/visit", fid)
     if saved is not None:
-        return dict(saved, info=dict(saved.get("info") or {}, is_praise=str(fid) in _praised(state)))
+        return dict(saved, info=dict(saved.get("info") or {}, is_praise=str(fid) not in _praised(state)),
+                    build_coin_flag=battery_flag(state, fid))
     # dorm 0 is the furniture in storage, and DormController$$LoadDorm(0) builds every row it is sent
     rooms = [r for r in account.furniture(state) if _int(r.get("dorm")) > 0]
     room = min((_int(r["dorm"]) for r in rooms), default=1)
     wired = _wire(row)
     info = {k: wired[k] for k in ("f_userid", "name", "lv", "headpic_id", "homepage_time", "is_vehicle_visit")}
-    return {"info": {**info, "praise_num": 0, "is_praise": str(fid) in _praised(state), "furniture_collect": 0, "gun_collect": 0},
+    return {"info": {**info, "praise_num": 0, "is_praise": str(fid) not in _praised(state), "furniture_collect": 0, "gun_collect": 0},
             "notice": {"notice": "", "is_view_notice": False}, "dorm_type": room, "adjutant_list": [],
+            "build_coin_flag": battery_flag(state, fid),
             "sangvis_with_user_list": [], "gun_with_user_list": [],
             "furniture_list": [r for r in rooms if _int(r.get("dorm")) == room]}
 
@@ -142,8 +178,24 @@ def visit_random(state, body):
     return visit(state, {"f_userid": rows[0]["f_userid"]}) if rows else None
 
 
+# The archived reply carries the day it was recorded; the interaction count and whether this friend can still
+# be interacted with today are the save's.
 def vehicle_visit(state, body):
-    return archived.read(_me(state), "Vehicle/visit", (body or {}).get("to_user_id"))
+    fid = str((body or {}).get("to_user_id") or "")
+    saved = archived.read(_me(state), "Vehicle/visit", fid)
+    if not isinstance(saved, dict):
+        return saved
+    limit = int(str(_config("vehicle_maintainance", "10:508-10")).partition(":")[0] or 10)
+    done = _today(state, "_vehicle_maintain")
+    day = (int(time.time()) - DAY_OFFSET) // 86400
+    return dict(saved, vehicle_maintain_num=len(done), can_maintain=fid not in done and len(done) < limit,
+                vehicle_maintain_refresh_time=(day + 1) * 86400 + DAY_OFFSET)
+
+
+# A praise (like) pays game_config dorm_visit_prize (prize 71: 10 friendship points) for the first
+# dorm_visit_prize_limit of the day; RequestNiceDorm finds the prize by package.id and adds it itself.
+def _config(name, default):
+    return next((r["parameter_value"] for r in stc.catch("game_config_info") if r["parameter_name"] == name), default)
 
 
 def praise(state, body):
@@ -151,13 +203,35 @@ def praise(state, body):
     if _find(state, fid)[1] is None:
         return None
     ids = _praised(state)
-    if fid not in ids:
-        ids.append(fid)
-    return {"today_praise_num": len(ids)}
+    if fid in ids:
+        return {"today_praise_num": len(ids)}
+    ids.append(fid)
+    reply = {"today_praise_num": len(ids)}
+    if len(ids) <= int(_config("dorm_visit_prize_limit", 10)):
+        prize = int(_config("dorm_visit_prize", 71))
+        quests.grant(state, quests._reward(quests.prizes().get(prize, {})))
+        reply["package"] = {"id": prize}
+    return reply
 
 
 def progress(state, body):
-    return {"praise_num": len(_praised(state)), "team_prize_num": 0, "vehicle_maintain_num": 0}
+    return {"praise_num": len(_praised(state)), "team_prize_num": 0, "vehicle_maintain_num": len(_today(state, "_vehicle_maintain"))}
+
+
+# Interact in a friend's armor room: Vehicle/maintain {"to_user_id"} -> {"visit_message": a line id of
+# game_config vehicle_visitmessage}. RequestVehicleMaintain adds game_config vehicle_maintainance's item
+# ("10:508-10": 10 friendship points, the first 10 a day) itself; the save gets it too, once per friend a day.
+def vehicle_maintain(state, body, rng=random):
+    fid = str((body or {}).get("to_user_id") or "")
+    if _find(state, fid)[1] is None:
+        return None
+    limit, _, item = str(_config("vehicle_maintainance", "10:508-10")).partition(":")
+    done = _today(state, "_vehicle_maintain")
+    if fid not in done and len(done) < int(limit or 10):
+        done.append(fid)
+        quests.grant(state, {"item_ids": item})
+    lines = [p.partition(":")[0] for p in str(_config("vehicle_visitmessage", "19:0")).split(";") if p.strip()]
+    return {"visit_message": int(rng.choice(lines))}
 
 
 def message_add(state, body):

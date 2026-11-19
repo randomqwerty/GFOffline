@@ -74,10 +74,57 @@ def own_calls(uid):
         "Dorm/list": {},
         "Sangvis/duplicateIndex": {},
         "Event/letterIndex": {},
+        "Explore/getMallList": {},
     }
 
 
-OWN_CALLS = tuple(own_calls(1))
+def keyed_calls(uid):
+    """Own calls asked more than once: function -> {key: body}. The cafe's comic stand (type 1) and projector
+    (type 2) lists (DormMemoriesListController)."""
+    return {
+        "Dorm/coffeeshop_unlock_list": {str(t): {"user_id": str(uid), "id": 1, "type": t} for t in (1, 2)},
+    }
+
+
+RANK = "Index/rank"
+RANK_PAGE = 20                      # the client's page length
+# The standing boards by RankingListType and sub_type (1 kills, 2 data samples by difficulty, 3 exercises,
+# 4 dolls collected, 5 furniture collected): rank table rows 1-7.
+STANDING_BOARDS = ((1, "0"), (2, "1"), (2, "2"), (2, "3"), (3, "0"), (4, "0"), (5, "0"))
+PERMANENT_TYPE = 10                 # the rank table's permanent boards (mission scores), asked by rank_id
+
+
+def rank_boards():
+    """{archive key: (first page's body, places shown)} for every leaderboard kept: the standing boards and the
+    rank table's permanent ones (read from the game's tables when set up)."""
+    boards = {}
+    for kind, sub in STANDING_BOARDS:
+        body = {"type": kind, "index": 0, "length": RANK_PAGE, "sub_type": sub, "condition": 0}
+        boards[archived.board_key(body)] = (body, 100)
+    try:
+        from gfserver import stc
+        rows = [r for r in stc.table("rank") if int(r["type"]) == PERMANENT_TYPE]
+    except (OSError, ValueError, KeyError):
+        rows = []
+    for r in rows:
+        body = {"type": PERMANENT_TYPE, "index": 0, "length": RANK_PAGE, "rank_id": int(r["id"]),
+                "sub_type": str(r["sub_type"]), "condition": 0}
+        boards[archived.board_key(body)] = (body, int(r.get("visable_count") or 100))
+    return boards
+
+
+def merge_page(kept, reply, index):
+    """A board reply with this page (from offset index) placed into what was kept of the same board."""
+    page = reply.get("rank_list") if isinstance(reply.get("rank_list"), list) else []
+    if not index or not isinstance(kept, dict):
+        return dict(reply, rank_list=list(page)) if not index else None
+    rows = list(kept.get("rank_list") or [])
+    if len(rows) < index:
+        return None                     # a gap: the pages before it were never seen
+    return dict(kept, rank_list=rows[:index] + list(page) + rows[index + len(page):])
+
+
+OWN_CALLS = tuple(own_calls(1)) + tuple(keyed_calls(1)) + (RANK,)
 PLAYER_CALLS = {"Friend/usercard": "f_userid", "Friend/visit": "f_userid", "Vehicle/visit": "to_user_id"}
 
 
@@ -196,7 +243,37 @@ def fetch_all(session, friends=True, players=(), refresh=False, log=print):
         log(f"  saved {function}" + (" (a player)" if key is not None else ""))
         return reply
 
+    def board(body, key, shown):
+        """A whole leaderboard, page by page, kept as one reply."""
+        nonlocal saved, skipped
+        if not refresh and archived.path(uid, RANK, key).exists():
+            skipped += 1
+            return
+        kept = None
+        for index in range(0, shown, RANK_PAGE):
+            try:
+                reply = session.call(RANK, dict(body, index=index))
+            except (RuntimeError, urllib.error.URLError, OSError) as e:
+                if str(e) == REFUSED and not alive():
+                    raise SystemExit(f"stopping: the live server ended the session after {saved} saved.")
+                failed.append((RANK, key, str(e)))
+                break
+            if not isinstance(reply, dict):
+                break
+            kept = merge_page(kept, without_sign(reply, session.sign), index)
+            if len(reply.get("rank_list") or []) < RANK_PAGE:
+                break
+        if kept is not None:
+            archived.write(uid, RANK, kept, key)
+            saved += 1
+            log(f"  saved {RANK} board {key}")
+
     replies = {function: one(function, body) for function, body in own_calls(uid).items()}
+    for function, bodies in keyed_calls(uid).items():
+        for key, body in bodies.items():
+            one(function, body, key)
+    for key, (body, shown) in rank_boards().items():
+        board(body, key, shown)
     if isinstance(replies.get("Index/index"), dict):
         kept = keep_account_file(uid, replies["Index/index"])
         if kept:
@@ -237,7 +314,18 @@ def import_log(path, log=print):
         function, reply, body = str(e.get("URL", "")).strip("/"), e.get("Response"), e.get("Request")
         if not isinstance(reply, (dict, list)):
             continue
-        if function in OWN_CALLS:
+        if function == RANK and isinstance(reply, dict) and isinstance(body, dict):
+            key = archived.board_key(body)
+            kept = merge_page(archived.read(uid, RANK, key), reply, int(body.get("index") or 0))
+            if kept is not None:
+                archived.write(uid, RANK, kept, key)
+                written += 1
+        elif function in keyed_calls(uid):
+            kind = str((body if isinstance(body, dict) else {}).get("type") or "")
+            if kind in keyed_calls(uid)[function]:
+                archived.write(uid, function, reply, kind)
+                written += 1
+        elif function in OWN_CALLS:
             archived.write(uid, function, reply)
             written += 1
         elif function in PLAYER_CALLS:

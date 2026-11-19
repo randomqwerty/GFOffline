@@ -182,4 +182,5 @@ def eat_gun(state, body):
         gained[stat] = max(0, min(points, limits[stat] - have))
         gun[stat] = str(have + gained[stat])
     state["gun_with_user_info"] = [g for g in guns_owned if str(g["id"]) not in food]
-    return gained
+    # the client sets the doll's stats to these (FeedController.RequestEatGunHandle), so they are the new totals
+    return {stat: int(gun[stat]) for stat in grow_m}

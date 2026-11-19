@@ -273,15 +273,21 @@ def memoir_list(state, body):
 
 
 def unlock_memoir(state, body):
-    """Gun/memoir {"gun_id", "stage_id"}: a doll memoir story unlocked (reply read as JSON, no keys)."""
+    """Gun/memoir {"gun_id", "stage_id"}: a Neural Upgrade story read. The first read pays its
+    mindupdate_story_info prize (Memory Fragments, item 45: 50/50/100/100 for stages 1-4); the reply is
+    that package (RequestUnlockMemoir reads it with Package.GetPackage), empty after."""
+    from . import quests
     body = body or {}
     gid, stage = str(body.get("gun_id") or 0), str(body.get("stage_id") or 0)
     if gid == "0":
         return None
     rows = state.setdefault("gun_memoir_list", [])
-    if not any(r["gun_id"] == gid and r["stage_id"] == stage for r in rows):
-        rows.append({"gun_id": gid, "stage_id": stage})
-    return {}
+    if any(str(r["gun_id"]) == gid and str(r["stage_id"]) == stage for r in rows):
+        return {}
+    rows.append({"gun_id": gid, "stage_id": stage})
+    story = next((r for r in stc.catch("mindupdate_story_info") if str(r["gun_id"]) == gid and str(r["stage_id"]) == stage), None)
+    prize = quests.prizes().get(int((story or {}).get("prize_id") or 0))
+    return quests.grant(state, quests._reward(prize)) if prize else {}
 
 
 # --- HOC (squads) outside missions

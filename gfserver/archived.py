@@ -30,6 +30,20 @@ def read(uid, function, key=None):
         return None
 
 
+RANK_ID_KEY = 100000
+
+
+def board_key(body):
+    """Index/rank's archive key: the type for a standing board (type and sub_type for the data sample boards, whose
+    sub_type is the difficulty), RANK_ID_KEY + rank_id for a board from the rank table (rank_id set)."""
+    body = body or {}
+    rank_id = int(body.get("rank_id") or 0)
+    if rank_id:
+        return str(RANK_ID_KEY + rank_id)
+    kind, sub = int(body.get("type") or 0), str(body.get("sub_type") or "0")
+    return str(kind) if not sub.isdigit() or not int(sub) else str(kind * 1000 + int(sub))
+
+
 def write(uid, function, reply, key=None):
     target = path(uid, function, key)
     if target is None:

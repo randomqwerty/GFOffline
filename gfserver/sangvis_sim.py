@@ -42,7 +42,7 @@ import random
 import time
 from functools import lru_cache
 
-from . import quests, squads, stc
+from . import archived, quests, squads, stc
 
 CHALLENGES = (1, 2, 3)
 ENEMY_BASE, TEAM_BASE, ALLY_BASE, ROTATION = 940001, 1001, 3001, 5
@@ -187,10 +187,19 @@ def reward_amount(stage, num, won, duration, now):
 
 
 def _record(state, now):
+    """{"week", "wins": {"<c>": n}, "award": {"<c>": key}}: wins are lifetime (the live win_counter, which marks a
+    challenge as cleared for sweeping); the award choice is the week's. An imported account starts from its
+    archived Sangvis/duplicateIndex."""
     start, _ = _week(now)
     rec = state.get("_sangvis_duplicate")
-    if not rec or rec.get("week") != start:
-        rec = state["_sangvis_duplicate"] = {"week": start, "wins": {}, "award": {}}
+    if not rec or "lifetime" not in rec:
+        wins = dict((rec or {}).get("wins") or {})
+        saved = (archived.read(str((state.get("user_info") or {}).get("user_id", "")), "Sangvis/duplicateIndex") or {})
+        for c, row in (saved.get("sangvis_duplicate_with_user") or {}).items():
+            wins[str(c)] = max(int(wins.get(str(c)) or 0), int((row or {}).get("win_counter") or 0))
+        rec = state["_sangvis_duplicate"] = {"week": start, "wins": wins, "award": (rec or {}).get("award") or {}, "lifetime": True}
+    if rec.get("week") != start:
+        rec.update(week=start, award={})
     return rec
 
 

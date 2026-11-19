@@ -7,8 +7,8 @@ the same folder as --source, to patch that folder instead of copying it, unless 
 from tools/archive_live.py instead of downloading the resource config. Safe to run again.
 
 The source folder is only read. Its tables and bundles are what the server works from. The copy holds real copies of
-the files that get patched or run (about 280 MB) and hard links to the rest, so it takes little space when it is on the same
-NTFS drive as the source; anywhere else the rest is copied too. After a Steam update, set up again.
+the files that get patched, run or written (about 350 MB) and hard links to the rest, so it takes little space when it is on
+the same NTFS drive as the source; anywhere else the rest is copied too. After a Steam update, set up again.
 The one thing the game doesn't keep on disk is its resource config (about 2 MB): that comes from the live service once, into archive/, unless --archive has it.
 """
 import argparse
@@ -79,8 +79,31 @@ def check_files(source):
 DATA = Path("GirlsFrontLine_Data")
 RES = DATA / "StreamingAssets" / "Res"
 # Real copies: the programs next to the exe (GameAssembly.dll is patched, and anything that writes beside the exe must not
-# reach the game's own files) and the patched resources.assets. Everything else in the data folder is linked.
+# reach the game's own files), the patched resources.assets, and every file in StreamingAssets but the bundles and media:
+# the game writes the tables (Res/Pc/stc), the text cache (langcache_*.dat) and the SDK's MTLocalData in place, which
+# through a link would change the source's own files. Bundles and media (SWAPPED) it replaces by downloading to .temp and
+# moving, so those, and everything else in the data folder, are linked.
 COPIED_DATA = ("resources.assets",)
+STREAMING = DATA / "StreamingAssets"
+SWAPPED = (".ab", ".bytes")
+
+
+def _written(rel):
+    """A path in the data folder that the game may write in place (see COPIED_DATA)."""
+    return rel.parts[:2] == STREAMING.parts and rel.suffix.lower() not in SWAPPED
+
+
+def unshare(game):
+    """Give every written file in the copy that is still a hard link (a copy set up before they were copied) its own
+    copy, so the game's writes stay in the copy. Returns how many."""
+    count = 0
+    for f in (Path(game) / STREAMING).rglob("*"):
+        if f.is_file() and f.suffix.lower() not in SWAPPED and f.stat().st_nlink > 1:
+            tmp = f.with_name(f.name + ".unshare.tmp")
+            shutil.copy2(f, tmp)
+            os.replace(tmp, f)
+            count += 1
+    return count
 
 
 def _size(files):
@@ -93,7 +116,11 @@ def _top_files(folder):
 
 def _linked_files(source):
     return [f for f in (source / DATA).rglob("*") if f.is_file() and f.suffix != ".tmp"
-            and not (f.parent == source / DATA and f.name in COPIED_DATA)]
+            and not (f.parent == source / DATA and f.name in COPIED_DATA) and not _written(f.relative_to(source))]
+
+
+def _written_files(source):
+    return [f for f in (source / STREAMING).rglob("*") if f.is_file() and f.suffix != ".tmp" and _written(f.relative_to(source))]
 
 
 def _robocopy(source, game, *extra):
@@ -144,6 +171,12 @@ def copy_game(source, game):
             dst.unlink()
     _robocopy(source, game, "/LEV:1", "/XF", "*.tmp")
     _robocopy(source / DATA, game / DATA, *COPIED_DATA)
+    written = _written_files(source)
+    for f in written:
+        dst = game / f.relative_to(source)
+        if dst.is_file() and os.path.samefile(f, dst):
+            dst.unlink()
+    _robocopy(source / STREAMING, game / STREAMING, "/E", "/XF", "*.tmp", *(f"*{s}" for s in SWAPPED))
     linked = _linked_files(source)
     print(f"Linking the other {len(linked)} files ({_size(linked) / 2**30:.1f} GB), which takes no extra space. (Explorer still counts them in the folder's size; the drive's free space is what shows the saving.)", flush=True)
     if link_files(source, game, linked):

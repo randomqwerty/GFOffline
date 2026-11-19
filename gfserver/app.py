@@ -245,6 +245,10 @@ class GFHandler(BaseHTTPRequestHandler):
             # eventually drops back to the title screen. Recorded live reply:
             return self._send(json.dumps({"1": None, "Err_Msg": "", "Err_No": 100}),
                               "application/json; charset=utf-8")
+        if form.get("c") == "micasdk" and form.get("a") == "getProducts":
+            # ServerInfo.RequestProductList (the shop's paid goods): Err_No 100 = OK, and every key
+            # besides Err_No/Err_Msg is a product, so none are listed.
+            return self._send(json.dumps({"Err_No": 100, "Err_Msg": ""}), "application/json; charset=utf-8")
         if not parts and form.get("a") == "bannerAndSpot":
             # ServerInfo.RequestBannerAndAnnounce: GET <R_BANNER addr>?c=game&a=bannerAndSpot,
             # plain JSON read by Request.RequestResult (Err_No 100 = OK) + banner/spot lists.

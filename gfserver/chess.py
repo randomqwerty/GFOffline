@@ -382,9 +382,10 @@ class Connection:
             _games.pop(str(play.me), None)
         try:
             store = Store.get()
-            state = store.load_player(str(play.me), config.PLAYER_TEMPLATE)
-            settle(state, play, self.game or {})
-            store.save_player(str(play.me), state)
+            with store.editing(play.me):
+                state = store.load_player(str(play.me), config.PLAYER_TEMPLATE)
+                settle(state, play, self.game or {})
+                store.save_player(str(play.me), state)
         except (OSError, ValueError, KeyError, IndexError):
             log.exception("chess: could not save the result")
 

@@ -15,6 +15,12 @@ the local server for its configs. It now always returns false.
 unity_reachable: Application.internetReachability, which the client's downloads (ResCenter) check before fetching
 from the local server, always returns ReachableViaLocalAreaNetwork (2).
 
+res_check_button, res_delete_button: the loading screen's "Resource Verification" and "Delete Cache"
+(HotUpdateController.CheckAllRes / DeleteResAndDownWhole) run before the Lua hotfixes load, so the client patch
+(offline_res_check.lua) can't stop them there. Either would delete or download again the game files this copy
+patches. They now return at once. forced_res_check: ResCenter.ForcceFullResCheck, the startup check after a
+cut-short verification, also runs before Lua; it now answers no.
+
 play.py applies them before each launch, so a copy set up before a patch was added gets it.
 
 Each patch checks the original bytes first; already-patched bytes are left alone.
@@ -36,6 +42,15 @@ PATCHES = [
     ("unity_reachable", 0x2F804F0,
      bytes.fromhex("4883ec28488b"),                # sub rsp,0x28 ; mov rax,[rip+..]
      bytes.fromhex("b802000000c3")),               # mov eax,2 ; ret
+    ("res_check_button", 0x184CB30,
+     bytes.fromhex("40534883ec20"),                # push rbx ; sub rsp,0x20
+     bytes.fromhex("c3")),                         # ret
+    ("res_delete_button", 0x184CCC0,
+     bytes.fromhex("40534883ec20"),
+     bytes.fromhex("c3")),
+    ("forced_res_check", 0x1E156B0,
+     bytes.fromhex("40534883ec20"),
+     bytes.fromhex("31c0c3")),                     # xor eax,eax ; ret
 ]
 
 

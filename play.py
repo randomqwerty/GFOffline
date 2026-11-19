@@ -30,6 +30,13 @@ def main():
         patch_gameassembly.apply(exe.parent / "GameAssembly.dll", say=lambda m: None)
     except (patch_gameassembly.PatchError, OSError) as e:
         log.warning("GameAssembly.dll not patched: %s", e)
+    import setup_game
+    try:
+        shared = setup_game.unshare(exe.parent)
+        if shared:
+            log.info("%d game files no longer shared with the source install", shared)
+    except OSError as e:
+        log.warning("game files still shared with the source install: %s", e)
     import build_patch
     try:
         if build_patch.ensure():

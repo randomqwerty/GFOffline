@@ -162,6 +162,11 @@ def index_index(req: Request) -> Response:
     acct = store.account(req.uid)
     if acct is None:
         return Response("error", 3)
+    with store.editing(req.uid):
+        return _index_reply(req, store, acct)
+
+
+def _index_reply(req, store, acct):
     state = _personalize(store.load_player(req.uid, config.PLAYER_TEMPLATE), acct)
     if not state.get("_mission"):
         # a map left open on the live server (an account file's mission_act_info / spot_act_info):
@@ -173,6 +178,9 @@ def index_index(req: Request) -> Response:
     returnback.on_login(state)
     carnival.check(state)
     sangvis_sim.daily_energy(state)
+    for sp in (False, True):
+        workshop.produce_counts(state, sp)       # the week's free targeted builds, refilled on Mondays
+    workshop.settle_quick_fairies(state)
     state.pop("_energy_unsent", None)      # this reply is the client's whole copy
     for line in mod_save.describe(mod_save.reconcile(state)):    # mods turned off or on since
         log.info("your save: %s", line)
@@ -185,6 +193,7 @@ def index_index(req: Request) -> Response:
     # Without this key the client never makes GameData.autoPlanSettinData (GameData.ReadUserInfo), and the
     # formation screen crashes on return (FormationController.CheckAutoPlanState); null makes an empty one.
     reply.setdefault("automission_presets_info", None)
+    reply["dorm_rest_friend_build_coin_count"] = friends.batteries_left(state)
     if "mission_event_info" in reply:
         reply["mission_event_info"] = missions.event_info(reply["mission_event_info"])
     try:
@@ -203,6 +212,11 @@ def index_index(req: Request) -> Response:
 def _with_state(req, change):
     """Load the account's save, apply change(state) -> reply, write the save back."""
     store = Store.get()
+    with store.editing(req.uid):
+        return _change_state(req, store, change)
+
+
+def _change_state(req, store, change):
     state = store.load_player(req.uid, config.PLAYER_TEMPLATE)
     if (state.get("_mission") or {}).get("resume_sent"):
         state["_mission"]["resume_seen"] = True       # the login that sent it back was read (missions.resume_info)
@@ -339,7 +353,7 @@ for _name, _fn in {
     "Commander/usePreset": account.use_preset, "Index/gameSetting": account.game_setting,
     "Mission/autoMissionPresets": account.auto_mission_presets, "Mission/pauseTurnTime": lambda s, b: "1",
     "Mission/guide": lambda s, b: "1", "Gun/like": account.gun_like,     # Gun/like counts for the "like" daily
-    "Index/setMailLock": lambda s, b: "1", "Squad/dataChange": squads.data_change,
+    "Index/setMailLock": quests.set_mail_lock, "Squad/dataChange": squads.data_change,
     "Manual/like": account.manual_like, "Dorm/skinRead": account.skin_read, "Dorm/set_notice": account.dorm_set_notice,
     "Dorm/spare_exchange": account.spare_exchange,
     # the player's own settings for visitors (RequestSetFriendDorm, RequestSetFriendMedal check "1")
@@ -424,7 +438,7 @@ for _name, _fn in {
     "Gun/developLog": lambda s, b: {"log_list": []}, "Equip/developLog": lambda s, b: {"log_list": []},
     "Equip/developCollectList": lambda s, b: {"log_list": []},
     "Gun/setWishGun": factory.set_wish_gun,
-    "Equip/produceDevelop": workshop.produce_develop, "Equip/spProduceDevelop": workshop.produce_develop,
+    "Equip/produceDevelop": workshop.produce_develop, "Equip/spProduceDevelop": workshop.sp_produce_develop,
     "Equip/produceRecover": workshop.produce_recover, "Equip/spProduceRecover": workshop.sp_produce_recover,
     "Squad/train": squads.train, "Squad/trainFinish": squads.train_finish, "Squad/trainGiveUp": squads.train_give_up,
     "Squad/addUpStartProgress": squads.add_rank_progress, "Squad/startUpStart": squads.start_promotion,
@@ -456,7 +470,7 @@ for _name, _fn in {
     "Mall/gemToResource": account.mall_buy, "Mall/gemToItem": account.mall_buy,
     "Mall/gemToGiftbag": account.mall_buy, "Mall/gemToMax": account.gem_to_max,
     "Sangvis/gasha": recruit.gasha_index, "Sangvis/gashaDraw": recruit.draw, "Sangvis/gashaRecover": recruit.recover,
-    "Sangvis/gashaRefresh": recruit.refill, "Sangvis/gashaReset": recruit.refill,
+    "Sangvis/gashaRefresh": recruit.refresh, "Sangvis/gashaReset": recruit.refill,
     "Gun/contract": upgrades.gun_contract, "Sangvis/contract": upgrades.sangvis_contract,
     "Gun/mindupdate": upgrades.mindupdate, "Equip/adjust": upgrades.equip_adjust,
     "Fairy/adjust": upgrades.fairy_adjust, "Sangvis/advance": upgrades.sangvis_advance,
@@ -570,7 +584,7 @@ for _name, _fn in {
     # a friend's goods and garage: the stock and vehicles aren't in the client or the account file, so these
     # are refused (error) rather than answered "1", which the JSON handlers can't read
     "Friend/mallBuy": lambda s, b: None, "Friend/buyMallByType9": lambda s, b: None,
-    "Vehicle/visit": friends.vehicle_visit, "Vehicle/maintain": lambda s, b: None,
+    "Vehicle/visit": friends.vehicle_visit, "Vehicle/maintain": friends.vehicle_maintain,
     # real-money purchases can't happen offline: an error stops the client before it opens a payment
     # (an empty reply would go on to MallGoodController's Sunborn payment order)
     "Mall/ifAble": lambda s, b: None,
@@ -710,29 +724,10 @@ def crash_log(req: Request) -> Response:
 
 @handler("Friend/dormInfo")
 def friend_dorm_info(req: Request) -> Response:
-    # Own dorm summary, requested right after Index/index. Prefer an imported recording
-    # (includes furniture_with_user_info); otherwise a minimal one shaped like the KR tool's
-    # preset (preset/dorminfo.json). Offline there are no visitors or praises.
+    # Own dorm summary, requested right after Index/index: account.dorm_info, from the account's archived
+    # live reply, else an imported recording, else a minimal one shaped like the KR tool's preset.
     recorded = canned_response(req)
-    if recorded is not None:
-        # the furniture is the account's own (account.furniture: saved after the first read)
-        reply = recorded.payload
-        reply["furniture_with_user_info"] = _with_state(req, account.furniture)
-        return Response("json", _with_state(req, lambda s: account.dorm_notice(reply, s)), key=req.sign)
-    return Response("json", _with_state(req, lambda s: account.dorm_notice({
-        "info": {"praise_num": 0, "visit_num": 0, "user_id": str(req.uid), "dorm_id": "1"},
-        "in_mydorm_list": [],
-        "my_visit_list": [],
-        "build_coin_flag": -4,
-        "current_build_coin": "0",
-        "establish_build_result": [],
-        "reset_build_coin_data": [],
-        "notice": {"is_view_notice": "1", "notice": ""},
-        "is_show_commander": "1",
-        "is_use_commander": "0",
-        "is_sangvis_show_gun": "1",
-        "furniture_with_user_info": account.furniture(s),
-    }, s)), key=req.sign)
+    return Response("json", _with_state(req, lambda s: account.dorm_info(s, recorded.payload if recorded else None)), key=req.sign)
 
 
 def canned_response(req: Request):

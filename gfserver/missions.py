@@ -1169,11 +1169,116 @@ def _mapped_groups():
     return {int(r["id"]): _ids(r["mapped_missions"]) for r in stc.table("mission_mapped")}
 
 
+# Older events (Glory Day, Gunslinger Girl, VA-11 HALL-A, ...) have no mission_mapped group: the harder map is
+# only named so ("STALKER" / "STALKER EX", "Critical Angle II" / "... EX-I" / "... EX-II"; Glory Day's EX maps sit
+# in their own campaigns, -21 and -22, beside -19 and -20). name_groups pairs them by name; the base game's
+# pairs are in data/difficulty_groups.json (tools/build_difficulty_groups.py), a mod's are made from its text.
+_TIER = re.compile(r"^(?P<base>.*?)[\s\-]*(?P<mark>EX|UX)(?:[\s\-]*(?P<num>I{1,3}))?$")
+_PART = re.compile(r"[\s\-]*(?:I{1,3}|[①-⑨])$")
+
+
+def _tier(mark, num):
+    return {"EX": 1, "UX": 2}[mark] * 10 + len(num or "")
+
+
+def name_groups(rows, names):
+    """rows: mission rows; names: {mission id: display name}. -> {mission id: [ids, easiest first]} for each map
+    named as a harder version of another and rated harder (mission.difficulty): the base map is the one of the
+    same name (or the name plus a part number: "①", " I") in the same campaign, else in the nearest campaign up
+    to 3 away."""
+    norm = {int(r["id"]): " ".join(str(names.get(int(r["id"])) or "").replace("//n", " ").split()) for r in rows}
+    camp = {int(r["id"]): int(r.get("campaign") or 0) for r in rows}
+    rating = {int(r["id"]): int(r.get("difficulty") or 0) for r in rows}
+    by_name = {}
+    for mid, n in norm.items():
+        if n:
+            by_name.setdefault(n, []).append(mid)
+            by_name.setdefault(_PART.sub("", n), []).append(mid)
+    marked = {}
+    for mid, n in norm.items():
+        m = _TIER.match(n)
+        if not m or not m.group("base"):
+            continue
+        base = m.group("base")
+        exact = [b for b in by_name.get(base, []) if norm[b] == base]      # "Reflective Surface∞" for its "-EX"
+        loose = [b for b in by_name.get(_PART.sub("", base), []) if not _TIER.match(norm[b])]
+        cands = [b for b in dict.fromkeys(exact or loose) if b != mid and abs(camp[b] - camp[mid]) <= 3
+                 and rating[b] < rating[mid]]      # "Annealing EX" (1000, below "Annealing I") is a story node
+        if not cands:
+            continue
+        best = min(cands, key=lambda b: (abs(camp[b] - camp[mid]), norm[b] != base, b))
+        marked.setdefault(best, []).append((_tier(m.group("mark"), m.group("num")), mid))
+    out = {}
+    for base, tiers in marked.items():
+        group = [base] + [mid for _, mid in sorted(tiers)]
+        for mid in group:
+            out[mid] = group
+    return out
+
+
+@lru_cache(maxsize=1)
+def _name_groups():
+    from . import mods
+    path = config.ROOT / "data" / "difficulty_groups.json"
+    groups = {int(k): v for k, v in json.loads(path.read_text("utf-8")).items()} if path.is_file() else {}
+    text = {}
+    for mod in mods.discover():
+        text.update(mod.get("text") or {})
+    if text:
+        rows = [r for r in _missions().values() if str(r.get("name") or "") in text]
+        if rows:
+            names = {int(r["id"]): text[str(r["name"])] for r in rows}
+            groups.update(merge_mapped(name_groups(rows, names), _mapped_groups()))
+    return groups
+
+
+def merge_mapped(groups, mapped):
+    """A name group sharing a map with a mission_mapped group extends that group with its harder maps: in the name
+    group's order when it holds the whole mapped group, else after it."""
+    member = {mid: g for g in mapped.values() for mid in g}
+    out = {}
+    for mid, g in groups.items():
+        known = next((member[x] for x in g if x in member), None)
+        if known and not set(known) <= set(g):
+            g = list(known) + [x for x in g[1:] if x not in known]
+        for x in g:
+            if x not in member:
+                out[x] = g
+    return out
+
+
+@lru_cache(maxsize=1)
+def _mapped_by_member():
+    """mission id -> its mission_mapped group. Found by membership: some events' rows (Gunslinger Girl, -38 and
+    -41) have mapped_mission_id 0 though a group lists them. Name groups (merge_mapped) can add harder maps to
+    one ("That which must be protected EX I" beside its "EX II")."""
+    return {mid: g for g in _mapped_groups().values() for mid in g}
+
+
+def _difficulty_group(row):
+    mid = int(row.get("id") or 0)
+    return _mapped_by_member().get(mid) or _name_groups().get(mid, [])
+
+
 def _mapped_win(state, row):
-    group = _mapped_groups().get(int(row.get("mapped_mission_id") or 0), [])
+    """A map's difficulties, easiest first: stc mission_mapped ("Terzetto", "- EX", "- UX"), else name_groups. A win
+    counts for the group, and as a clear of each easier one not yet won, which opens what that one's win opens
+    (returned as the win reply's "open")."""
+    group = _difficulty_group(row)
+    opened = {}
+    mid = int(row.get("id") or 0)
+    for lower in group[:group.index(mid)] if mid in group else []:
+        rec = _mission_record(state, lower)
+        if int(rec["win_counter"] or 0) == 0 and lower in _missions():
+            rec["win_counter"] = "1"
+            rec["counter"] = str(max(int(rec["counter"] or 0), 1))
+            rec["medal1"] = "1"
+            opened.update(_open_next(state, _missions()[lower]))
+    mapped = _mapped_by_member().get(mid, [])
     for r in state.get("mission_with_user_info") or []:
-        if int(r["mission_id"]) in group:
+        if int(r["mission_id"]) in mapped:
             r["mapped_win_counter"] = str(max(1, int(r.get("mapped_win_counter") or 0)))
+    return opened
 
 
 def _close_missions(state, row):
@@ -2113,7 +2218,7 @@ def _win(state, m, reply, won=None):
     opened = _open_next(state, row)
     opened.update(_open_by_keys(state, keys, items))
     _close_missions(state, row)
-    _mapped_win(state, row)
+    opened.update(_mapped_win(state, row))
     _settle_score(state, m)
     # rank and user_exp are read as strings too
     # recorded on 126 (win_type "9130200"): ["9130200"], the conditions that were met
@@ -4031,6 +4136,32 @@ def _spawn_rules(mid, m=None):
     return out + (_spawn_point_rules(m) if points else [])
 
 
+# Heliports open and close in turns by stc spot active_cycle "open,closed" (DeploymentSpotController
+# $$CaculateTurnShow: turn % (open + closed), 0 counting as the last, above open is closed); "99,1", most
+# of them, is open for 99 turns. Nothing spawns on a closed one.
+
+
+@lru_cache(maxsize=1)
+def _active_cycles():
+    out = {}
+    for r in stc.table("spot"):
+        parts = str(r.get("active_cycle") or "").split(",")
+        if abs(int(r.get("type") or 0)) in (3, 7) and len(parts) == 2 and all(x.strip().isdigit() for x in parts):
+            opened, closed = int(parts[0]), int(parts[1])
+            if opened + closed > 0:
+                out[int(r["id"])] = (opened, closed)
+    return out
+
+
+def heliport_closed(sid, turn):
+    cycle = _active_cycles().get(int(sid))
+    if cycle is None or turn < 1:
+        return False
+    opened, closed = cycle
+    at = turn % (opened + closed) or opened + closed
+    return at > opened
+
+
 def rule_spots(rule):
     """A spawn rule's nodes: "spots" [ids] (one rule for several heliports, each node on its own:
     its own chance, turn and "max" count), else its one "spot"."""
@@ -4076,7 +4207,8 @@ def _spawn(m, rng, at_start=False, avoid=(), our_turn=False):
             continue                # "while_alive": only while that enemy team is on the map (Hole 1's Ghost)
         if rule.get("_nodes"):
             ok = [x for x in rule["_nodes"] if x not in occupied and _spot_of(m, x) is not None
-                  and (at_start or not rule.get("enemy_owned", True) or _spot_of(m, x)["belong"] == BELONG_ENEMY)]
+                  and (at_start or not rule.get("enemy_owned", True) or _spot_of(m, x)["belong"] == BELONG_ENEMY)
+                  and (at_start or not heliport_closed(x, turn))]
             if rule.get("blind"):
                 # "blind": the node is picked among all of them, and a clogged or captured one uses the
                 # spawn up (Hornet's Nest+ bosses: "If the Heliport is clogged/captured, the boss does
@@ -4098,6 +4230,8 @@ def _spawn(m, rng, at_start=False, avoid=(), our_turn=False):
         if rule.get("if_special") and int(rule["if_special"]) not in marks or rule.get("unless_special") and int(rule["unless_special"]) in marks:
             continue                # "if_special" / "unless_special": only with / without that special spot there
         if not at_start:
+            if heliport_closed(spot["spot_id"], turn):
+                continue
             first, last = int(rule.get("from_turn") or 1), int(rule.get("to_turn") or 0)
             every = max(1, int(rule.get("every") or 1))
             if turn < first or (last and turn > last) or (turn - first) % every:

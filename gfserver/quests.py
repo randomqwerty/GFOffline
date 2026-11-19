@@ -44,6 +44,12 @@ Reply formats (from the client's handlers):
         7 daily, 8 weekly, 21 career), "start_time", "end_time", "if_read", "if_received"} plus
         the reward in prize-table form (user_exp, mp, ammo, mre, part, core, gem, item_ids
         "id-n,...", gun_id, equip_ids, fairy_ids, gift, ...)  (Mail$$.ctor reads it as a Package)
+The daily chest and weekly point boxes (game_config daily_progress / weekly_progress "need:prize;...") go by mail
+with sub_id = their need: the client finds a box's mail by type 7 / 8 and that sub_id (DWRewardItemCtrl
+<CheckWeeklyRewardState>b__21_0, DailyWeekQuestCtrl <CheckDailyRewardState>b__111_0), and shows a reached box
+with no such mail as already claimed.
+The live account's day and week are taken from its archived Index/Quest while they last (_import_period): the
+quest list, refreshes, progress, the quests claimed there, and the weekly points, whose boxes count as paid.
 APPROXIMATION: the daily pick, the weekly-point values (WEEKLY_POINTS) and the reset times are
 server rules not in the client. Rewarded dolls/equipment/fairies are added to the save; the
 client may only show the equipment and fairies after a relogin.
@@ -59,9 +65,10 @@ from .factory import _add
 
 MAIL_ACHIEVEMENT, MAIL_DAILY, MAIL_WEEKLY, MAIL_CAREER = 2, 7, 8, 21
 QUEST_MAILS = (MAIL_ACHIEVEMENT, MAIL_DAILY, MAIL_WEEKLY, MAIL_CAREER)
-WEEKLY_POINTS = {"daily": 10, "weekly": 20}
+WEEKLY_POINTS = {"daily": 10, "weekly": 40}
 MAIL_DAYS = 30
 RES = ("user_exp", "mp", "ammo", "mre", "part", "core", "gem")
+WEAR = ("skin", "commander_uniform")     # doll skins and commander outfits: comma lists of ids
 LISTS = ("item_ids", "equip_ids", "fairy_ids", "gift", "furniture", "coins", "vehicle_component", "sangvis", "chip")
 
 # Event types this server records (on_call and missions.record calls).
@@ -135,6 +142,13 @@ def _state(state, now=None):
         lst = [i for i, r in sorted(weekly_rows().items()) if r["type"] in TRACKED]
         q["weekly"] = {"week": monday.isoformat(), "end": week_end, "list": lst, "refresh": [0] * len(lst),
                        "progress": {}, "done": [], "accumulation": 0, "paid": []}
+    for period in ("daily", "weekly"):
+        if not q[period].get("live_checked"):
+            q[period]["live_checked"] = True
+            _import_period(state, q, period, now)
+    _box_ids(state, q)
+    _settle_old(state, MAIL_DAILY, int(time.mktime(day.timetuple())))
+    _settle_old(state, MAIL_WEEKLY, int(time.mktime(monday.timetuple())))
     if "baseline" not in q:
         # an existing account: what it already meets is treated as rewarded long ago
         q["baseline"] = True
@@ -146,6 +160,69 @@ def _state(state, now=None):
     if "career_imported" not in q:
         _import_career(state, q)
     return q
+
+
+def _ids_in(text):
+    return [int(x) for x in str(text or "").split(",") if x.strip().isdigit()]
+
+
+def _import_period(state, q, period, now):
+    """This day's / week's quests from the archived live Index/Quest, if it is still the period it was recorded in."""
+    saved = archived.read(str((state.get("user_info") or {}).get("user_id", "")), "Index/Quest")
+    block = saved.get(period) if isinstance(saved, dict) else None
+    if not isinstance(block, dict) or not int(block.get("end_time") or 0) > now:
+        return
+    p = q[period]
+    rows = daily_rows() if period == "daily" else weekly_rows()
+    listed = [i for i in _ids_in(block.get(f"{period}_quest_list")) if i in rows]
+    if listed:
+        p["list"] = listed
+        refresh = _ids_in(block.get("refresh_count"))
+        p["refresh"] = (refresh + [0] * len(listed))[:len(listed)]
+    live_done = [i for i in _ids_in(block.get("accomplish_quest_list")) if i in rows]
+    both = len(set(live_done) & set(p["done"]))
+    p["done"] = list(dict.fromkeys(p["done"] + live_done))
+    for kind, n in (block.get("progress") or {}).items():
+        if str(n).isdigit():
+            p["progress"][kind] = max(p["progress"].get(kind, 0), int(n))
+    if period == "weekly":
+        p["locked"] = _ids_in(block.get("locked_quest_list"))
+        live_points = int(block.get("weekly_accumulation") or 0)
+        # points earned here this week add to live's, less any quest claimed in both places
+        p["accumulation"] = live_points + max(0, p["accumulation"] - WEEKLY_POINTS["weekly"] * both)
+        p["paid"] = sorted(set(p["paid"]) | {need for need, _ in _pairs(_config().get("weekly_progress")) if need <= live_points})
+        _pay_boxes(state, q)
+    else:
+        p["chest"] = p.get("chest") or any(len(live_done) >= need for need, _ in _pairs(_config().get("daily_progress")))
+
+
+def _box_ids(state, q):
+    """Unclaimed box mails sent with sub_id 0, before boxes were matched by their need: each takes a need reached this
+    period that has no mail yet, or is dropped when every one has (the live mailbox already holds that box)."""
+    for kind, period, key in ((MAIL_DAILY, "daily", "daily_progress"), (MAIL_WEEKLY, "weekly", "weekly_progress")):
+        stray = [m for m in _mails(state) if m["type"] == kind and str(m.get("sub_id")) == "0" and m["title"] == key
+                 and not m["if_received"]]
+        if not stray:
+            continue
+        p = q[period]
+        reached = sorted(p["paid"]) if period == "weekly" else             [need for need, _ in _pairs(_config().get(key)) if p.get("chest")]
+        start = int(p["end"]) - (7 if period == "weekly" else 1) * 86400
+        taken = {str(m.get("sub_id")) for m in _mails(state) if m["type"] == kind and int(m["start_time"]) >= start - 86400}
+        free = [n for n in reached if str(n) not in taken]
+        for i, m in enumerate(sorted(stray, key=lambda m: int(m["id"]))):
+            if i < len(free):
+                m["sub_id"] = str(free[i])
+            else:
+                state["_mail"].remove(m)
+
+
+def _settle_old(state, kind, period_start):
+    """Pay out daily / weekly reward mails from before this period that are still waiting: an unclaimed one
+    keeps the quest screen's (!) lit (the game's questscontroller patch checks for any such mail) and can show
+    the new period's quest of the same id as already claimed."""
+    for m in _mails(state):
+        if m["type"] == kind and not m["if_received"] and int(m["start_time"]) < period_start:
+            grant(state, m)
 
 
 def _saved_achievements(uid):
@@ -290,6 +367,9 @@ def on_call(state, function, body, reply):
     elif function == "Dorm/giftToGun":
         record(state, "gift", _n(b, "num"))
         record(state, "open_gift", _n(b, "num"))
+    elif function == "Mission/simulation":
+        # a sweep of n runs counts as n simulations
+        record(state, "combat_simulation", max(1, _n(b, "count")))
     elif function == "Dorm/get_build_coin" and isinstance(reply, dict):
         record(state, "get_build_coin", int(reply.get("build_coin") or 0))
     else:
@@ -318,7 +398,7 @@ def _developed(reply):
 _SIMPLE = {
     "Equip/eatEquip": ("upgrade_equip",), "Equip/adjust": ("adjust_equip",), "Fairy/adjust": ("adjust_fairy",),
     "Fairy/eatFairy": ("eat_fairy",), "Gun/combineGun": ("combine_gun",), "Operation/finishOperation": ("operation",),
-    "Automission/finishAutomission": ("auto_battle", "auto_mission"), "Mission/simulation": ("combat_simulation",),
+    "Automission/finishAutomission": ("auto_battle", "auto_mission"),
     "Gun/skillUpgrade": ("upgrade",), "Gun/mindupdate": ("mind_update",),
     "Sangvis/resolution": ("sangvis_resolution",), "Gun/like": ("like", "upvote"),
     "Dorm/receive_favor": ("heart_collect",), "Dorm/receiveSangvisFavor": ("heart_collect",),
@@ -464,13 +544,71 @@ def _career_progress(ctx):
 # --- mail -------------------------------------------------------------------------------
 
 def _mails(state):
-    return state.setdefault("_mail", [])
+    if not state.get("_mail_imported"):
+        _import_mails(state)
+    if not state.get("_mail_flags_synced"):
+        _sync_mail_flags(state)
+    for m in state["_mail"]:
+        m.setdefault("if_locked", False)
+    return state["_mail"]
+
+
+def _flag(value):
+    return str(value).strip().lower() in ("1", "true")
+
+
+def _import_mails(state):
+    """Once: the account's live mailbox from its archived Index/getMailList, received and locked state kept.
+    The server's own mails are numbered after the live ones, as Index/getMailList's start_id is the client's
+    newest id."""
+    from . import archived
+    mails = state.setdefault("_mail", [])
+    state["_mail_imported"] = state["_mail_flags_synced"] = True
+    live = archived.read(str((state.get("user_info") or {}).get("user_id", "")), "Index/getMailList")
+    have = {m["id"] for m in mails}
+    for m in live if isinstance(live, list) else []:
+        if not isinstance(m, dict) or not str(m.get("id") or "").isdigit() or str(m["id"]) in have:
+            continue
+        mail = {"id": str(m["id"]), "sub_id": str(m.get("sub_id") or 0), "title": m.get("title") or "",
+                "content": m.get("content") or "", "type": int(m.get("type") or 1),
+                "start_time": int(m.get("start_time") or 0), "end_time": int(m.get("end_time") or 0),
+                "if_read": _flag(m.get("if_read")), "if_received": _flag(m.get("if_received")),
+                "if_locked": _flag(m.get("if_locked"))}
+        if m.get("code"):
+            mail["code"] = str(m["code"])
+        mail.update(_reward(m))
+        mails.append(mail)
+    top = max((int(m["id"]) for m in mails), default=0)
+    state["_mail_next"] = max(int(state.get("_mail_next") or 1), top + 1)
+
+
+def _sync_mail_flags(state):
+    """Once: locked and received from the archived live mailbox, for live mails imported before they were kept.
+    Either one set here stays set."""
+    from . import archived
+    state["_mail_flags_synced"] = True
+    live = archived.read(str((state.get("user_info") or {}).get("user_id", "")), "Index/getMailList")
+    by_id = {str(m.get("id")): m for m in live if isinstance(m, dict)} if isinstance(live, list) else {}
+    for mail in state.get("_mail") or []:
+        m = by_id.get(mail["id"])
+        if m is None:
+            continue
+        for key in ("if_locked", "if_received", "if_read"):
+            mail[key] = bool(mail.get(key)) or _flag(m.get(key))
+
+
+def set_mail_lock(state, body):
+    """Index/setMailLock {"mail_id", "if_locked"} (RequestLockMails)."""
+    body = body or {}
+    mail = next((m for m in _mails(state) if m["id"] == str(body.get("mail_id"))), None)
+    if mail is not None:
+        mail["if_locked"] = _flag(body.get("if_locked"))
+    return "1"
 
 
 def _unit_count(rest):
-    """The count after "id-" in a prize's gun_id / equip_ids / fairy_ids entry. "id-n" is n of
-    them; longer entries are one unit with its details (fairies "26-0-100-5", fairyId-skin-level-x;
-    dolls "id-50-3-1-1", the level first), not a count."""
+    """The count after "id-" in a prize's gun_id / equip_ids entry. "id-n" is n of them; longer entries are one
+    unit with its details (dolls "id-50-3-1-1", the level first), not a count. fairy_ids has no count."""
     rest = str(rest or "").strip()
     return int(rest) if rest.isdigit() else 1
 
@@ -483,6 +621,9 @@ def _reward(row):
             out[k] = str(row[k])
     if str(row.get("gun_id") or "").strip() not in ("", "0"):
         out["gun_id"] = str(row["gun_id"])
+    for k in WEAR:
+        if str(row.get(k) or "").strip() not in ("", "0"):
+            out[k] = str(row[k])
     return out
 
 
@@ -491,7 +632,11 @@ def send_mail(state, kind, sub_id, title, reward, now=None):
     mid = int(state.get("_mail_next") or 1)
     state["_mail_next"] = mid + 1
     mail = {"id": str(mid), "sub_id": str(sub_id), "title": title, "content": "", "type": kind,
-            "start_time": now, "end_time": now + MAIL_DAYS * 86400, "if_read": False, "if_received": False}
+            "start_time": now, "end_time": now + MAIL_DAYS * 86400, "if_read": False, "if_received": False,
+            # Mail$$.ctor starts every mail locked and unlocks it only by this key; a locked mail is kept after its
+            # claim (RequestMailResourceHandle), so a quest box could be claimed again and an achievement mail
+            # showed again on each return to the screen
+            "if_locked": False}
     mail.update(reward)
     _mails(state).append(mail)
     return mail
@@ -505,7 +650,7 @@ def grant(state, mail):
     """Add a mail's reward to the save; returns the package for the client."""
     from . import factory, workshop
     ui = state["user_info"]
-    pkg = {k: mail[k] for k in RES + LISTS + ("gun_id",) if k in mail}
+    pkg = {k: mail[k] for k in RES + LISTS + WEAR + ("gun_id",) if k in mail}
     for k in RES:
         if k == "user_exp":
             _add(ui, "experience", int(mail.get(k) or 0))
@@ -533,18 +678,58 @@ def grant(state, mail):
                 guns.append({"gun_with_user_id": rec["id"], "gun_id": rec["gun_id"]})
     if guns:
         pkg["guns"] = guns
+    # the new records go in the package too: the client adds equipment and fairies from its "equips" / "fairys"
+    # lists (Package$$GetPackage reads them from the package's own JSON), and only ids would show after a relogin
+    equips, fairys = [], []
     for part in str(mail.get("equip_ids") or "").split(","):
         eid, _, num = part.partition("-")
         if eid.strip().isdigit() and int(eid) in workshop.equips():
             for _ in range(_unit_count(num)):
-                workshop.new_equip(state, int(eid))
+                equips.append(dict(workshop.new_equip(state, int(eid))))
     for part in str(mail.get("fairy_ids") or "").split(","):
-        fid, _, num = part.partition("-")
+        # one fairy per entry: "fairy_id-talent" (0: none given, "18-910118"), longer ones "26-0-100-5";
+        # the number after the id is never a count (read as one, "15-910101" made 910101 fairies)
+        fid, _, rest = part.partition("-")
         if fid.strip().isdigit() and int(fid) in workshop.fairies():
-            for _ in range(_unit_count(num)):
-                workshop.new_fairy(state, int(fid), workshop._talents()[0])
+            talent = rest.split("-")[0].strip()
+            known = {int(t["id"]) for t in stc.table("fairy_talent")}
+            talent = int(talent) if talent.isdigit() and int(talent) in known else workshop._talents()[0]
+            rec = workshop.new_fairy(state, int(fid), talent)
+            fairys.append({"fairy_with_user_id": rec["id"], "fairy_id": rec["fairy_id"], "passive_skill": rec["passive_skill"],
+                           "fairy_exp": rec["fairy_exp"], "quality_exp": rec["quality_exp"]})
+    if equips:
+        pkg["equips"] = equips
+    if fairys:
+        pkg["fairys"] = fairys
+    uid = str(ui.get("user_id", ""))
+    skins = state.setdefault("skin_with_user_info", {})
+    for sid in _ids(mail.get("skin")):
+        rec = {"skin_id": sid, "user_id": uid, "is_read": "0"}
+        if isinstance(skins, dict):
+            skins.setdefault(sid, rec)
+        elif not any(str(s.get("skin_id")) == sid for s in skins):
+            skins.append(rec)
+    outfits = state.setdefault("commander_uniform_info", [])
+    for cid in _ids(mail.get("commander_uniform")):
+        if not any(str(u.get("commander_uniform_id")) == cid for u in outfits):
+            outfits.append({"user_id": uid, "commander_uniform_id": cid, "color_get": [], "get_color_num": "0",
+                            "create_time": str(int(time.time()))})
     mail["if_received"] = mail["if_read"] = True
     return pkg
+
+
+def quiet_records(state, pkg):
+    """Replies the client unpacks with forceShowPerformance (Giftbox/open, the Collect All replies) carry no
+    "equips" / "fairys" records: each would queue the factory's get-new animation (GetEquipItem /
+    CommonGetNewFariyController), which can't play elsewhere, and the reward popup queued after it never showed.
+    The popup lists them from equip_ids / fairy_ids; they are in the save and show from the next login."""
+    pkg.pop("equips", None)
+    pkg.pop("fairys", None)
+    return pkg
+
+
+def _ids(value):
+    return [x.split("-")[0].strip() for x in str(value or "").split(",") if x.split("-")[0].strip() not in ("", "0")]
 
 
 def _merge(packages):
@@ -553,8 +738,8 @@ def _merge(packages):
         for k, v in p.items():
             if k in RES:
                 out[k] = out.get(k, 0) + int(v)
-            elif k == "guns":
-                out.setdefault("guns", []).extend(v)
+            elif k in ("guns", "equips", "fairys"):
+                out.setdefault(k, []).extend(v)
             else:
                 out[k] = f"{out[k]},{v}" if k in out else v
     return out
@@ -574,7 +759,7 @@ def _period_block(q, period):
              # quest's type up in this dictionary (WeekQuestInfo$$get_IsAccomplished)
              "progress": dict({str(r["type"]): 0 for r in rows.values() if r.get("type")}, **p["progress"])}
     if period == "weekly":
-        block["locked_quest_list"] = ""
+        block["locked_quest_list"] = ",".join(str(i) for i in p.get("locked") or [])
         block["weekly_accumulation"] = p["accumulation"]
     return block
 
@@ -645,11 +830,17 @@ def _accomplish(state, q, period, qid):
         for need, prize in _pairs(_config().get("daily_progress")):
             if len(p["done"]) >= need:
                 p["chest"] = True
-                mails.append(_prize_mail(state, MAIL_DAILY, 0, "daily_progress", prize))
+                mails.append(_prize_mail(state, MAIL_DAILY, need, "daily_progress", prize))
+    return mails + _pay_boxes(state, q)
+
+
+def _pay_boxes(state, q):
+    """Mail each weekly point box reached and not yet paid."""
+    w, mails = q["weekly"], []
     for need, prize in _pairs(_config().get("weekly_progress")):
         if w["accumulation"] >= need and need not in w["paid"]:
             w["paid"].append(need)
-            mails.append(_prize_mail(state, MAIL_WEEKLY, 0, "weekly_progress", prize))
+            mails.append(_prize_mail(state, MAIL_WEEKLY, need, "weekly_progress", prize))
     return mails
 
 
@@ -753,17 +944,23 @@ def achievement(state, body):
     return _achievement_block(state, q, ctx)
 
 
-# Point event (carnival) mails stay in the list once claimed, marked received: the client finds a
-# task's mail by type 16 and sub_id (CarnivalController$$CreateTasks) and otherwise keeps its own
-# unclaimed copy, offering the reward again (player report: "Total login" 1/2/3 days claimable twice).
+# Point event (carnival) mail types, which its Collect All may name. A claimed one must leave the list: the
+# client shows any type 16/17 mail it holds as claimable and never reads if_received
+# (CarnivalController <CreateTasks>b__1, <CreateRewards>b__0, Data <ExistsNewCarnivalTaskRewards>b__86_0).
 KEPT_MAILS = (16, 17)
 
 
+# Mailbox mails (MailType 1, 3, 6) stay listed once received, as live lists them (its Index/getMailList had 197
+# received type 1 mails); the client drops an unlocked one itself when it is claimed (Mail$$IsMailNeedDelete).
+MAILBOX_TYPES = (1, 3, 6)
+
+
 def mail_list(state, body):
+    """A locked mail stays listed after its end time, as live lists it (locking keeps it)."""
     start = _n(body, "start_id", 0)
     now = time.time()
-    return [m for m in _mails(state) if (not m["if_received"] or m["type"] in KEPT_MAILS)
-            and int(m["id"]) > start and m["end_time"] > now]
+    return [m for m in _mails(state) if (not m["if_received"] or int(m["type"]) in MAILBOX_TYPES)
+            and int(m["id"]) > start and (m["end_time"] > now or m.get("if_locked"))]
 
 
 def one_mail(state, body):
@@ -786,11 +983,16 @@ def get_mail_resource(state, body):
 def quick_get_quest_mails(state, body):
     """Claim every unclaimed quest reward mail (of the MailType in "type" when it is one)."""
     kind = (body or {}).get("type")
-    # the point event's Collect All sends type 16, param -1 (CarnivalController$$GetAllReward):
-    # its task mails (player report: "no items to receive" while they held unclaimed ones)
-    kinds = {int(kind)} if str(kind or "").isdigit() and (int(kind) in QUEST_MAILS or int(kind) in KEPT_MAILS) else set(QUEST_MAILS)
+    # Only the type asked for, as the client drops only those after the reply (RequestQuickGetResourceInQuests
+    # b__5_0): the quest screen's Collect All sends 7 (daily and weekly, the point boxes too) or 21 (career), the
+    # point event's 16 (param -1), and the daily exploration map 27 on its own when it opens
+    # (DailyMapCreater$$CheckHavePtPrize), which here claimed every quest mail, the weekly boxes with them.
+    if str(kind or "").isdigit():
+        kinds = {MAIL_DAILY, MAIL_WEEKLY} if int(kind) == MAIL_DAILY else {int(kind)}
+    else:
+        kinds = set(QUEST_MAILS)
     picked = [m for m in _mails(state) if not m["if_received"] and m["type"] in kinds]
-    pkg = _merge(grant(state, m) for m in picked)
+    pkg = quiet_records(state, _merge(grant(state, m) for m in picked))
     pkg["career_mail_ids"] = [int(m["id"]) for m in picked if m["type"] == MAIL_CAREER]
     return pkg
 
@@ -805,4 +1007,4 @@ def quick_get_all_mails(state, body):
     """Index/quickGetResourceInMails: claim every unclaimed mail; the reply is one package
     (RequestQuickGetResourceInMails reads it with Package$$GetPackage)."""
     picked = [m for m in _mails(state) if not m["if_received"] and m["end_time"] > time.time()]
-    return _merge(grant(state, m) for m in picked)
+    return quiet_records(state, _merge(grant(state, m) for m in picked))

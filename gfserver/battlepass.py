@@ -13,12 +13,13 @@ Reply formats (from the client's handlers):
       {"bonus": {"<level>": <package>}} (RequestGetBonus)
   Battlepass/getAllBonus {"battlepass_id"} -> {"free_bonus": {...}, "paid_bonus": {...},
       "extra_bonus": {...}} (RequestGetAllBonus)
-A new season's record starts with the pass exp at 0.
+A new season's record starts with the pass exp at 0. An imported account first takes its records and pass exp from
+the archived live Battlepass/index, so a season already started there goes on with its exp and claimed levels.
 """
 import time
 from functools import lru_cache
 
-from . import quests, squads, stc
+from . import archived, quests, squads, stc
 
 FREE, PAID, EXTRA = 1, 2, 3
 FMT = "%Y-%m-%d %H:%M:%S"
@@ -62,7 +63,33 @@ def _levels(text):
     return {int(p.split(":")[0]): int(p.split(":")[1]) for p in str(text or "").split(",") if ":" in p}
 
 
+def _import(state):
+    """Once per save: the live records and pass exp (archived Battlepass/index). A record this server opened for the
+    same season with nothing claimed gives way to the live one."""
+    if state.get("_battlepass_imported"):
+        return
+    state["_battlepass_imported"] = True
+    saved = archived.read(str(state["user_info"].get("user_id", "")), "Battlepass/index")
+    if not isinstance(saved, dict):
+        return
+    recs = state.setdefault("battlepass_with_user", [])
+    for live in saved.get("battlepass_with_user") or []:
+        if not isinstance(live, dict) or "battlepass_id" not in live:
+            continue
+        mine = next((r for r in recs if str(r["battlepass_id"]) == str(live["battlepass_id"])), None)
+        if mine is None:
+            recs.append(dict(live))
+        elif not mine.get("free_bonus") and not mine.get("paid_bonus") and str(mine.get("extra_bonus") or "0") == "0":
+            mine.clear()
+            mine.update(live)
+    for item, n in (saved.get("battlepass_pt_item") or {}).items():
+        if str(item).isdigit() and str(n).isdigit():
+            have = squads._item(state, str(item))
+            have["number"] = str(max(int(have.get("number") or 0), int(n)))
+
+
 def _record(state, row, now):
+    _import(state)
     recs = state.setdefault("battlepass_with_user", [])
     rec = next((r for r in recs if str(r["battlepass_id"]) == str(row["id"])), None)
     if rec is None:

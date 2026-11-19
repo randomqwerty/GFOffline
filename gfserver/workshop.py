@@ -12,13 +12,14 @@ Reply formats (from the client's handlers):
   Equip/develop        {"equip_id"}  {"mp","ammo","mre","part","build_slot","input_level"}
                                                     RequestStartEquipmentDevelop
   Equip/quickDevelop   "1"   {"build_slot"}           DevelopEquipmentController (CheckONE)
-  Equip/finishDevelop  {"equip_with_user": {...}} (read unguarded), optional fairy_with_user
+  Equip/finishDevelop  {"equip_with_user": {...}} (read unguarded), optional fairy_with_user (new fairy id)
   Equip/finishAllDevelop {"equip_with_user_add_list": [{"build_slot", "equip_id",
                        "equip_with_user"}], "fairy_with_user_add_list": [{"build_slot", "fairy_id",
                        "fairy_with_user_id"}], "cost_item3_num"}  RequestGetAllDevelopEquipment
   Fairy/develop        {"equip_ids": [{"slot", "info": {"type": 1, "fairy_id", "passive_skill",
-                       "quality_lv"}}]} (recorded live reply)  RequestStartFairyDevelop
-  Fairy/finishDevelop  {"fairy_with_user": {...}}  {"build_slot", "if_quick"}
+                       "quality_lv"}}]} (recorded live reply)  RequestStartFairyDevelop; a quick build
+                       (build_quick) is a list at the root instead: [{"fairy_with_user": {...}}]
+  Fairy/finishDevelop  {"fairy_with_user": new fairy id}  {"build_slot", "if_quick"}
   Fairy/finishAllDevelop {"fairy_with_user_add_list": [...], "cost_item3_num"}  {"if_quick"}
   Equip/eatEquip       {"equip_add_exp", "cost_item50_num"}  {"equip_with_user_id", "food"}
   Fairy/eatFairy       {"add_fairy_exp"}  {"fairy_with_user_id", "food"}
@@ -33,6 +34,7 @@ for a unit is kept in the save's "_max_life" (stripped from Index/index): the gu
 APPROXIMATION: repair costs and the enhancement exp of fodder are not in the client data; the
 client deducts its own repair cost, and fodder exp uses the tables below.
 """
+import math
 import random
 import time
 from functools import lru_cache
@@ -44,8 +46,8 @@ from .inventory import _remove_keyed
 EQUIP_OBTAIN = "3001"      # "Obtainable from Equipment Productions"
 FAIRY_OBTAIN = "39"        # "Obtain from Fairy Production"
 EQUIP_RARITY = {"standard": {2: 50, 3: 30, 4: 15, 5: 5}, "heavy": {3: 40, 4: 40, 5: 20}}
-FOOD_EQUIP_EXP = {1: 5, 2: 10, 3: 30, 4: 100, 5: 300}     # APPROXIMATION
-FOOD_FAIRY_EXP = 2000                                      # APPROXIMATION, per fairy
+EQUIP_PARTS_ITEM = "50"     # enhancement parts (UserInfo.equipCapsule)
+PROTOTYPE_FAIRY = 26
 STAT_KEYS = ("pow", "hit", "dodge", "speed", "rate", "critical_harm_rate", "critical_percent",
              "armor_piercing", "armor", "shield", "damage_amplify", "damage_reduction",
              "night_view_percent", "bullet_number_up")
@@ -190,6 +192,23 @@ def _fairy_pool():
     return [f["id"] for f in fairies().values() if FAIRY_OBTAIN in str(f["obtain_ids"]).split(",")]
 
 
+def _fairy_recipe_pool(body):
+    """The fairies the spent resources can make: every recommended fairy recipe (stc recommended_formula
+    develop_type 6, "<category>:<fairy ids>|..." in its preview) the spend covers. 500 each makes the basic 13;
+    2000/2000/2000/1000 adds the rest (Reinforcement, Shield, ...)."""
+    keys = ("mp", "ammo", "mre", "part")
+    spend = [int((body or {}).get(k) or 0) for k in keys]
+    have = {int(f) for f in _fairy_pool()}
+    pool = set()
+    for r in _formulas().values():
+        if str(r.get("develop_type")) != "6" or any(s < int(r.get(k) or 0) for s, k in zip(spend, keys)):
+            continue
+        for group in str(r.get("preview") or "").split("|"):
+            _, _, ids = group.partition(":")
+            pool.update(int(x) for x in ids.split(",") if x.strip().isdigit() and int(x) in have)
+    return sorted(pool) or sorted(have)
+
+
 @lru_cache(maxsize=1)
 def _talents():
     return [int(t["id"]) for t in stc.table("fairy_talent") if int(t["rank"] or 0) in (1, 2)]
@@ -283,7 +302,7 @@ def equip_finish_develop(state, body, rng=random):
     act = _take_act(state, "develop_fairy_act_info", slot)
     if act is None:
         return None
-    return {"equip_with_user": {}, "fairy_with_user": _collect_fairy(state, act)}
+    return {"equip_with_user": {}, "fairy_with_user": int(_collect_fairy(state, act)["id"])}
 
 
 def _finished(state, act, duration, quick):
@@ -325,29 +344,55 @@ def equip_finish_all(state, body, rng=random):
 
 
 def fairy_develop(state, body, rng=random):
-    """One fairy per slot: the given build_slot, or build_multi free slots."""
+    """One fairy per slot: the given build_slot, or build_multi free slots. A quick build is finished at once and
+    takes no slot (the client makes no build for it; one kept here held its slot unseen, and with all of them held
+    nothing could be built). Its reply is a list at the root, one {"fairy_with_user"} per fairy: for a quick build
+    RequestStartFairyDevelop reads the root, not equip_ids, and shows each fairy's result screen."""
     body = body or {}
     count = max(1, int(body.get("build_multi") or 1))
-    slots = [int(body["build_slot"])] if count == 1 and body.get("build_slot") else _equip_slots(state)[:count]
     quick = bool(int(body.get("build_quick") or 0))
+    if quick:
+        slots = [int(body.get("build_slot") or 0)] if count == 1 else list(range(count))
+    else:
+        slots = [int(body["build_slot"])] if count == 1 and body.get("build_slot") else _equip_slots(state)[:count]
     _pay(state, body, len(slots))
     out = []
+    pool = _fairy_recipe_pool(body)
     for slot in slots:
-        fairy_id, talent = rng.choice(_fairy_pool()), rng.choice(_talents())
+        fairy_id, talent = rng.choice(pool), rng.choice(_talents())
+        info = {"type": 1, "fairy_id": fairy_id, "passive_skill": talent, "quality_lv": 1}
         if quick:
             _use_item(state, QUICK_CONTRACT_ITEM)
-        _set_act(state, "develop_fairy_act_info", {"build_slot": slot, "start_time": 0 if quick else int(time.time()),
+            rec = new_fairy(state, fairy_id, talent)
+            out.append({"slot": slot, "info": info, "fairy_with_user": {"fairy_with_user_id": int(rec["id"]),
+                                                                        "fairy_id": fairy_id, "passive_skill": talent}})
+            continue
+        _set_act(state, "develop_fairy_act_info", {"build_slot": slot, "start_time": int(time.time()),
                                                    "fairy_id": fairy_id, "passive_skill": talent,
                                                    "quality_lv": 1, "is_produce": 0})
-        out.append({"slot": slot, "info": {"type": 1, "fairy_id": fairy_id, "passive_skill": talent, "quality_lv": 1}})
-    return {"equip_ids": out}
+        out.append({"slot": slot, "info": info})
+    return out if quick else {"equip_ids": out}
+
+
+def settle_quick_fairies(state):
+    """Quick fairy builds this server kept as finished builds (start_time 0): the client never had them, and they
+    held their slots. Each goes to the fairy list."""
+    acts = state.get("develop_fairy_act_info") or []
+    for a in [a for a in acts if not int(a.get("start_time") or 0)]:
+        _collect_fairy(state, a)
+    state["develop_fairy_act_info"] = [a for a in acts if int(a.get("start_time") or 0)]
 
 
 def fairy_finish_develop(state, body):
-    act = _take_act(state, "develop_fairy_act_info", int((body or {}).get("build_slot") or 0))
-    if act is None:
+    """The reply is the new fairy's id: the client builds it from its own slot record (RequestFairyDevelopFinish)."""
+    body = body or {}
+    slot = int(body.get("build_slot") or 0)
+    act = next((a for a in state.get("develop_fairy_act_info") or [] if int(a["build_slot"]) == slot), None)
+    if act is None or _finished(state, act, fairies().get(int(act["fairy_id"]), {}).get("develop_duration") or 0,
+                                bool(int(body.get("if_quick") or 0))) is None:
         return None
-    return {"fairy_with_user": _collect_fairy(state, act)}
+    _take_act(state, "develop_fairy_act_info", slot)
+    return {"fairy_with_user": int(_collect_fairy(state, act)["id"])}
 
 
 def fairy_finish_all(state, body):
@@ -364,19 +409,41 @@ def _level_for(exp, table, level_key, cap):
 
 
 def eat_equip(state, body):
+    from .quests import _config
     body = body or {}
     eqs = state.get("equip_with_user_info") or {}
     target = _find(eqs, body.get("equip_with_user_id") or 0)
     if target is None:
         return None
-    food = [str(i) for i in body.get("food") or [] if str(i) != str(target["id"])]
-    gained = sum(FOOD_EQUIP_EXP.get(int(equips().get(int(_find(eqs, f)["equip_id"]), {}).get("rank") or 2), 10)
-                 for f in food if _find(eqs, f) is not None)
+    food = [str(i) for i in body.get("food") or [] if str(i) != str(target["id"]) and _find(eqs, i) is not None]
+    parts = _use_item(state, EQUIP_PARTS_ITEM, max(0, int(body.get("cost_item50_num") or 0)))
+    gained = equip_food_exp(target, [_find(eqs, f) for f in food], parts)
     state["equip_with_user_info"] = _remove_keyed(eqs, food)
     target["equip_exp"] = str(int(target.get("equip_exp") or 0) + gained)
     cap = int(equips().get(int(target["equip_id"]), {}).get("max_level") or 0) or 10
-    target["equip_level"] = str(_level_for(int(target["equip_exp"]), stc.catch("equip_exp_info"), "level", cap))
-    return {"equip_add_exp": gained, "cost_item50_num": 0}
+    rank = int(equips().get(int(target["equip_id"]), {}).get("rank") or 3)
+    rate = dict(x.split(":") for x in str(_config().get("equip_exp_rate") or "").split(",") if ":" in x).get(str(rank), 1)
+    # equip_exp_info scaled by equip_exp_rate for the rarity (Equip.CalculateExpToNextLevel)
+    need = [{"level": r["level"], "exp": math.ceil(int(r["exp"]) * float(rate))} for r in stc.catch("equip_exp_info")]
+    target["equip_level"] = str(_level_for(int(target["equip_exp"]), need, "level", cap))
+    return {"equip_add_exp": gained, "cost_item50_num": parts}
+
+
+def equip_food_exp(target, food, parts):
+    """Exp the client previews (ResearchEquipmentStrengthenController.CalculateExpFromList, OnClickCapsule):
+    equip_intensive_exp per enhancement part; per equipment eaten, basic_equip_exp by its rarity
+    (times same_equip_exp_rate for the same equipment) plus equipment_strengthen_ratio of its own exp."""
+    from .quests import _config
+    cfg = _config()
+    basic = {int(a): int(b) for a, b in (x.split(":") for x in str(cfg.get("basic_equip_exp") or "").split(",") if ":" in x)}
+    same = int(cfg.get("same_equip_exp_rate") or 1)
+    ratio = float(cfg.get("equipment_strengthen_ratio") or 0)
+    exp = parts * int(cfg.get("equip_intensive_exp") or 0)
+    for f in food:
+        e = basic.get(int(equips().get(int(f["equip_id"]), {}).get("rank") or 2), 0)
+        exp += e * same if f["equip_id"] == target["equip_id"] else e
+        exp += math.ceil(int(f.get("equip_exp") or 0) * ratio)
+    return exp
 
 
 def eat_fairy(state, body):
@@ -386,11 +453,30 @@ def eat_fairy(state, body):
     if target is None:
         return None
     food = [str(i) for i in body.get("food") or [] if str(i) != str(target["id"]) and _find(fs, i) is not None]
-    gained = FOOD_FAIRY_EXP * len(food)
+    gained = sum(fairy_food_exp(target, _find(fs, f)) for f in food)
     state["fairy_with_user_info"] = _remove_keyed(fs, food)
-    target["fairy_exp"] = str(int(target.get("fairy_exp") or 0) + gained)
-    target["fairy_lv"] = str(max(1, _level_for(int(target["fairy_exp"]), stc.catch("fairy_exp_info"), "id", 100)))
+    need = _quality_need(int(target["fairy_id"]))
+    exp = min(max(need.values()), int(target.get("quality_exp") or 0) + gained) if need else 0
+    target["quality_exp"] = str(exp)
+    target["quality_lv"] = str(max([lv for lv, e in need.items() if exp >= e] or [1]))
+    # RequestFairyStrengthenController adds add_fairy_exp to the rarity exp (quality_exp)
     return {"add_fairy_exp": gained}
+
+
+def fairy_food_exp(target, food):
+    """Rarity exp from one fairy eaten: the same fairy, or a Prototype Fairy, gives 100 and any
+    other 10, times 1.5 when the talents match."""
+    same = food["fairy_id"] == target["fairy_id"] or int(food["fairy_id"]) == PROTOTYPE_FAIRY
+    exp = 100 if same else 10
+    if str(food.get("passive_skill")) == str(target.get("passive_skill")):
+        exp = exp * 3 // 2
+    return exp
+
+
+def _quality_need(fairy_id):
+    """{rarity level: total exp}, from fairy.quality_need_number "1:0,2:100,..."."""
+    raw = str(fairies().get(fairy_id, {}).get("quality_need_number") or "")
+    return {int(a): int(b) for a, b in (x.split(":") for x in raw.split(",") if ":" in x)}
 
 
 def retire_equip(state, body):
@@ -451,7 +537,9 @@ def gift_to_gun(state, body):
     if int(gift.get("exp") or 0):
         from .missions import add_gun_exp
         add_gun_exp(g, int(gift["exp"]) * num)
-    return {"gun_with_user_id": str(g["id"]), "gun_exp": str(g.get("gun_exp") or 0), "skin_add_favor": 0}
+    # the client takes the new affection from all_favorup_gun (DormController.SettleDormFavor)
+    return {"gun_with_user_id": str(g["id"]), "gun_exp": str(g.get("gun_exp") or 0), "skin_add_favor": 0,
+            "all_favorup_gun": [{"gun_with_user_id": int(g["id"]), "favor_afteradd": int(g["favor"])}]}
 
 
 BLACK_CARD_EXCHANGE = "43"
@@ -612,15 +700,33 @@ def core_recover_equip(state, body, rng=random):
     return {"id": new_equip(state, eid, rng)["id"]}
 
 
+# A random box (present type 2, the Frontline Protocol Extra Prize) draws one of its drop_package's prizes. The
+# table gives no rates; a prize holding a RARE_DRAWS item weighs that much, the others DRAW_WEIGHT (7 Oath
+# Certificate about 1 in 110, 605 Aid Commission about 1 in 28).
+# APPROXIMATION: the weights (player report: the Oath extremely rare, the Aid Commission rare).
+DRAW_WEIGHT = 15
+RARE_DRAWS = {7: 1, 605: 4}
+
+
+def _draw_weight(prize_id):
+    from . import quests
+    items = [int(p.split("-")[0]) for p in str(quests.prizes().get(prize_id, {}).get("item_ids") or "").split(",")
+             if p.split("-")[0].strip().isdigit()]
+    return min([RARE_DRAWS[i] for i in items if i in RARE_DRAWS], default=DRAW_WEIGHT)
+
+
 @lru_cache(maxsize=1)
 def _presents():
     return {int(r["item_id"]): r for r in stc.table("present")}
 
 
-def open_gift_box(state, body):
-    """Giftbox/open {"gift_box_id", "open_num", "select_list", plus the chosen prize fields of a
-    selectable box (gun_id, equip_ids, item_ids, ...)} -> {"presentBox": package} (RequestOpenPresentBox).
-    A fixed box pays its prize_id (stc present) per box opened."""
+def open_gift_box(state, body, rng=random):
+    """Giftbox/open {"gift_box_id", "open_num", "select_list"} -> package (RequestOpenPresentBox builds its reward
+    popup from the reply itself, Package$$.ctor(jsonData); "presentBox" is only the source name it passes to
+    GetPackage. Nested under a "presentBox" key, the popup had nothing in it and closed at once).
+    present.type 1/4: pick from the prize's lists; select_list holds the picks as {field: {id: count}}
+    (or {field: id} for gun_id and the like). Type 2: one random drop_content of drop_package_id per box
+    (_draw_weight). Type 3: the whole prize per box. Older clients put a pick at the top level."""
     from . import quests
     body = body or {}
     box = _presents().get(int(body.get("gift_box_id") or 0))
@@ -630,16 +736,50 @@ def open_gift_box(state, body):
     have = next((i for i in state.get("item_with_user_info", []) if str(i["item_id"]) == str(box["item_id"])), None)
     if have is None or int(have["number"]) < num:
         return None
-    have["number"] = str(int(have["number"]) - num)
-    chosen = {k: str(body[k]) for k in quests.LISTS + ("gun_id",) if body.get(k)}
-    one = quests._reward(quests.prizes().get(int(box["prize_id"] or 0), {}))
-    # a pick-one box lists bare ids ("16,20,32"); the client sends the choice in the same field
-    if any("," in str(v) and "-" not in str(v) for k, v in one.items() if k in quests.LISTS + ("gun_id",)):
-        if not chosen:
-            have["number"] = str(int(have["number"]) + num)
+    fields = quests.LISTS + ("gun_id",)
+    if int(box.get("drop_package_id") or 0) and not int(box.get("prize_id") or 0):
+        options = [int(x) for x in str(_drop_packages().get(int(box["drop_package_id"])) or "").split(",") if x.strip()]
+        options = [_drop_contents()[o] for o in options if o in _drop_contents()]
+        if not options:
             return None
-        one = chosen
-    return {"presentBox": quests.grant(state, quests._merge([one] * num))}
+        weights = [_draw_weight(o) for o in options]
+        rows = [quests.prizes().get(rng.choices(options, weights=weights)[0], {}) for _ in range(num)]
+        have["number"] = str(int(have["number"]) - num)
+        return quests.quiet_records(state, quests.grant(state, quests._merge([quests._reward(r) for r in rows])))
+    one = quests._reward(quests.prizes().get(int(box["prize_id"] or 0), {}))
+    # a pick box lists bare ids ("16,20,32"); a fixed one lists id-amount pairs
+    if any("," in str(v) and "-" not in str(v) for k, v in one.items() if k in fields) or int(box.get("type") or 0) in (1, 4):
+        chosen = _picks(body.get("select_list"), fields) or {k: str(body[k]) for k in fields if body.get(k)}
+        if not chosen:
+            return None
+        pkg = chosen
+    else:
+        pkg = quests._merge([one] * num)
+    have["number"] = str(int(have["number"]) - num)
+    return quests.quiet_records(state, quests.grant(state, pkg))
+
+
+def _picks(select, fields):
+    """select_list {"equip_ids": {"16": 1}, "gun_id": 5} -> {"equip_ids": "16-1", "gun_id": "5"}."""
+    out = {}
+    for k, v in (select.items() if isinstance(select, dict) else ()):
+        if k not in fields:
+            continue
+        if isinstance(v, dict):
+            out[k] = ",".join(f"{i}-{int(n)}" for i, n in v.items() if int(n) > 0)
+        elif str(v) not in ("", "0"):
+            out[k] = str(v)
+    return {k: v for k, v in out.items() if v}
+
+
+@lru_cache(maxsize=1)
+def _drop_packages():
+    return {int(r["id"]): r["content_ids"] for r in stc.table("drop_package")}
+
+
+@lru_cache(maxsize=1)
+def _drop_contents():
+    return {int(r["id"]): int(r["prize_id"]) for r in stc.table("drop_content")}
 
 
 # --- equipment "produce" builds (targeted, from a recommended formula)
@@ -649,9 +789,10 @@ def open_gift_box(state, body):
 #     The equipment is drawn from the formula's produce_preview "equip_id:weight,..." (stc
 #     recommended_formula), falling back to the ids in its preview. The client pays the cost.
 #   Equip/produceRecover / spProduceRecover -> {"equip_type_(sp)produce_num",
-#     "equip_type_(sp)produce_recover_time"}: the daily produce count, reported full
-#     (game_config equip_type_produce_limit / equip_type_spproduce_limit).
-# APPROXIMATION: the daily limits are not enforced.
+#     "equip_type_(sp)produce_recover_time"} (RequestEquipProduceRecover): the free targeted productions left
+#     this week and when they refill to game_config equip_type_produce_limit (20) / equip_type_spproduce_limit,
+#     Monday 00:00 server time (live: 1792396800). Kept in user_record, which the account brings from live;
+#     each build uses one (the client counts them down itself: UserRecord.equipTypeProduceFreeNum).
 
 @lru_cache(maxsize=1)
 def _formulas():
@@ -672,7 +813,33 @@ def _produce_pool(formula):
     return {k: w for k, w in pool.items() if k in equips()}
 
 
-def produce_develop(state, body, rng=random):
+PRODUCE_KEYS = {False: ("equip_type_produce_num", "equip_type_produce_recover_time", "equip_type_produce_limit", 20),
+                True: ("equip_type_spproduce_num", "equip_type_spproduce_recover_time", "equip_type_spproduce_limit", 10)}
+
+
+def produce_counts(state, sp=False, now=None):
+    """(free builds left, refill time), refilled when the week has turned."""
+    from .account import _next_reset
+    now = int(now or time.time())
+    num_key, time_key, limit_key, default = PRODUCE_KEYS[sp]
+    rec = state.setdefault("user_record", {})
+    if now >= int(rec.get(time_key) or 0):
+        rec[num_key] = str(_config_value(limit_key, default))
+        rec[time_key] = str(_next_reset(2, now))
+    return int(rec.get(num_key) or 0), int(rec[time_key])
+
+
+def _use_produce(state, sp, n):
+    num_key = PRODUCE_KEYS[sp][0]
+    left, _ = produce_counts(state, sp)
+    state["user_record"][num_key] = str(max(0, left - n))
+
+
+def sp_produce_develop(state, body, rng=random):
+    return produce_develop(state, body, rng, sp=True)
+
+
+def produce_develop(state, body, rng=random, sp=False):
     body = body or {}
     formula = _formulas().get(int(body.get("recommended_formula_id") or 0))
     pool = _produce_pool(formula) if formula else {}
@@ -689,6 +856,7 @@ def produce_develop(state, body, rng=random):
             _set_act(state, "develop_equip_act_info", {"build_slot": slot, "start_time": int(time.time()), "equip_id": eid,
                                                        "passive_skill": 0, "quality_lv": 0, "is_produce": 1})
             out.append({"slot": slot, "equip_id": eid})
+    _use_produce(state, sp, len(out))
     return out
 
 
@@ -697,11 +865,11 @@ def _config_value(name, default):
     return int(row["parameter_value"]) if row else default
 
 
-def produce_recover(state, body):
-    return {"equip_type_produce_num": _config_value("equip_type_produce_limit", 20),
-            "equip_type_produce_recover_time": int(time.time())}
+def produce_recover(state, body, now=None):
+    left, at = produce_counts(state, False, now)
+    return {"equip_type_produce_num": left, "equip_type_produce_recover_time": at}
 
 
-def sp_produce_recover(state, body):
-    return {"equip_type_spproduce_num": _config_value("equip_type_spproduce_limit", 10),
-            "equip_type_spproduce_recover_time": int(time.time())}
+def sp_produce_recover(state, body, now=None):
+    left, at = produce_counts(state, True, now)
+    return {"equip_type_spproduce_num": left, "equip_type_spproduce_recover_time": at}
