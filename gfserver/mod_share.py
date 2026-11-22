@@ -1,6 +1,6 @@
 """Sharing mods as one .zip file: Mod Studio's Export button writes one, the launcher's "Add a mod" reads one.
 
-A shared zip holds one mod folder (mods/<name>/ with mod.json, tables/, catchdata/, story/). Adding one checks it before
+A shared zip holds one mod folder (mods/<name>/ with mod.json, tables/, catchdata/, story/, art/). Adding one checks it before
 anything is written: one mod.json, no paths outside the folder, only the file types mods use, and a size limit. A mod
 with the same folder name is replaced, and the old copy kept in mods/_replaced/ (folders starting with _ are not loaded).
 """
@@ -16,6 +16,9 @@ from pathlib import Path, PurePosixPath
 from . import mods
 
 KINDS = (".json", ".txt", ".md")          # mods hold table rows, text and story files, never game art
+# the mod's own pictures and music, under art/ (tools/custom_art.py, tools/game_assets.py; music as ADX, and
+# the uploaded file for listening to it in Mod Studio)
+ART_KINDS = (".png", ".adx", ".mp3", ".ogg", ".m4a", ".wav", ".flac", ".opus", ".webm")
 MAX_BYTES = 50 * 2**20
 NAME = re.compile(r"[A-Za-z0-9_\-]+")
 
@@ -72,7 +75,8 @@ def inspect(path):
                 skipped.append(i.filename)
                 continue
             rel = p.relative_to(home)
-            if p.suffix.lower() not in KINDS or any(part.startswith(".") for part in rel.parts):
+            art = rel.parts[:1] == ("art",) and p.suffix.lower() in ART_KINDS
+            if (p.suffix.lower() not in KINDS and not art) or any(part.startswith(".") for part in rel.parts):
                 skipped.append(i.filename)
                 continue
             files[rel.as_posix()] = z.read(i)

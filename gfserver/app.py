@@ -15,7 +15,7 @@ import traceback
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from . import battle_hold, client_settings, config, crypto, live_view, mods, passport, transit
+from . import battle_hold, client_settings, config, crypto, live_view, mods, paid_shop, passport, transit
 from .handlers import HANDLERS, Request, Response, canned_response
 from .store import Store
 
@@ -153,7 +153,9 @@ class GFHandler(BaseHTTPRequestHandler):
             base = config.base_package()
             cands = [p for p in [mods.package_file(segs[1])] if p] + [arch / "stc" / segs[1]] + ([base[0]] if base else [])
         elif len(segs) == 2 and segs[0] == "pc":
-            cands = [arch / "cdn" / "pc" / segs[1], config.GAME_DIR / "GirlsFrontLine_Data" / "StreamingAssets" / "Res" / "Pc" / segs[1]]
+            # a mod build's bundles and music files (tools/build_mods.py) first: they are what the config declares
+            cands = [config.ROOT / "build" / segs[1], arch / "cdn" / "pc" / segs[1],
+                     config.GAME_DIR / "GirlsFrontLine_Data" / "StreamingAssets" / "Res" / "Pc" / segs[1]]
         else:
             return None
         if ".." in segs[1] or "/" in segs[1] or "\\" in segs[1]:
@@ -247,8 +249,8 @@ class GFHandler(BaseHTTPRequestHandler):
                               "application/json; charset=utf-8")
         if form.get("c") == "micasdk" and form.get("a") == "getProducts":
             # ServerInfo.RequestProductList (the shop's paid goods): Err_No 100 = OK, and every key
-            # besides Err_No/Err_Msg is a product, so none are listed.
-            return self._send(json.dumps({"Err_No": 100, "Err_Msg": ""}), "application/json; charset=utf-8")
+            # besides Err_No/Err_Msg is a product (paid_shop.py)
+            return self._send(json.dumps(paid_shop.product_list(), ensure_ascii=False), "application/json; charset=utf-8")
         if not parts and form.get("a") == "bannerAndSpot":
             # ServerInfo.RequestBannerAndAnnounce: GET <R_BANNER addr>?c=game&a=bannerAndSpot,
             # plain JSON read by Request.RequestResult (Err_No 100 = OK) + banner/spot lists.

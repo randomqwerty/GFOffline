@@ -20,7 +20,7 @@ from tkinter import filedialog, messagebox, ttk
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-from gfserver import client_settings as cs, config, install, mods  # noqa: E402
+from gfserver import client_settings as cs, config, install, mods, updater  # noqa: E402
 from gfserver import launcher_panels as panels  # noqa: E402
 
 STUDIO_PORT = 8770
@@ -162,8 +162,8 @@ class Launcher(tk.Tk):
         self.teams = None
         self.tool_buttons = {}
         self.title("GF1 Offline")
-        self.geometry("780x860")
-        self.minsize(680, 760)
+        self.geometry(f"780x{min(860, self.winfo_screenheight() - 80)}")
+        self.minsize(520, 360)
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
         problem = None
@@ -181,39 +181,110 @@ class Launcher(tk.Tk):
         style.configure("Muted.TLabel", foreground="#666666")
         style.configure("Warn.TLabel", foreground="#b3261e")
 
-        tabs = ttk.Notebook(self)
-        tabs.pack(fill="both", expand=True, padx=10, pady=(10, 4))
+        # tabs above, the log below, with a divider to drag; the log keeps its height when the window gets smaller
+        self.panes = ttk.PanedWindow(self, orient="vertical")
+        self.panes.pack(fill="both", expand=True, padx=10, pady=(10, 10))
+        upper = ttk.Frame(self.panes)
+        tabs = ttk.Notebook(upper)
+        tabs.pack(fill="both", expand=True, pady=(0, 4))
+        self.scrollers = []
+        self.bind_all("<MouseWheel>", self.wheel, add="+")
         self.build_play(self.tab(tabs, "Play"))
         self.build_battle(self.tab(tabs, "Battle tools"))
         self.build_keys(self.tab(tabs, "Keys"))
         self.build_tools(self.tab(tabs, "Tools"))
         self.live = panels.Worker()
-        self.map_tab = panels.MapTab(self.tab(tabs, "Map"), self.live, self.setting_var)
+        self.map_tab = panels.MapTab(self.tab(tabs, "Map", scroll=False), self.live, self.setting_var)     # it zooms and drags itself
         self.battle_prompt = panels.BattlePrompt(self, self.live)
         self.tabs, self.live_ticks = tabs, 0
 
         self.note = tk.StringVar(value=problem or "")
-        ttk.Label(self, textvariable=self.note, style="Warn.TLabel", wraplength=750).pack(fill="x", padx=12)
-        out = ttk.Frame(self)
-        out.pack(fill="x", padx=10, pady=(2, 10))
+        ttk.Label(upper, textvariable=self.note, style="Warn.TLabel", wraplength=750).pack(fill="x", padx=2)
+        out = ttk.Frame(self.panes)
         self.log = tk.Text(out, height=8, wrap="word", state="disabled", font=("Consolas", 9), relief="solid", borderwidth=1)
         bar = ttk.Scrollbar(out, command=self.log.yview)
         self.log.configure(yscrollcommand=bar.set)
-        self.log.pack(side="left", fill="both", expand=True)
         bar.pack(side="right", fill="y")
+        self.log.pack(side="left", fill="both", expand=True)
+        self.panes.add(upper, weight=1)
+        self.panes.add(out, weight=0)
 
         self.refresh()
         self.check_mods()
+        if self.settings.get("check_updates") and updater.frozen():
+            self.check_updates()
         self.poll_job = self.after(100, self.poll)
 
     def destroy(self):
         self.after_cancel(self.poll_job)
         super().destroy()
 
-    def tab(self, tabs, title):
-        frame = ttk.Frame(tabs, padding=14)
-        tabs.add(frame, text=title)
+    def tab(self, tabs, title, scroll=True):
+        """The frame a tab's contents go in; with scroll, inside a canvas with scrollbars for when the window is too small."""
+        if not scroll:
+            frame = ttk.Frame(tabs, padding=14)
+            tabs.add(frame, text=title)
+            return frame
+        outer = ttk.Frame(tabs)
+        tabs.add(outer, text=title)
+        canvas = tk.Canvas(outer, highlightthickness=0, borderwidth=0, background=ttk.Style(self).lookup("TFrame", "background") or None)
+        down = ttk.Scrollbar(outer, orient="vertical", command=canvas.yview)
+        across = ttk.Scrollbar(outer, orient="horizontal", command=canvas.xview)
+        canvas.configure(yscrollcommand=down.set, xscrollcommand=across.set)
+        outer.rowconfigure(0, weight=1)
+        outer.columnconfigure(0, weight=1)
+        canvas.grid(row=0, column=0, sticky="nsew")
+        frame = ttk.Frame(canvas, padding=14)
+        item = canvas.create_window(0, 0, window=frame, anchor="nw")
+
+        wraps, seen = {}, [None]
+
+        def rewrap(width):
+            # labels that wrap do so within the window, up to the width they were made with
+            todo = list(frame.winfo_children())
+            while todo:
+                wdg = todo.pop()
+                todo += wdg.winfo_children()
+                if isinstance(wdg, ttk.Label):
+                    made = wraps.setdefault(wdg, int(str(wdg.cget("wraplength") or 0) or 0))
+                    if made > 0:
+                        room = width - (wdg.winfo_rootx() - frame.winfo_rootx()) - 24
+                        wdg.configure(wraplength=max(200, min(made, room)))
+
+        def fit(_=None):
+            # the contents get the canvas's width (labels wrap in it) unless they need more; bars show only when needed
+            if seen[0] != canvas.winfo_width() and canvas.winfo_width() > 1:
+                seen[0] = canvas.winfo_width()
+                rewrap(seen[0])
+            w, h = max(canvas.winfo_width(), frame.winfo_reqwidth()), max(canvas.winfo_height(), frame.winfo_reqheight())
+            canvas.itemconfigure(item, width=w)         # the height follows the contents, so this runs again when they change
+            canvas.configure(scrollregion=(0, 0, w, h))
+            if frame.winfo_reqheight() <= canvas.winfo_height():
+                canvas.yview_moveto(0)
+            for bar, need, place in ((down, frame.winfo_reqheight() > canvas.winfo_height(), dict(row=0, column=1, sticky="ns")),
+                                     (across, frame.winfo_reqwidth() > canvas.winfo_width(), dict(row=1, column=0, sticky="ew"))):
+                if need and not bar.winfo_ismapped():
+                    bar.grid(**place)
+                elif not need and bar.winfo_ismapped():
+                    bar.grid_remove()
+        frame.bind("<Configure>", fit)
+        canvas.bind("<Configure>", fit)
+        self.scrollers.append(canvas)
         return frame
+
+    def wheel(self, event):
+        """The mouse wheel scrolls the tab under the pointer; the log, lists, text boxes and the map handle it themselves."""
+        self.scroll_at(self.winfo_containing(event.x_root, event.y_root), event.delta)
+
+    def scroll_at(self, widget, delta):
+        while widget is not None:
+            if widget in self.scrollers:
+                if widget.yview() != (0.0, 1.0):
+                    widget.yview_scroll(-1 * (delta // 120 or (1 if delta > 0 else -1)), "units")
+                return
+            if isinstance(widget, (tk.Text, tk.Listbox, tk.Canvas, ttk.Combobox, ttk.Spinbox)):
+                return
+            widget = widget.master
 
     # ------------------------------------------------------------ Play
 
@@ -244,6 +315,96 @@ class Launcher(tk.Tk):
         self.studio_button.pack(side="left")
         self.studio_stop = ttk.Button(row, text="Stop", command=lambda: self.runner.stop("studio"))
         self.studio_stop.pack(side="left", padx=6)
+        ttk.Separator(box).pack(fill="x", pady=14)
+        self.build_updates(box)
+
+    # ------------------------------------------------------------ updates
+
+    def build_updates(self, box):
+        ttk.Label(box, text="Updates", style="Head.TLabel").pack(anchor="w")
+        row = ttk.Frame(box)
+        row.pack(anchor="w", pady=(2, 0))
+        ttk.Label(row, text=f"This is version {updater.VERSION}.").pack(side="left")
+        self.update_button = ttk.Button(row, text="Check for updates", command=lambda: self.check_updates(asked=True))
+        self.update_button.pack(side="left", padx=8)
+        self.var_check_updates = self.setting_var("check_updates")
+        ttk.Checkbutton(box, text="Look for a new version when the launcher starts", variable=self.var_check_updates).pack(anchor="w", pady=(4, 0))
+        ttk.Label(box, text="New versions come from the GF Offline releases on GitHub. Updating keeps your saves, mods and settings.",
+                  style="Muted.TLabel", wraplength=720).pack(anchor="w")
+        self.updating = False
+
+    def check_updates(self, asked=False):
+        if self.updating:
+            return
+        self.updating = True
+        self.update_button.configure(state="disabled")
+        if asked:
+            self.say("Looking for a new version…")
+
+        def work():
+            try:
+                self.runner.events.put(("update", updater.check(), asked))
+            except updater.UpdateError as e:
+                self.runner.events.put(("update", e, asked))
+        threading.Thread(target=work, daemon=True).start()
+
+    def on_update(self, info, asked):
+        self.updating = False
+        self.update_button.configure(state="normal")
+        if isinstance(info, Exception):
+            if asked:
+                self.say(f"Couldn't look for updates: {info}")
+            return
+        if info is None:
+            if asked:
+                self.say(f"Version {updater.VERSION} is the newest.")
+            return
+        notes = info["notes"][:600] + ("…" if len(info["notes"]) > 600 else "")
+        about = f"GF Offline {info['version']} is out (this is {updater.VERSION}).\n\n" + (notes + "\n\n" if notes else "")
+        if not updater.frozen() or not info["url"]:
+            if messagebox.askyesno("New version", about + "Open its download page?", parent=self):
+                webbrowser.open(info["page"])
+            return
+        size = f" ({info['size'] / 1e6:.0f} MB)" if info["size"] else ""
+        busy = [self.names.get(k, k) for k in self.runner.procs if self.runner.running(k)]
+        warn = ("When it's downloaded, this closes: " + ", ".join(busy) + ".\n\n") if busy else ""
+        if not messagebox.askyesno("New version", about + f"Download and install it now{size}? The launcher restarts when it's done. "
+                                   "Your saves, mods and settings stay.\n\n" + warn, parent=self):
+            return
+        self.updating = True
+        self.update_button.configure(state="disabled")
+        self.say(f"Downloading GF Offline {info['version']}…")
+        shown = [0]
+
+        def progress(done, total):
+            step = int(done * 10 / total) if total else 0
+            if step > shown[0]:
+                shown[0] = step
+                self.runner.events.put(("line", "update", f"  {step * 10}%"))
+
+        def work():
+            try:
+                self.runner.events.put(("update_ready", updater.download(info, progress=progress), info["version"]))
+            except (updater.UpdateError, OSError) as e:
+                self.runner.events.put(("update_ready", e, info["version"]))
+        threading.Thread(target=work, daemon=True).start()
+
+    def on_update_ready(self, new, version):
+        if isinstance(new, Exception):
+            self.updating = False
+            self.update_button.configure(state="normal")
+            self.say(f"The update didn't download: {new}")
+            return
+        try:
+            updater.install(new)
+        except (updater.UpdateError, OSError) as e:
+            self.updating = False
+            self.update_button.configure(state="normal")
+            self.say(f"The update couldn't start: {e}")
+            return
+        self.say(f"Installing GF Offline {version}; the launcher opens again when it's done.")
+        self.runner.stop_all()
+        self.destroy()
 
     ACCOUNTS = (("own", "Your account", "The account file in player/; the sample account when there is none."),
                 ("sample", "Sample account", "Most things already unlocked."),
@@ -382,7 +543,8 @@ class Launcher(tk.Tk):
     def save_settings(self):
         """Saved as it changes. Something refused, such as one key on two actions while swapping them, stays on screen unsaved."""
         try:
-            self.settings = {**cs.save(self.settings, self.settings_file), **{k: self.settings[k] for k in cs.SIM_NUMBERS}}
+            typed = {k: self.settings[k] for k in cs.SIM_NUMBERS}
+            self.settings = {**cs.save(self.settings, self.settings_file), **typed}
             self.settings_ok = True
             self.note.set("")
         except cs.SettingsError as e:
@@ -396,7 +558,8 @@ class Launcher(tk.Tk):
     def plain_error(e):
         s = str(e)
         for key, name in (("sim_runs", "Times to run each fight"), ("sim_seed", "Fixed random seed"), ("sim_enemy_team", "Enemy team"),
-                          ("sim_limit_drone_seconds", "Drone fight time limit"), ("sim_limit_other_seconds", "Other fight time limit")):
+                          ("sim_limit_drone_seconds", "Drone fight time limit"), ("sim_limit_other_seconds", "Other fight time limit"),
+                          *((n, label) for n, label, _, _ in cs.GAME_CONFIG)):
             s = s.replace(key, name)
         return s
 
@@ -435,6 +598,7 @@ class Launcher(tk.Tk):
         ttk.Label(box, text="Enemy team ids (as GFLMaps shows them), separated by commas. Target practice lists these in place of your "
                             "saved list, which is kept; leave it empty to get your list back. Applies at the next login.",
                   style="Muted.TLabel", wraplength=700).pack(anchor="w", padx=(22, 0))
+        self.build_rules(box)
         self.switch(box, "simulator", "Simulator",
                     "Changes target practice fights so you can test a team: pick the enemy, repeat the fight, and get the results as a table.")
 
@@ -466,6 +630,34 @@ class Launcher(tk.Tk):
         ttk.Label(grid, text="Start it from a target practice stage. Results go to battle_logs/simulator_<date>.csv in the game folder.",
                   style="Muted.TLabel", wraplength=640).grid(row=8, column=0, columnspan=2, sticky="w")
         self.show_simulator()
+
+    def build_rules(self, box):
+        ttk.Label(box, text="Game rules").pack(anchor="w", pady=(8, 0))
+        ttk.Label(box, text="Change some of the game's own limits. Leave a box empty for the game's value, shown beside it. "
+                            "Applies the next time you start the game.", style="Muted.TLabel", wraplength=700).pack(anchor="w", padx=(22, 0))
+        grid = ttk.Frame(box, padding=(22, 4, 0, 0))
+        grid.pack(anchor="w", fill="x")
+        try:
+            from gfserver import stc
+            game = {r["parameter_name"]: r["parameter_value"] for r in stc._catchdata()["game_config_info"]}
+        except Exception:     # no game data yet: the values just aren't shown
+            game = {}
+        saved = self.settings.get("game_config") or {}
+        self.rule_vars = {}
+        for row, (name, label, lo, hi) in enumerate(cs.GAME_CONFIG):
+            ttk.Label(grid, text=label).grid(row=row, column=0, sticky="w", pady=2)
+            var = tk.StringVar(value=str(saved.get(name, "")))
+            var.trace_add("write", lambda *_, n=name, v=var: self.set_rule(n, v.get().strip()))
+            ttk.Entry(grid, textvariable=var, width=10).grid(row=row, column=1, sticky="w", padx=8)
+            hint = f"game: {game[name]}" if name in game else ""
+            ttk.Label(grid, text=f"{hint}  ({lo} to {hi})".strip(), style="Muted.TLabel").grid(row=row, column=2, sticky="w")
+            self.rule_vars[name] = var
+
+    def set_rule(self, name, value):
+        rules = dict(self.settings.get("game_config") or {})
+        rules[name] = value
+        self.settings["game_config"] = rules
+        self.save_settings()
 
     def limit_row(self, grid, row, key, label):
         on = self.setting_var(key)
@@ -666,13 +858,15 @@ class Launcher(tk.Tk):
     # ------------------------------------------------------------ what's running
 
     def say(self, line):
+        following = not self.log.winfo_viewable() or self.log.yview()[1] >= 0.999       # scrolled up to read: stay there
         self.log.configure(state="normal")
         self.log.insert("end", line + "\n")
         extra = int(self.log.index("end-1c").split(".")[0]) - LOG_LINES
         if extra > 0:
             self.log.delete("1.0", f"{extra + 1}.0")
         self.log.configure(state="disabled")
-        self.log.see("end")
+        if following:
+            self.log.see("end")
 
     def poll(self):
         changed = False
@@ -683,6 +877,10 @@ class Launcher(tk.Tk):
                     self.say(event[2])
                 elif event[0] == "stale":
                     self.show_stale(event[1])
+                elif event[0] == "update":
+                    self.on_update(event[1], event[2])
+                elif event[0] == "update_ready":
+                    self.on_update_ready(event[1], event[2])
                 else:
                     changed = True
                     self.on_exit(event[1], event[2])

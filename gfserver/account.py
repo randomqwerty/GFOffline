@@ -19,11 +19,14 @@ APPROXIMATION: the natural regen rate and cap are server-side; GF's commonly cit
 3 minutes is used, stopping at a cap that grows with commander level (REGEN_CAP_*).
 """
 import json
+import logging
 import random
 import time
 from functools import lru_cache
 
 from . import archived
+
+log = logging.getLogger(__name__)
 
 REGEN_INTERVAL = 180
 REGEN_AMOUNT = {"mp": 3, "ammo": 3, "mre": 3, "part": 1}
@@ -263,11 +266,13 @@ def list_todo(state, body):
 def mall_buy(state, body):
     """Mall/gemToResource, gemToItem, gemToGiftbag {"mall_id", "num", "is_special"}
     (MallGood$$RequestBuy) -> {"status": 1, "prize": [package per good]} (MallGood$$RequestBuyGoodHandle).
-    The goods come from catchdata mall_info (resources, item_ids, gift, prize_id) and cost gemprice
-    gems each. Limits are the shop reply's rest_num and daily_quota (mall_tables). APPROXIMATION: discounts are not applied."""
+    The goods come from catchdata mall_info (resources, item_ids, gift, prize_id), or the shop list's own row for goods
+    only it has (the 7-day packages: types 101, 201, 301, ids 101-107, 1001-1007, 3001-3007), and cost gemprice gems each. Limits are the shop reply's rest_num and daily_quota (mall_tables). APPROXIMATION: discounts are not applied."""
     from . import quests, stc
     body = body or {}
     row = next((r for r in stc.catch("mall_info") if str(r["id"]) == str(body.get("mall_id"))), None)
+    if row is None:
+        row = _shop(state["user_info"].get("user_id", ""))[1].get(str(body.get("mall_id")))
     num = max(1, int(body.get("num") or 1))
     if row is None:
         return None
@@ -368,6 +373,13 @@ def mall_tables(state, body):
         elif int(row.get("daily_quota") or 0) and mall_id in today:
             quota[mall_id] = {"user_id": str(uid), "product_id": mall_id, "buy_count": str(today[mall_id]),
                               "last_buy_time": str(record.get("last", {}).get(mall_id, 0))}
+    from . import battlepass, paid_shop
+    quota.update(paid_shop.quota_rows(state))
+    # the handler sets these counts in the bag: a recording's are another season's or stale
+    reply["battlepass_pt_item"] = battlepass.pt_items(state)
+    for card in ("monthlycard1", "monthlycard2", "monthlycard3"):     # bought with gems (paid_shop)
+        if int(state["user_info"].get(f"{card}_end_time") or 0) > int(reply.get(f"{card}_end_time") or 0):
+            reply[f"{card}_end_time"] = str(state["user_info"][f"{card}_end_time"])
     return reply
 
 
@@ -499,6 +511,7 @@ def explore_start(state, body, now=None, rng=None):
     from . import stc
     rng = rng or _random
     now = int(now or time.time())
+    explore_settle(state, now)
     e = _explore(state)
     tt = _time_types().get(int(e.get("time_type") or 1)) or _time_types()[1]
     from . import squads
@@ -536,6 +549,7 @@ def _next_affair(run, now):
 
 
 def explore_balance(state, body):
+    explore_settle(state)
     e = _explore(state)
     run, now = e.get("run"), int(time.time())
     return {"ex_prize": {}, "list": [run] if run else [], "is_auto": int(e["is_auto"] or 0),
@@ -555,16 +569,15 @@ def explore_get_event(state, body):
             "is_prize": int(now >= run["end_time"])}
 
 
-def _explore_finds(run, rng=None):
-    """The run's reward as a package: the area's loot, then what was found on the way."""
+def _explore_rewards(run, rng=None):
+    """The run's completion reward (the area's loot) and its finds on the way, each a package."""
     import random as _random
     rng = rng or _random.Random(int(run.get("start_time") or 0))
     tt = _time_types().get(int(run.get("time_type") or 1)) or _time_types()[1]
     area = int(run.get("area_id") or 1)
     hours = int(tt["duration"]) / 3600
     main = LOOT_PER_HOUR * hours * float(run.get("reward_up") or 1) * (MYSTERY_BONUS if run.get("mysterious") else 1)
-    items = {4000 + area: round(main)}
-    extra = {}
+    finds = []
     mid = float(run.get("mid_reward_up") or 1)
     for _ in run.get("affairs") or []:
         if rng.random() >= MID_CHANCE:
@@ -572,36 +585,113 @@ def _explore_finds(run, rng=None):
         find = rng.choices([f for _, f in MID_FINDS], weights=[w for w, _ in MID_FINDS])[0]
         if find == "loot":
             other = rng.choice([a for a in (1, 2, 3, 4) if a != area])
-            find = {"item_ids": f"{4000 + other}-{round(LOOT_PER_HOUR * mid)}"}
-        elif find == "food":
+            finds.append({"item_ids": f"{4000 + other}-{round(LOOT_PER_HOUR * mid)}"})
+            continue
+        if find == "food":
             find = {"item_ids": f"{rng.randint(6001, 6009)}-1"}
         elif find == "equip":
             from . import workshop
             pick = rng.choice(sorted(workshop._equip_pool().get(5) or [0]))
             if pick:
-                extra.setdefault("equip_ids", []).append(f"{pick}-1")
+                finds.append({"equip_ids": f"{pick}-1"})
             continue
+        pkg = {}
         for key, value in find.items():
             if key == "item_ids":
                 iid, _, n = value.partition("-")
-                items[int(iid)] = items.get(int(iid), 0) + max(1, round(int(n) * mid))
+                pkg[key] = f"{iid}-{max(1, round(int(n) * mid))}"
             else:
-                extra[key] = extra.get(key, 0) + max(1, round(value * mid))
+                pkg[key] = max(1, round(value * mid))
+        finds.append(pkg)
+    return {"item_ids": f"{4000 + area}-{round(main)}"}, finds
+
+
+def _explore_finds(run, rng=None):
+    """The run's whole reward as one package."""
+    main, finds = _explore_rewards(run, rng)
+    items, extra = {}, {}
+    for pkg in [main] + finds:
+        for key, value in pkg.items():
+            if key == "item_ids":
+                iid, _, n = value.partition("-")
+                items[int(iid)] = items.get(int(iid), 0) + int(n)
+            elif key == "equip_ids":
+                extra.setdefault(key, []).append(value)
+            else:
+                extra[key] = extra.get(key, 0) + value
     if "equip_ids" in extra:
         extra["equip_ids"] = ",".join(extra["equip_ids"])
     return dict(extra, item_ids=",".join(f"{i}-{n}" for i, n in items.items()))
 
 
-def explore_reward(state, body):
+# A finished run's area loot becomes a Loot Rack completion mail (MailType 24 exploreReturn) and each find on the
+# way a midway mail (25 exploreAffair), as live sends them: the rack shows the two kinds in separate rows
+# (ExploreRewardStorage$$RefreshRewardMail counts them apart), and Index/getExploreMail claims them. Its
+# get_list is the claimed mail ids; with none, the client shows "reached the max amount of rewards"
+# (DormExploreRoomController$$OnRequestExploreGetReward: RequestExploreGetReward.mailCount 0).
+EXPLORE_MAILS = (24, 25)
+EXPLORE_MAIL_END = 2100000000     # the live mails' end_time
+
+
+# Auto mode (setTeam is_auto) starts the next run when one ends, while the Loot Rack has room and the time type's
+# resources are there (ExploreData$$GetNextAutoStartTime). The rack (establish 803) holds parameter_1 "<final>,<midway>"
+# reward mails (ExploreData$$GetFinalRewardSlot / GetMidwayRewardSlot). Runs chain from each one's end time, so
+# they go on while the player is away; full completion slots stop them until the mails are claimed
+# (ExploreRewardStorage$$get_isFull), and finds beyond the midway slots are lost.
+# APPROXIMATION: one midway mail per find, and dropping finds when the midway slots are full.
+LOOT_RACK = "803"
+
+
+def _rack_slots(state, kind=EXPLORE_MAILS[0]):
+    """Completion (24) or midway (25) slots; the client's default is 1 of each (ExploreRewardStorage$$RefreshMaxNum)."""
+    row = next((r for r in state.get("outhouse_establish_info") or [] if str(r.get("establish_type")) == LOOT_RACK), {})
+    parts = str(row.get("parameter_1") or "").split(",")
+    n = parts[EXPLORE_MAILS.index(kind)].strip() if len(parts) > 1 else ""
+    return int(n) if n.isdigit() else 1
+
+
+def _rack_held(state, kind=EXPLORE_MAILS[0]):
     from . import quests
+    return sum(1 for m in quests._mails(state) if int(m["type"]) == kind and not m["if_received"])
+
+
+def _can_auto(state, e):
+    if not int(e.get("is_auto") or 0) or not [g for g in e.get("guns") or [] if str(g) not in ("", "0")]:
+        return False
+    tt = _time_types().get(int(e.get("time_type") or 1)) or _time_types()[1]
+    ui = state["user_info"]
+    return (_rack_held(state) < _rack_slots(state)
+            and all(int(ui.get(res) or 0) >= int(tt.get(res) or 0) for res in ("mp", "ammo", "mre", "part")))
+
+
+def explore_settle(state, now=None):
+    """Turn finished runs into Loot Rack mails, starting the next ones in auto mode."""
+    from . import quests
+    now = int(now or time.time())
     e = _explore(state)
-    run = e.get("run")
-    if not run or time.time() < run["end_time"]:
-        return {"get_list": [], "out": {}}
-    pkg = quests.grant(state, _explore_finds(run))
-    e.pop("run", None)
-    quests.record(state, "explore")
-    return {"get_list": [], "out": pkg}
+    while (run := e.get("run")) and now >= run["end_time"]:
+        main, finds = _explore_rewards(run)
+        room = _rack_slots(state, EXPLORE_MAILS[1]) - _rack_held(state, EXPLORE_MAILS[1])
+        for kind, title, pkg in [(EXPLORE_MAILS[0], "探索结束奖励", main)] + [(EXPLORE_MAILS[1], "探索途中奖励", f)
+                                                                       for f in finds[:max(0, room)]]:
+            quests.send_mail(state, kind, 0, title, pkg, now=run["end_time"])["end_time"] = EXPLORE_MAIL_END
+        e.pop("run", None)
+        quests.record(state, "explore")
+        if _can_auto(state, e):
+            explore_start(state, {}, now=run["end_time"])
+        else:
+            e["waiting"] = int(e.get("is_auto") or 0)
+
+
+def explore_reward(state, body, now=None):
+    from . import quests
+    explore_settle(state, now)
+    picked = [m for m in quests._mails(state) if int(m["type"]) in EXPLORE_MAILS and not m["if_received"]]
+    pkg = quests._merge(quests.grant(state, m) for m in picked)
+    e = _explore(state)
+    if e.pop("waiting", 0) and not e.get("run") and _can_auto(state, e):
+        explore_start(state, {}, now=now)
+    return {"get_list": [int(m["id"]) for m in picked], "out": pkg}
 
 
 # Exploration shop (stc explore_mall: cost "<item>-<n>" choices split by "|", prize_id, quota per
@@ -746,13 +836,17 @@ def explore_adaptive_team(state, body, now=None):
             "start_time": time.strftime(fmt, time.localtime(start)), "end_time": time.strftime(fmt, time.localtime(end))}
 
 
-# Coalition exchange shop (stc sangvis_exchange_mall: cost_item, cost_num, prize_id, quota per item
-# over its start_time..end_time window).
+# Coalition exchange shop (Protocol Assimilation; stc sangvis_exchange_mall: cost_item, cost_num, prize_id, quota
+# per item over its start_time..end_time window).
 #   Sangvis/getMallList {} -> [{"id", "num"}] (RequestExchangeMallList: num bought; the client hides
 #       items outside their window)
-#   Sangvis/exchangeMall {"mall_id", "num"} -> {"status": 1, "prize": <package>, "sangvis_info": [new
-#       unit records]} (RequestSangvisExchangeMall: takes the cost itself; GameData$$GetNewSangvis adds
-#       each unit). Counts are kept in sangvis_mall_with_user_info.
+#   Sangvis/exchangeMall {"mall_id", "num"} -> {"status": 1, "prize": [entry, ...]}
+#       (RequestSangvisExchangeMall$$SuccessJsonHandleData). "prize" is a list: an entry holding "sangvis_info"
+#       (one unit record) goes to GameData$$GetNewSangvis, any other entry is a Package. The client then takes
+#       the cost and raises the good's bought count itself (SangvisExchangeShopItemController
+#       $$RequestSangvisExchangeMall). A single package object made the loop throw after the purchase was
+#       saved: no "sold out" until a relogin, and the next buy hit the "server busy" relogin box.
+#       Counts are kept in sangvis_mall_with_user_info.
 
 def sangvis_mall_list(state, body):
     from . import stc
@@ -776,15 +870,17 @@ def sangvis_mall_buy(state, body, now=None):
     squads._spend(state, row["cost_item"], cost)
     bought[str(row["id"])] = have + num
     prize = quests.prizes().get(int(row["prize_id"]), {})
-    package, units = {}, []
+    entries = []
     for _ in range(num):
-        package = quests._merge([package, quests.grant(state, quests._reward(prize))])
+        package = {k: v for k, v in quests.grant(state, quests._reward(prize)).items() if k != "sangvis"}
+        if package:
+            entries.append(package)
         for part in str(prize.get("sangvis") or "").split(","):
             sid, _, n = part.partition("-")
             if sid.strip().isdigit() and int(sid) in mods._sangvis():
-                units += [mods.new_sangvis_record(state, int(sid), state["user_info"].get("user_id", ""))
-                          for _ in range(int(n or 1))]
-    return {"status": 1, "prize": package, "sangvis_info": units}
+                entries += [{"sangvis_info": mods.new_sangvis_record(state, int(sid), state["user_info"].get("user_id", ""))}
+                            for _ in range(int(n or 1))]
+    return {"status": 1, "prize": entries}
 
 
 def explore_cancel(state, body):
@@ -1415,9 +1511,19 @@ def _target_key(row):
 
 
 def target_practice_list(state, chosen):
-    """The launcher's own list of enemy teams (settings "target_practice") as the saved list's rows; None when unset."""
+    """The launcher's own list of enemy teams (settings "target_practice") as the saved list's rows; None when unset.
+    A team with a stand-in enemy (no stats of its own, maxlife 0) is left out: the client's power figure for it
+    overflows and the screen hangs (MissionSelectionDroneTrainSettingController.GetEnemyPower)."""
     from . import missions
+    types = missions._enemy_types()
+
+    def fightable(team):
+        return all(int((types.get(t) or {}).get("maxlife") or 0) for t in missions._team_members().get(team, []))
     ids = [int(x) for x in str(chosen or "").split(",") if x.isdigit() and int(x) in missions._enemy_teams()]
+    skipped = [t for t in ids if not fightable(t)]
+    if skipped:
+        log.warning("target practice: teams %s use an enemy with no stats and are left out", skipped)
+    ids = [t for t in ids if t not in skipped]
     if not ids:
         return None
     uid = state["user_info"].get("user_id", "")

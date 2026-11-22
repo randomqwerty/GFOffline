@@ -179,16 +179,23 @@ def visit_random(state, body):
 
 
 # The archived reply carries the day it was recorded; the interaction count and whether this friend can still
-# be interacted with today are the save's.
+# be interacted with today are the save's. vehicle_maintain_num is the interactions LEFT today: the client refuses
+# with "max interactions used" when it is 0 (DormUIController$$RequestVisitVehicleMaintain), and the friend point
+# panel shows GetVehicleMaintainMax minus it (FriendController$$RequestFriendPointProgressHandle); recorded live:
+# 10 with can_maintain 1.
+def _maintain_left(state):
+    limit = int(str(_config("vehicle_maintainance", "10:508-10")).partition(":")[0] or 10)
+    return max(0, limit - len(_today(state, "_vehicle_maintain")))
+
+
 def vehicle_visit(state, body):
     fid = str((body or {}).get("to_user_id") or "")
     saved = archived.read(_me(state), "Vehicle/visit", fid)
     if not isinstance(saved, dict):
         return saved
-    limit = int(str(_config("vehicle_maintainance", "10:508-10")).partition(":")[0] or 10)
-    done = _today(state, "_vehicle_maintain")
+    left = _maintain_left(state)
     day = (int(time.time()) - DAY_OFFSET) // 86400
-    return dict(saved, vehicle_maintain_num=len(done), can_maintain=fid not in done and len(done) < limit,
+    return dict(saved, vehicle_maintain_num=left, can_maintain=fid not in _today(state, "_vehicle_maintain") and left > 0,
                 vehicle_maintain_refresh_time=(day + 1) * 86400 + DAY_OFFSET)
 
 
@@ -215,11 +222,12 @@ def praise(state, body):
 
 
 def progress(state, body):
-    return {"praise_num": len(_praised(state)), "team_prize_num": 0, "vehicle_maintain_num": len(_today(state, "_vehicle_maintain"))}
+    return {"praise_num": len(_praised(state)), "team_prize_num": 0, "vehicle_maintain_num": _maintain_left(state)}
 
 
-# Interact in a friend's armor room: Vehicle/maintain {"to_user_id"} -> {"visit_message": a line id of
-# game_config vehicle_visitmessage}. RequestVehicleMaintain adds game_config vehicle_maintainance's item
+# Interact in a friend's armor room: Vehicle/maintain {"to_user_id"} -> {"visit_message": the position of a line
+# in game_config vehicle_visitmessage "<line>:<n>;..." (DormUIController$$HandleVehicleMaintain indexes the list
+# with it; a line id there threw before the reward was shown). RequestVehicleMaintain adds game_config vehicle_maintainance's item
 # ("10:508-10": 10 friendship points, the first 10 a day) itself; the save gets it too, once per friend a day.
 def vehicle_maintain(state, body, rng=random):
     fid = str((body or {}).get("to_user_id") or "")
@@ -230,8 +238,8 @@ def vehicle_maintain(state, body, rng=random):
     if fid not in done and len(done) < int(limit or 10):
         done.append(fid)
         quests.grant(state, {"item_ids": item})
-    lines = [p.partition(":")[0] for p in str(_config("vehicle_visitmessage", "19:0")).split(";") if p.strip()]
-    return {"visit_message": int(rng.choice(lines))}
+    lines = str(_config("vehicle_visitmessage", "19:0")).split(";")
+    return {"visit_message": rng.randrange(len(lines))}
 
 
 def message_add(state, body):

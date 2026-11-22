@@ -11,7 +11,7 @@ import sys
 from gfserver import config, mods
 import studio as w
 
-KINDS = ("story", "event", "text")
+KINDS = ("story", "event", "text", "config")
 SPEAKER = re.compile(r"<Speaker>(.*?)</Speaker>")
 STORY_NAME = re.compile(r"[^/\\:*?\"<>|]+\.txt")
 OPS_IMAGES = "Pics/Icons/OPS/"
@@ -255,6 +255,8 @@ def _text_design(mod_name):
     base = w.base().text()
     event_keys = {str(r.get(f)) for r in mod["tables"].get("normal_activity", []) for f in ("tag", "name", "chapter_name", "desc")}
     event_keys |= {str(r.get("event_name")) for r in mod["tables"].get("mission_event", [])}
+    import assets
+    event_keys |= assets.owned(mod)[1]             # names of added pictures and music: edited on their page
     return {"kind": "text", "id": "all", "name": "Game text", "in_mod": True,
             "rows": [{"key": k, "original": w.decode_text(base.get(k, "")), "value": w.decode_text(v)}
                      for k, v in sorted((mod["meta"].get("text") or {}).items()) if k not in event_keys]}
@@ -264,6 +266,8 @@ def _save_text(mod, d):
     keep = {k: v for k, v in (mod["meta"].get("text") or {}).items() if k in
             {str(r.get(f)) for r in mod["tables"].get("normal_activity", []) for f in ("tag", "name", "chapter_name", "desc")} |
             {str(r.get("event_name")) for r in mod["tables"].get("mission_event", [])}}
+    import assets
+    keep.update({k: v for k, v in (mod["meta"].get("text") or {}).items() if k in assets.owned(mod)[1]})
     for row in d.get("rows") or []:
         key = str(row.get("key") or "").strip()
         if not re.fullmatch(r"[A-Za-z0-9_]+-\d+", key):
@@ -317,7 +321,31 @@ def copy_from_cn(mod_name, table, ids):
 
 # ---------------------------------------------------------------------------- what designs.py calls
 
+# ---------------------------------------------------------------------------- game screen settings
+
+def _config_design(mod_name):
+    """The mod's "profile_edits" (lines of the client's own config files, gfserver/mods.py) as rows."""
+    mod = w.load_mod(mod_name) if mod_name else {"meta": {}}
+    edits = mod["meta"].get("profile_edits") or {}
+    rows = [{"file": f, "from": str(e.get("from", "")), "to": str(e.get("to", ""))} for f, lst in sorted(edits.items()) for e in lst]
+    return {"kind": "config", "id": "all", "name": "Game screen settings", "in_mod": bool(rows), "rows": rows}
+
+
+def _save_config(mod, d):
+    edits = {}
+    for r in d.get("rows") or []:
+        f, old = str(r.get("file") or "").strip().replace("\\", "/"), str(r.get("from") or "")
+        if f and old.strip():
+            edits.setdefault(f, []).append({"from": old, "to": str(r.get("to") or "")})
+    if edits:
+        mod["meta"]["profile_edits"] = edits
+    else:
+        mod["meta"].pop("profile_edits", None)
+
+
 def get(mod_name, kind, eid):
+    if kind == "config":
+        return _config_design(mod_name)
     if kind == "story":
         _check_name(eid)
         return _story_design(mod_name, eid)
@@ -327,6 +355,8 @@ def get(mod_name, kind, eid):
 
 
 def new(kind, template=None):
+    if kind == "config":
+        return _config_design(None)
     if kind == "story":
         _check_name(template)
         return _story_design(None, template)
@@ -344,6 +374,8 @@ def save(mod_name, kind, d):
             saved = _save_event(mod, d) if kind == "event" else "all"
             if kind == "text":
                 _save_text(mod, d)
+            elif kind == "config":
+                _save_config(mod, d)
             w.save_mod(mod_name, mod)
         res = w.check_mod(mod_name)
         res["id"] = saved
@@ -362,6 +394,8 @@ def delete(mod_name, kind, eid):
             if kind == "event":
                 _remove_event(mod, eid)
                 _drop_empty(mod["meta"])
+            elif kind == "config":
+                _save_config(mod, {"rows": []})
             else:
                 _save_text(mod, {"rows": []})
             w.save_mod(mod_name, mod)
@@ -375,4 +409,5 @@ def summary(mod_name, mod):
     events = [{"id": r["id"], "name": text.get(str(r.get("chapter_name")), "")} for r in mod["tables"].get("normal_activity", [])]
     shown = _text_design(mod_name)["rows"]
     return {"story": [{"id": p.name, "show": p.stem, "name": ""} for p in sorted(d.glob("*.txt"))] if d.is_dir() else [],
-            "event": events, "text": [{"id": "all", "show": "All", "name": f"{len(shown)} text{'' if len(shown) == 1 else 's'} changed"}] if shown else []}
+            "event": events, "text": [{"id": "all", "show": "All", "name": f"{len(shown)} text{'' if len(shown) == 1 else 's'} changed"}] if shown else [],
+            "config": [{"id": "all", "show": "All", "name": f"{n} line{'' if n == 1 else 's'} changed"}] if (n := sum(len(v) for v in (mod["meta"].get("profile_edits") or {}).values())) else []}

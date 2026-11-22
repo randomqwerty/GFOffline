@@ -1,7 +1,7 @@
 """Repair, equipment and fairy production, enhancement, retiring and gifts.
 
 Reply formats (from the client's handlers):
-  Gun/fixGuns          "1"   {"if_quick", "fix_guns": {"<fix_slot>": gun_with_user_id}}  RequestFixGun
+  Gun/fixGuns          "1"   {"if_quick", "fix_guns": {"<gun_with_user_id>": fix_slot}}  RequestFixGun
   Gun/fixFinish        "1"   {"fix_slot"}                     RequestGunFixFinish
   Gun/quickFix         "1"   {"fix_slot"}                     RequestGunFixQuickFinish
   Sangvis/fix          "1"   {"fix_sangvis_list", "if_quick"} RequestSangvisFixStart
@@ -107,17 +107,35 @@ def _heal(state, kind, uid):
     return unit
 
 
-def _fix_pairs(raw):
-    """fix_guns / fix_sangvis_list as [(slot, unit id)] from {"slot": id} or [id, ...]."""
+def _fix_pairs(state, kind, raw):
+    """fix_guns / fix_sangvis_list as [(slot, unit id)]: the client sends {"<unit id>": slot}; a key that
+    is no unit of the save is read the other way round ({"slot": id}); a list is [id, ...]."""
     if isinstance(raw, dict):
-        return [(int(k), v) for k, v in raw.items() if str(k).isdigit()]
+        units = state.get(f"{kind}_with_user_info")
+        out = []
+        for k, v in raw.items():
+            if not str(k).isdigit() or not str(v).isdigit():
+                continue
+            out.append((int(k), v) if _find(units, k) is None and _find(units, v) is not None else (int(v), k))
+        return out
     return [(i, v) for i, v in enumerate(raw or [], 1)]
+
+
+def settle_fix_slots(state):
+    """Repairs saved by an older version with slot and unit swapped: the client can't find the unit and
+    refuses the login ("account data has anomalies"). Each is put the right way round."""
+    for a in state.get("fix_act_info") or []:
+        for kind in ("gun", "sangvis"):
+            key, units = f"{kind}_with_user_id", state.get(f"{kind}_with_user_info")
+            uid = str(a.get(key) or "0")
+            if uid != "0" and _find(units, uid) is None and _find(units, a.get("fix_slot")) is not None:
+                a["fix_slot"], a[key] = int(uid), str(a["fix_slot"])
 
 
 def _start_fix(state, kind, raw, quick):
     acts = state.setdefault("fix_act_info", [])
     busy = {int(a["fix_slot"]) for a in acts}
-    for slot, uid in _fix_pairs(raw):
+    for slot, uid in _fix_pairs(state, kind, raw):
         if quick:
             _heal(state, kind, uid)
             continue

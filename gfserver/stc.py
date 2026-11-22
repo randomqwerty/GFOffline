@@ -180,5 +180,40 @@ def _catchdata():
 
 
 def catch(name):
-    """A catchdata table by name, e.g. catch("operation_info") -> list of row dicts."""
-    return _catchdata()[name]
+    """A catchdata table by name, e.g. catch("operation_info") -> list of row dicts. game_config_info comes with the
+    launcher's game rule changes (client_settings GAME_CONFIG)."""
+    rows = _catchdata()[name]
+    if name == "game_config_info":
+        rows = _with_rules(rows)
+    return rows
+
+
+_RULES_CACHE = {"key": None, "rows": None, "file": None, "rules": {}}
+
+
+def _rules():
+    """The saved game rule changes, read again when the settings file changes."""
+    from . import client_settings, config
+    f = config.SETTINGS_FILE
+    try:
+        stamp = (str(f), f.stat().st_mtime_ns) if f.is_file() else (str(f), None)
+    except OSError:
+        stamp = (str(f), None)
+    if _RULES_CACHE["file"] != stamp:
+        try:
+            rules = client_settings.load(f).get("game_config") or {} if stamp[1] is not None else {}
+        except (client_settings.SettingsError, OSError):
+            rules = {}
+        _RULES_CACHE.update(file=stamp, rules=rules)
+    return _RULES_CACHE["rules"]
+
+
+def _with_rules(rows):
+    rules = _rules()
+    if not rules:
+        return rows
+    key = (id(rows), tuple(sorted(rules.items())))
+    if _RULES_CACHE["key"] != key:
+        _RULES_CACHE.update(key=key, rows=[dict(r, parameter_value=str(rules[r["parameter_name"]]))
+                                           if r["parameter_name"] in rules else r for r in rows])
+    return _RULES_CACHE["rows"]

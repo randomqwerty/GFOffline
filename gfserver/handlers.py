@@ -9,7 +9,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 
-from . import (account, attendance, client_settings, base, battlepass, bingo, breakout, carnival, chess, config, crypto, events, factory, formation, friends, gashapon, guilds, gray_zone, inventory,
+from . import (account, attendance, client_settings, base, battlepass, bingo, breakout, carnival, chess, config, crypto, events, factory, formation, friends, gashapon, guilds, gray_zone, inventory, paid_shop,
                missions, mod_save, mods, player, quests, recruit, returnback, sangvis_sim, squads, stc, theater, trial, upgrades, workshop)
 from .store import Store
 
@@ -166,8 +166,31 @@ def index_index(req: Request) -> Response:
         return _index_reply(req, store, acct)
 
 
+SLOT_LISTS = ("develop_act_info", "develop_equip_act_info", "develop_fairy_act_info", "fix_act_info",
+              "upgrade_act_info", "squad_skill_act_info", "operation_act_info", "auto_mission_act_info")
+
+
+def _slot_lists(state):
+    """Timers kept as lists of records. An account file can hold one as an object keyed by slot, a single
+    record, or a JSON string; each becomes a list (anything else is dropped)."""
+    for k in SLOT_LISTS:
+        v = state.get(k)
+        if isinstance(v, str):
+            try:
+                v = json.loads(v) if v.strip() else []
+            except ValueError:
+                v = []
+        if isinstance(v, dict):
+            v = [v] if v and not any(isinstance(x, dict) for x in v.values()) else list(v.values())
+        if v is not None and not isinstance(v, list):
+            v = []
+        if v is not None:
+            state[k] = [x for x in v if isinstance(x, dict)]
+
+
 def _index_reply(req, store, acct):
     state = _personalize(store.load_player(req.uid, config.PLAYER_TEMPLATE), acct)
+    _slot_lists(state)
     if not state.get("_mission"):
         # a map left open on the live server (an account file's mission_act_info / spot_act_info):
         # this server never ran it, so every call on it fails (a Gray Zone battleFinish: error:1).
@@ -175,12 +198,15 @@ def _index_reply(req, store, acct):
         for k in ("mission_act_info", "spot_act_info"):
             state.pop(k, None)
     attendance._migrate(state.setdefault("user_record", {}))   # next sign-in time, before the client reads it
+    paid_shop.card_mails(state)             # today's Monthly Gems Card mail, in the list the client is sent
+    account.explore_settle(state)           # runs finished while away (and auto runs since)
     returnback.on_login(state)
     carnival.check(state)
     sangvis_sim.daily_energy(state)
     for sp in (False, True):
         workshop.produce_counts(state, sp)       # the week's free targeted builds, refilled on Mondays
     workshop.settle_quick_fairies(state)
+    workshop.settle_fix_slots(state)
     state.pop("_energy_unsent", None)      # this reply is the client's whole copy
     for line in mod_save.describe(mod_save.reconcile(state)):    # mods turned off or on since
         log.info("your save: %s", line)
@@ -585,9 +611,8 @@ for _name, _fn in {
     # are refused (error) rather than answered "1", which the JSON handlers can't read
     "Friend/mallBuy": lambda s, b: None, "Friend/buyMallByType9": lambda s, b: None,
     "Vehicle/visit": friends.vehicle_visit, "Vehicle/maintain": friends.vehicle_maintain,
-    # real-money purchases can't happen offline: an error stops the client before it opens a payment
-    # (an empty reply would go on to MallGoodController's Sunborn payment order)
-    "Mall/ifAble": lambda s, b: None,
+    # paid goods are bought with gems here (paid_shop.py; plain JSON, read by client_patch/paid_shop.lua)
+    "Mall/ifAble": paid_shop.buy,
     # nobody else offline: no visits to the garage (RequestVehicleRoomVisitInfo), no like ranking
     # (RequestGunLikeList; every list guarded)
     "Vehicle/visitInfo": lambda s, b: {"is_vehicle_visit": False, "last_vehicle_visit_time": 0, "vehicle_visit_info": []},

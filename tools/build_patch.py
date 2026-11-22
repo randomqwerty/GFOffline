@@ -24,9 +24,10 @@ STAMP = "gf_offline_patch.txt"
 
 
 def stamp():
-    """What the built patch depends on: every client_patch/*.lua and the server address it is filled in with."""
+    """What the built patch depends on: every client_patch/*.lua, the tools that build it and the resource config,
+    and the server address it is filled in with."""
     h = hashlib.sha256(config.PUBLIC_BASE.encode("utf-8"))
-    for f in sorted((ROOT / "client_patch").glob("*.lua")):
+    for f in sorted((ROOT / "client_patch").glob("*.lua")) + [ROOT / "tools" / "build_lpatch.py", ROOT / "tools" / "build_resconfig.py"]:
         h.update(f.name.encode("utf-8") + b"\x00" + f.read_bytes() + b"\x00")
     return h.hexdigest()
 

@@ -34,9 +34,9 @@ A battle costs the stage's item_cost: item 603 first, then the bought 10603 (Use
 sangvisBpCharge); game_config item_recover_info_603 "603:6:2:1" gives one back every 2 hours up to 6.
 A run pays the chosen award ("type:id:count:limit"; type 1 an item, 2 a gift item), won or lost. The client shows challenge 1 as UpgradeMat, 2 as UpQuality and 3 as a choice of two
 SkillMat awards (MissionSelectionSangvisSimDungeonsController$$InitType3UI needs two entries).
-APPROXIMATION: the extra allies (EXTRA_ALLIES of gun_in_ally 3501-3743, drawn per week), the map
-(the recorded forest map for every stage) and the challenge 2/3 awards (items 514 sangvis_advance_item
-and 515/516 sangvis_skill_coin1/2, counts guessed) are guesses; challenge 1's award is the recorded one.
+The awards are the recorded ones (a 2026 Sangvis/duplicateIndex): 400001 x10, 514 x6, 515 or 516 x70.
+APPROXIMATION: the extra allies (EXTRA_ALLIES of gun_in_ally 3501-3743, drawn per week) and the map
+(the recorded forest map for every stage) are guesses.
 """
 import random
 import time
@@ -50,9 +50,9 @@ EXTRA_ALLIES, EXTRA_RANGE = 15, (3501, 3743)
 MISSION_BASE = 1600                       # challenge c is mission 1600 + c
 COST_ITEM, COST = "603", 3                # COST when the mission row has no costbp
 CHARGE_ITEM = "10603"                     # bought energy, spent after item 603
-AWARDS = {1: "2:400001:10:10000",         # recorded: SangvisExp_RapidGrowthDisk x10
-          2: "1:514:3:10000",
-          3: "1:515:3:10000,1:516:3:10000"}
+AWARDS = {1: "2:400001:10:10000",         # recorded: Rapid Growth Disk x10
+          2: "1:514:6:10000",             # recorded: Petri Dish x6
+          3: "1:515:70:10000,1:516:70:10000"}   # recorded: Basic or Advanced Training Keycode x70
 GIFT = "2"
 DAY_OFFSET = -8 * 3600                    # the live server's day runs 00:00 UTC-8 (handlers.SERVER_DAY_TZ)
 ANCHOR_WEEK, ANCHOR_INDEX = 1641801600, 1  # the recorded week (2022-01-10) had team 1002 / enemy 940002

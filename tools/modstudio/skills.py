@@ -235,7 +235,7 @@ def _same(a, b):
     return all(_norm(a.get(k)) == _norm(b.get(k)) for k in set(a) | set(b) if k != "id")
 
 
-def compile_tree(w, tree, owned, group=None):
+def compile_tree(w, tree, owned, group=None, original=False):
     """Rows for a tree: {"battle_skill_config": [10 rows], <table>: [rows]} and the group id.
 
     owned: {table: ids already belonging to the mod} (they keep their ids and are always written).
@@ -243,7 +243,7 @@ def compile_tree(w, tree, owned, group=None):
     """
     tree = prune(tree)
     group = int(group or tree.get("group") or 0)
-    if not group or group < GROUP_FROM:
+    if not group or (group < GROUP_FROM and not original):
         group = w.free_skill_group()
     owned = {t: {str(x) for x in ids} for t, ids in owned.items()}
     nodes = {(table, str(node["id"])): node for table, node in _nodes(tree)[1:]}
@@ -326,7 +326,14 @@ def compile_tree(w, tree, owned, group=None):
         return ",".join("*" + fmap[p.strip()[1:]] if p.strip().startswith("*") and p.strip()[1:] in fmap else p for p in parts) if v else v
     for f in POOLS:
         skill[f] = pool((tree.get("pools") or {}).get(f, skill.get(f, "")))
-    out["battle_skill_config"] = [dict(skill, id=group * 100 + lv, skill_group_id=group, level=lv) for lv in range(1, 11)]
+    if original:
+        # a game skill keeps its own levels; what was changed (as seen on its highest level) goes on each
+        top = _level10(w, group)
+        diff = {f: v for f, v in skill.items() if f not in ("id", "level") and str(v) != str(top.get(f, ""))}
+        rows = sorted((r for r in w.world_table("battle_skill_config") if r["skill_group_id"] == group), key=lambda r: r["level"])
+        out["battle_skill_config"] = [dict(r, **diff) for r in rows]
+    else:
+        out["battle_skill_config"] = [dict(skill, id=group * 100 + lv, skill_group_id=group, level=lv) for lv in range(1, 11)]
     return out, group
 
 

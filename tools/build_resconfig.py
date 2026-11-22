@@ -6,13 +6,17 @@ The client (ResCenter$$CompareOldNewData) compares each local bundle's file size
 sizeCompress/sizeOriginal in the config and re-downloads mismatches straight from the real
 CDN (DownLoadThread uses System.Net, which ignores the game's proxy). A modded bundle
 therefore has to be declared in the config with its new size, or it gets overwritten.
+Its fileHash/fileHashs are set to its SHA-1 too: the client's file check (ResCenter$$CompareFileExEx, run after a
+download) hashes each local file against them, and a mismatch is downloaded again, endlessly.
 
-Also applies build/fallbacks.json (art_fallback.py): bundles nobody can serve are left out, and
+Also declares the custom art copies (build/custom_art.json, custom_art.py), the added and replaced
+pictures and music (build/game_assets.json, game_assets.py) and applies build/fallbacks.json (art_fallback.py): bundles nobody can serve are left out, and
 the other version of their art answers for them.
 
 Reads archive/resconfig.json + the archived config bundle; writes build/resconfig.txt.
 Requires UnityPy.
 """
+import hashlib
 import json
 import re
 import sys
@@ -33,12 +37,23 @@ def bundle_key(filename):
     return Path(filename).stem.lower()
 
 
+def file_hash(path):
+    """The config's form of a file's SHA-1 (BitConverter.ToString): "E8-6E-AD-..."."""
+    return "-".join(f"{b:02X}" for b in hashlib.sha1(Path(path).read_bytes()).digest())
+
+
 def main():
     meta = json.loads((ARCHIVE / "resconfig.json").read_text("utf-8"))
     mods = [Path(p) for p in sys.argv[1:]] or sorted((ROOT / "build").glob("*.ab"))
     env = UnityPy.load(str(ARCHIVE / meta["file"]))
     obj = next(o for o in env.objects if o.type.name == "MonoBehaviour")
     tree = obj.read_typetree()
+    import custom_art
+    for e in custom_art.add_entries(tree):
+        print(f"{e['assetBundleName']}: new (custom art)")
+    import game_assets
+    for e in game_assets.add_entries(tree):
+        print(f"{e['assetBundleName']}: new (game asset)")
 
     entries = tree["BaseAssetBundles"] + tree["AddAssetBundles"]
     # Extra asset paths a modded bundle now answers to (build_mods.py "art"). The
@@ -86,6 +101,8 @@ def main():
         print(f"{e['assetBundleName']}: size {e['sizeCompress']}/{e['sizeOriginal']} -> {size}  ({mod.name})")
         e["sizeCompress"] = size
         e["sizeOriginal"] = size
+        e["fileHash"] = file_hash(mod)
+        e["fileHashs"] = [e["fileHash"]]
 
     # Bundle/video downloads use System.Net (ignores the game's proxy) against resUrl, so point
     # resUrl at the offline server itself, which serves the archive (tools/archive_live.py).
@@ -105,6 +122,8 @@ def main():
     sizes = {(s, e["assetBundleName"]): e["sizeCompress"] for s in lists for e in check[s]}
     first = next(o for o in UnityPy.load(str(ARCHIVE / meta["file"])).objects
                  if o.type.name == "MonoBehaviour").read_typetree()
+    custom_art.add_entries(first)
+    game_assets.add_entries(first)
     orig = {(s, e["assetBundleName"]): e["sizeCompress"] for s in lists for e in first[s]}
     orig = {k: v for k, v in orig.items() if k[1] not in dropped}
     changed = {k for k in orig if orig[k] != sizes[k]}

@@ -45,6 +45,10 @@ const KINDS = {
   story: { label: "Story text", catalog: "story", one: "story file" },
   event: { label: "Event listings", one: "event" },
   text: { label: "Game text (names, descriptions)", one: "text" },
+  config: { label: "Game screen settings", one: "setting" },
+  ally: { label: "Allied forces", catalog: "ally_team", one: "allied force" },
+  building: { label: "Buildings", catalog: "building", one: "building" },
+  assets: { label: "Pictures and music", one: "picture or track" },
   row: { label: "Other game data (advanced)", one: "entry" },
 };
 const NAME_TABLE = { skill: "skill", enemy: "enemy_character_type", team: "enemy_team", gun: "gun", sangvis: "sangvis", mission: "mission" };
@@ -106,20 +110,30 @@ function card(title, ...kids) {
   return h("div", { class: "card" }, title ? h("h3", {}, title) : null, ...kids);
 }
 
-/** One skill slot: shows the skill's name, pick / open / clear. */
+/** What a skill (group) does, from the skill list; "" when unknown. */
+async function skillDesc(id) {
+  const list = await catalog("skill");
+  S.skillIndex ||= Object.fromEntries(list.map(r => [String(r.id), r]));
+  return (S.skillIndex[String(id)] || {}).desc || "";
+}
+
+/** One skill slot: shows the skill's name and what it does, pick / open / clear. */
 function skillSlot(obj, key, label, help) {
   const name = h("span", { class: "ref" });
+  const about = h("div", { class: "doc" });
   const show = async () => {
     const id = obj[key];
+    about.textContent = "";
     if (!id) { name.textContent = "none"; return; }
     const n = await lookupNames("skill", [id]);
     name.textContent = `${n[id] || "(unnamed)"} · ${id}`;
+    about.textContent = await skillDesc(id);
   };
   show();
-  return field(label, h("div", { class: "row" }, name,
+  return field(label, h("div", {}, h("div", { class: "row" }, name,
     h("button", { class: "small", onclick: async () => { const id = await pickDialog("skill", `Pick ${label.toLowerCase()}`); if (id !== null) { obj[key] = Number(id); dirty(); show(); } } }, "Pick…"),
     h("button", { class: "small", title: "Open this skill in the skill editor", onclick: () => obj[key] && openEntity("skill", obj[key]) }, "Open"),
-    h("button", { class: "small", onclick: () => { obj[key] = 0; dirty(); show(); } }, "Clear")), help);
+    h("button", { class: "small", onclick: () => { obj[key] = 0; dirty(); show(); } }, "Clear")), about), help);
 }
 
 /** A list of skills (passives). */
@@ -128,7 +142,8 @@ function skillList(obj, key, label, help) {
   const render = async () => {
     const ids = obj[key] || [];
     const n = await lookupNames("skill", ids);
-    box.replaceChildren(...ids.map((id, i) => h("span", { class: "pill" }, `${n[id] || "(unnamed)"} · ${id} `,
+    const descs = await Promise.all(ids.map(skillDesc));
+    box.replaceChildren(...ids.map((id, i) => h("span", { class: "pill", title: descs[i] }, `${n[id] || "(unnamed)"} · ${id} `,
       h("button", { class: "small", onclick: () => { obj[key].splice(i, 1); dirty(); render(); } }, "✕"))),
       h("button", { class: "small", onclick: async () => { const id = await pickDialog("skill", `Add to ${label.toLowerCase()}`); if (id !== null) { (obj[key] ||= []).push(Number(id)); dirty(); render(); } } }, "+ Add"));
   };
@@ -138,10 +153,80 @@ function skillList(obj, key, label, help) {
 
 /** Model / art: one code shared by every unit drawn with it. */
 function modelSlot(obj, kind) {
-  const name = h("span", { class: "ref" }, obj.model || "none");
+  const own = kind === "gun" && /^Mod\d+$/.test(obj.model || "");
+  const name = h("span", { class: "ref" }, (obj.model || "none") + (own ? " (own pictures)" : ""));
   return field("Model / art", h("div", { class: "row" }, name,
-    h("button", { class: "small", onclick: async () => { const code = await pickDialog("models_" + kind, "Pick a model (art, animations and voice come with it)"); if (code !== null) { obj.model = code; name.textContent = code; dirty(); } } }, "Pick…")),
-    "Uses the art of an existing unit (new art needs new asset bundles, not supported yet).");
+    h("button", { class: "small", onclick: async () => { const code = await pickDialog("models_" + kind, "Pick a model (art, animations and voice come with it)"); if (code !== null) { obj.model = code; name.textContent = code; dirty(); if (kind === "gun") renderEditor(); } } }, "Pick…")),
+    kind === "gun" ? "Uses the art of an existing T-Doll. To give it pictures of its own, see Own pictures at the bottom."
+                   : "Uses the art of an existing unit.");
+}
+
+const readAsDataURL = (file) => new Promise((ok, fail) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = fail; r.readAsDataURL(file); });
+
+/** A T-Doll's own pictures: templates come from its model, uploads are converted on the server (art.py). */
+function artCard(e) {
+  const box = h("div", { class: "art-slots" }, h("p", { class: "muted small" }, "Loading…"));
+  let look = 0;
+  const render = async () => {
+    if (!S.mod) { box.replaceChildren(h("p", { class: "muted small" }, "Pick a mod first.")); return; }
+    let a;
+    try { a = await api(`art?mod=${encodeURIComponent(S.mod)}&id=${e.id}&model=${encodeURIComponent(e.model || "")}&skin=${look}`); }
+    catch (err) { box.replaceChildren(h("p", { class: "muted small" }, err.message)); return; }
+    if (!a.slots.length) { box.replaceChildren(h("p", { class: "muted small" }, `The pictures of ${a.from || "this model"} aren't on this computer, so there is nothing to start from. Pick another model.`)); return; }
+    const t = Date.now(), q = `mod=${encodeURIComponent(S.mod)}&code=${encodeURIComponent(a.code)}`;
+    const send = async (slot, file) => {
+      if (!file) return;
+      toast("Converting the picture…", 20000);
+      try {
+        const res = await api(`mod/${encodeURIComponent(S.mod)}/art-upload`, { id: e.id, model: e.model, slot, skin: a.skin, data: await readAsDataURL(file) });
+        if (e.model !== res.code) { e.model = res.code; dirty(); toast("Picture added. Save the T-Doll to use its own pictures.", 6000); renderEditor(); return; }
+        toast("Picture added");
+      } catch (err) { toast(err.message, 9000); }
+      render();
+    };
+    const rows = a.slots.map(s => {
+      const file = h("input", { type: "file", accept: "image/*", class: "hidden", onchange: () => send(s.slot, file.files[0]) });
+      const sheet = ["chibi", "dorm"].includes(s.slot);
+      const portrait = a.slots.some(x => x.slot === "portrait" && x.uploaded);
+      const instead = portrait && s.slot === "damaged" ? "uses the portrait" : portrait && s.slot === "card" ? "made from the portrait" : "the model's own";
+      const thumb = s.uploaded ? h("img", { src: `/api/art-image?${q}&slot=${s.slot}&t=${t}`, alt: s.label })
+                               : h("span", { class: "muted small" }, instead);
+      return h("div", { class: "art-slot" },
+        h("div", { class: "art-thumb" }, thumb),
+        h("div", { class: "art-text" }, h("b", {}, s.label), h("div", { class: "doc" }, `${s.help} Size: ${s.size[0]} × ${s.size[1]}.`),
+          h("div", { class: "row" },
+            h("button", { class: "small", title: `${a.from}'s own picture, to paint over`, onclick: () => { location.href = `/api/art-template?from=${encodeURIComponent(a.template)}&slot=${s.slot}`; } }, "Download template"),
+            h("button", { class: "small", onclick: () => file.click() }, sheet ? "Upload painted template…" : s.uploaded ? "Replace…" : "Upload…"),
+            s.uploaded ? h("button", { class: "small", onclick: async () => { await api(`mod/${encodeURIComponent(S.mod)}/art-remove`, { id: e.id, model: a.code, slot: s.slot }); render(); } }, "Remove") : null),
+          file));
+    });
+    const chibi = a.slots.find(s => s.slot === "chibi" && s.uploaded)
+      ? h("div", { class: "art-slot" }, h("div", { class: "art-thumb" }, h("img", { src: `/api/art-image?${q}&slot=chibi_preview&t=${t}`, alt: "Battle chibi" })),
+          h("div", { class: "art-text" }, h("b", {}, "Battle chibi preview"), h("div", { class: "doc" }, "A still of the chibi drawn with your sheet. Parts that look cut or shifted are painted outside their place on the template.")))
+      : null;
+    const state = !a.custom ? h("p", { class: "muted small" }, `Starts from ${a.from}. Portraits: upload any picture; it is converted to the game's format (plain background removed, sized and placed like ${a.from}'s). Chibi sheets: paint over the template.`)
+      : !a.in_use ? h("p", { class: "pill warn" }, "Not used yet: save the T-Doll to switch it to these pictures.")
+      : h("p", { class: "muted small" }, `Own pictures, built on ${a.from}'s poses and animations. They reach the game when you build mods.`);
+    const reset = a.custom ? h("button", { class: "small danger", onclick: async () => {
+      if (!(await confirmDialog("Remove all of this T-Doll's own pictures? It goes back to its model's art."))) return;
+      const res = await api(`mod/${encodeURIComponent(S.mod)}/art-remove`, { id: e.id, model: a.code, slot: "all" });
+      if (e.model !== res.from) { e.model = res.from; dirty(); renderEditor(); } else render();
+    } }, "Remove all and use the model's art") : null;
+    look = a.skin;
+    const pick = a.looks.length > 1 ? h("div", { class: "field" }, h("label", {}, "Which look these pictures replace"),
+      h("select", { onchange: async ev => {
+        look = Number(ev.target.value);
+        if (a.custom) {
+          try { await api(`mod/${encodeURIComponent(S.mod)}/art-look`, { id: e.id, model: a.code, skin: look }); toast("Look changed"); }
+          catch (err) { toast(err.message, 9000); }
+        }
+        render();
+      } }, a.looks.map(l => h("option", { value: l.skin, selected: l.skin === a.skin ? "" : null }, l.name))),
+      h("div", { class: "doc" }, "Your pictures replace this look only. The doll's other looks keep their own art.")) : null;
+    box.replaceChildren(state, pick, ...rows, chibi, reset);
+  };
+  render();
+  return card("Own pictures", box);
 }
 
 // ------------------------------------------------------------------ game options
@@ -231,6 +316,44 @@ function textEditor(e) {
     card("", h("table", { class: "story" }, h("thead", {}, h("tr", {}, h("th", {}, "The game's text"), h("th", {}, "This mod's text"), h("th", {}, ""))), list)));
 }
 
+// Lines of the game's own screen settings (its config files): turning on an entry the game hides, and the like
+const CONFIG_MODES = { on: "Switch on a hidden entry", off: "Switch off an entry", change: "Change a line" };
+const configMode = (r) => r.to && r.from === "//" + r.to ? "on" : r.from && r.to === "//" + r.from ? "off" : "change";
+
+function configEditor(e) {
+  const list = h("div");
+  const draw = () => list.replaceChildren(...e.rows.map((r, i) => {
+    const mode = { v: configMode(r) };
+    const line = h("input", { type: "text", class: "wide", placeholder: "The line as the game has it" });
+    line.value = mode.v === "on" ? r.to : r.from;
+    const to = h("input", { type: "text", class: "wide", placeholder: "The new line" });
+    to.value = r.to;
+    const write = () => {
+      if (mode.v === "on") { r.to = line.value.replace(/^\/\//, ""); r.from = "//" + r.to; }
+      else if (mode.v === "off") { r.from = line.value; r.to = "//" + line.value; }
+      else { r.from = line.value; r.to = to.value; }
+      dirty();
+    };
+    line.addEventListener("input", write);
+    to.addEventListener("input", write);
+    const file = h("input", { type: "text", placeholder: "e.g. opspanel/campion-74.txt" });
+    file.value = r.file;
+    file.addEventListener("input", () => { r.file = file.value; dirty(); });
+    return h("div", { class: "mech" },
+      h("div", { class: "row wrap" }, selectInput(mode, "v", CONFIG_MODES, { text: true, onChange: () => { write(); draw(); } }),
+        h("span", { class: "muted small" }, "in the file"), file,
+        h("button", { class: "small danger", title: "Remove", onclick: () => { e.rows.splice(i, 1); dirty(); draw(); } }, "✕")),
+      field(mode.v === "on" ? "Entry (without the // the game puts before it)" : "Line", line),
+      mode.v === "change" ? field("Becomes", to) : null);
+  }), e.rows.length ? "" : h("p", { class: "muted small" }, "None."));
+  draw();
+  return card("Game screen settings",
+    h("p", { class: "muted small" }, "The game keeps some screens and buttons in its own settings files, and hides some by putting // before them. ",
+      "Each change here edits one whole line; Build mods says if the line isn't found."),
+    list,
+    h("button", { class: "small", onclick: () => { e.rows.push({ file: "", from: "", to: "" }); dirty(); draw(); } }, "+ Change"));
+}
+
 async function newStoryDialog() {
   const input = h("input", { type: "file", accept: ".txt", multiple: true });
   let close;
@@ -281,7 +404,14 @@ async function copyFromCnDialog() {
 // ------------------------------------------------------------------ dialogs
 
 function openDialog(...content) {
+  content = content.filter(x => x !== null && x !== undefined && x !== false);
   const d = $("#dialog"), body = $("#dialog-body");
+  if (!d.classList.contains("hidden")) {
+    // one open already (a picker from inside a dialog): stack another over it
+    const top = h("div", { class: "dialog stacked" }, h("div", { class: "dialog-box" }, h("div", { class: "dialog-body" }, ...content)));
+    document.body.append(top);
+    return () => top.remove();
+  }
   body.replaceChildren(...content);
   d.classList.remove("hidden");
   return () => d.classList.add("hidden");
@@ -290,16 +420,17 @@ function openDialog(...content) {
 function pickDialog(kind, title) {
   return new Promise(async (resolve) => {
     const list = await catalog(kind);
-    const search = h("input", { type: "search", placeholder: "Search by name, id or code…" });
+    const search = h("input", { type: "search", placeholder: "Search by name, description, id or code…" });
     const box = h("div", { class: "pick-list" });
     let close;
     const done = (v) => { close(); resolve(v); };
     const render = () => {
       const q = search.value.trim().toLowerCase();
       const hits = list.filter(r => !q || String(r.id).toLowerCase().includes(q) || (r.name || "").toLowerCase().includes(q)
-                                         || (r.code || "").toLowerCase().includes(q)).slice(0, 300);
-      box.replaceChildren(...hits.map(r => h("button", { onclick: () => done(r.id) },
-        h("span", { class: "id" }, r.id), h("span", {}, r.name || r.code || ""), h("span", { class: "sub" }, subLabel(kind, r)))));
+                                         || (r.code || "").toLowerCase().includes(q) || (r.desc || "").toLowerCase().includes(q)).slice(0, 300);
+      box.replaceChildren(...hits.map(r => h("button", { class: r.desc ? "has-desc" : "", onclick: () => done(r.id) },
+        h("span", { class: "id" }, r.id), h("span", {}, r.name || r.code || ""), h("span", { class: "sub" }, subLabel(kind, r)),
+        r.desc ? h("span", { class: "desc" }, r.desc) : null)));
       if (!hits.length) box.append(h("div", { class: "empty" }, "Nothing found"));
     };
     search.addEventListener("input", render);
@@ -332,9 +463,11 @@ function confirmDialog(msg) {
 async function newEntityDialog(kind) {
   if (!S.mod) return toast("Create or pick a mod first");
   if (kind === "row") return newRowDialog();
+  if (kind === "assets") return openAssets();
   if (kind === "story") return newStoryDialog();
   if (kind === "event") return showEditor(await api("newdesign/event"));
   if (kind === "text") return showEditor(await api(`design/text/all?mod=${S.mod}`));
+  if (kind === "config") return showEditor(await api(`design/config/all?mod=${S.mod}`));
   const k = KINDS[kind];
   let close;
   const go = async (from, extra = "") => {
@@ -343,6 +476,13 @@ async function newEntityDialog(kind) {
     showEditor(d);
   };
   const fromTemplate = h("button", { class: "primary", onclick: async () => { const id = await pickDialog(k.catalog, `Copy which ${k.one}?`); if (id !== null) go(id); } }, `Copy an existing ${k.one}…`);
+  const original = ["unit", "sangvis", "enemy", "team", "map", "skill", "ally", "building"].includes(kind)
+    ? h("div", { class: "row" }, h("button", { onclick: async () => {
+        const id = await pickDialog(k.catalog, `Change which ${k.one}?`);
+        if (id !== null) { close(); openEntity(kind, id); }
+      } }, `Change a game ${k.one}…`),
+      h("span", { class: "muted small" }, "Rebalance: your changes replace it everywhere in the game while this mod is on."))
+    : null;
   let scratch;
   if (kind === "unit") {
     scratch = h("div", { class: "row" }, h("span", { class: "muted" }, "New from scratch:"),
@@ -356,7 +496,7 @@ async function newEntityDialog(kind) {
   close = openDialog(h("h3", {}, `New ${k.one}`),
     h("p", { class: "muted" }, kind === "skill" ? "Start from a common kind of skill, or copy any skill in the game and change it." :
       "Copy an existing one (then change what you like), or start from scratch."),
-    h("div", { class: "row" }, fromTemplate), scratch, h("div", { class: "row" }, h("button", { onclick: () => close() }, "Cancel")));
+    h("div", { class: "row" }, fromTemplate), scratch, original, h("div", { class: "row" }, h("button", { onclick: () => close() }, "Cancel")));
 }
 
 function newRowDialog() {
@@ -441,6 +581,7 @@ function entId(e) {
 }
 
 async function openEntity(kind, id) {
+  if (kind === "assets") return openAssets(id);
   if (S.dirty && !(await confirmDialog("Discard unsaved changes?"))) return;
   const e = kind === "row" ? await api(`entity/row/${encodeURIComponent(id)}?mod=${S.mod || ""}`)
                            : await api(`design/${kind}/${encodeURIComponent(id)}?mod=${S.mod || ""}`);
@@ -461,7 +602,7 @@ function renderEditor() {
   if (!e) { root.replaceChildren(h("div", { class: "empty" }, "Nothing open")); return; }
   if (e.render) { const y = window.scrollY; root.replaceChildren(e.render()); window.scrollTo(0, y); return; }   // a page of its own (mapconfig.js)
   const editors = { unit: dollEditor, sangvis: sangvisEditor, enemy: enemyEditor, team: teamEditor, map: window.mapEditor,
-                    skill: window.skillEditor, row: rowEditor, story: storyEditor, event: eventEditor, text: textEditor };
+                    skill: window.skillEditor, row: rowEditor, story: storyEditor, event: eventEditor, text: textEditor, config: configEditor, ally: allyEditor, building: buildingEditor };
   const y = window.scrollY;
   root.replaceChildren(editorHead(e), editors[e.kind](e));
   window.scrollTo(0, y);
@@ -471,14 +612,15 @@ function editorHead(e) {
   const k = KINDS[e.kind];
   const title = e.kind === "skill" ? (e.texts && e.texts.name) || "New skill" : e.kind === "row" ? entId(e)
     : (e.name || (e.in_mod || e.in_base ? `${k.one[0].toUpperCase()}${k.one.slice(1)} ${entId(e)}` : `New ${k.one}`));
-  const tag = e.in_mod ? h("span", { class: "pill" }, "in this mod")
-    : e.in_base ? h("span", { class: "pill warn" }, "game original: saving stores your changes in this mod")
+  const tag = e.in_mod && e.in_base ? h("span", { class: "pill warn" }, "game original, changed by this mod")
+    : e.in_mod ? h("span", { class: "pill" }, "in this mod")
+    : e.in_base ? h("span", { class: "pill warn" }, "game original: saving changes it everywhere in the game (while this mod is on)")
     : h("span", { class: "pill warn" }, "not saved yet");
   return h("div", { class: "head" },
     h("div", {}, h("h2", {}, title), h("div", {}, h("span", { class: "muted small" }, `${k.one} ${entId(e) || ""} `), tag),
       h("div", { id: "problems" })),
     h("div", { class: "row" },
-      e.in_mod ? h("button", { class: "danger", onclick: deleteCurrent }, "Delete") : null,
+      e.in_mod ? h("button", { class: "danger", onclick: deleteCurrent }, e.in_base ? "Undo changes" : "Delete") : null,
       h("button", { class: "primary", onclick: saveCurrent }, "Save to mod")));
 }
 
@@ -489,7 +631,7 @@ async function saveCurrent() {
     let res, id;
     if (e.kind === "row") { res = await api(`mod/${S.mod}/save`, e); id = entId(e); }
     else { res = await api(`mod/${S.mod}/save-design`, { kind: e.kind, design: e }); id = res.id; }
-    S.dirty = false; S.catalogs = {}; S.names = {};
+    S.dirty = false; S.catalogs = {}; S.names = {}; S.skillIndex = null;
     S.summary = await api("mod/" + S.mod);
     const fresh = e.kind === "row" ? await api(`entity/row/${encodeURIComponent(id)}?mod=${S.mod}`) : await api(`design/${e.kind}/${encodeURIComponent(id)}?mod=${S.mod}`);
     showEditor(fresh);
@@ -507,10 +649,11 @@ function showProblems(res) {
 
 async function deleteCurrent() {
   const e = S.ent;
-  if (!(await confirmDialog(`Remove this ${KINDS[e.kind].one} from mod ${S.mod}?`))) return;
+  if (!(await confirmDialog(e.in_base ? `Undo this mod's changes to this ${KINDS[e.kind].one}? The game's own version comes back.`
+                                       : `Remove this ${KINDS[e.kind].one} from mod ${S.mod}?`))) return;
   const res = e.kind === "row" ? await api(`mod/${S.mod}/delete`, { kind: "row", id: entId(e) })
                                : await api(`mod/${S.mod}/delete-design`, { kind: e.kind, id: entId(e) });
-  S.ent = null; S.dirty = false; S.catalogs = {};
+  S.ent = null; S.dirty = false; S.catalogs = {}; S.skillIndex = null;
   S.summary = await api("mod/" + S.mod);
   renderSide();
   $("#editor").replaceChildren(h("div", { class: "empty" }, "Deleted."));
@@ -579,26 +722,83 @@ function dollEditor(e) {
       skillList(e.skills, "passive", "Passive skills", "Always active."),
       skillList(e.skills, "dynamic", "Battle-start passives", "Added at the start of each battle; can scale with the skill level.")),
     h("p", { class: "muted small" }, "Make new skills under Skills on the left, then pick them here.")));
+  wrap.append(comboCard(e));
+  wrap.append(artCard(e));
   return wrap;
 }
 
-function tileCard(e) {
-  const t = e.tile ||= { center: 13, cells: [], targets: [], buffs: [] };
-  let setCenter = false;
-  const grid = h("div", { class: "tilegrid" });
+// Conditional skills (combos.py on the server builds the hidden counters and watchers)
+const COMBO_EVENTS = { hit: "lands a hit", hurt: "takes damage", skill: "uses its skill" };
+const COMBO_IF = { "": "always", hp_below: "only while its HP is at or below", hp_above: "only while its HP is at or above", chance: "with a chance of" };
+
+function comboCard(e) {
+  e.combos ||= [];
+  const list = h("div");
   const draw = () => {
-    grid.replaceChildren();
-    for (let c = 1; c <= 25; c++) {
-      const inEchelon = [7, 8, 9, 12, 13, 14, 17, 18, 19].includes(c);
-      const cls = ["tile", inEchelon ? "ech" : "", t.cells.includes(c) ? "on" : "", t.center === c ? "me" : ""].join(" ");
-      grid.append(h("button", { class: cls, title: `cell ${c}`, onclick: () => {
-        if (setCenter) { t.center = c; setCenter = false; modeBtn.classList.remove("on"); }
-        else if (t.cells.includes(c)) t.cells.splice(t.cells.indexOf(c), 1); else t.cells.push(c);
-        dirty(); draw();
-      } }, t.center === c ? "DOLL" : t.cells.includes(c) ? "★" : ""));
-    }
+    list.replaceChildren(...e.combos.map((c, i) => {
+      c.only_if ||= { kind: "", value: 50 };
+      const desc = h("div", { class: "doc" });
+      skillDesc(c.skill).then(t => { desc.textContent = t; });
+      const name = h("span", { class: "ref" }, c.skill ? String(c.skill) : "pick a skill…");
+      if (c.skill) lookupNames("skill", [c.skill]).then(n => { name.textContent = `${n[c.skill] || "skill"} · ${c.skill}`; });
+      return h("div", { class: "mech combo" },
+        h("div", { class: "row wrap" }, h("strong", {}, "After it"), selectInput(c, "event", COMBO_EVENTS, { text: true }),
+          numberInput(c, "count", { min: 1 }), h("span", {}, "time(s), use"), name,
+          h("button", { class: "small", onclick: async () => { const id = await pickDialog("skill", "Skill to use"); if (id !== null) { c.skill = Number(id); dirty(); draw(); } } }, "Pick…"),
+          h("button", { class: "small danger", title: "Remove this rule", onclick: () => { e.combos.splice(i, 1); dirty(); draw(); } }, "✕")),
+        desc,
+        h("div", { class: "row wrap" }, h("span", { class: "muted small" }, "Condition:"), selectInput(c.only_if, "kind", COMBO_IF, { text: true, onChange: draw }),
+          c.only_if.kind ? numberInput(c.only_if, "value", { min: 0, max: 100 }) : null, c.only_if.kind ? h("span", { class: "muted small" }, "%") : null),
+        h("div", { class: "row wrap" },
+          checkbox(c, "repeat", "Count again after each use (else only once per battle)")));
+    }), e.combos.length ? "" : h("p", { class: "muted small" }, "None."));
   };
-  const modeBtn = h("button", { class: "small", onclick: () => { setCenter = !setCenter; modeBtn.classList.toggle("on", setCenter); } }, "Move the doll…");
+  draw();
+  return card("Conditional skills",
+    h("p", { class: "muted small" }, "Make a skill go off after something happens a number of times, like the game's marker skills: ",
+      "“after it lands 5 hits, use Overload”. The skill used is a copy of the one you pick that waits for the count; the original is not changed."),
+    list,
+    h("button", { class: "small", onclick: () => { e.combos.push({ event: "hit", count: 3, skill: 0, repeat: true, only_if: { kind: "", value: 50 } }); dirty(); draw(); } }, "+ Conditional skill"));
+}
+
+// Tiles: the game data is a 5×5 grid, numbered column by column from the back, each column bottom to top
+// (1–5 is the back column, 1 at the bottom; 16–20 is the column in front of the doll), with the doll always
+// on the middle cell, 13. The game shows a 3×3 part of it; its middle cell is "center" (effect_grid_center).
+const TILE_DOLL = 13;
+const tileCell = (row, col) => col * 5 + (4 - row) + 1;    // shown at (row, col), 0–4, row 0 at the top
+const tileWindow = (center) => [1, 0, -1].flatMap(r => [-5, 0, 5].map(c => center + r + c));
+
+function tileCard(e) {
+  const t = e.tile ||= { center: TILE_DOLL, cells: [], targets: [], buffs: [] };
+  t.cells = (t.cells || []).filter(c => c !== TILE_DOLL);
+  if (![7, 8, 9, 12, 13, 14, 17, 18, 19].includes(Number(t.center))) t.center = TILE_DOLL;
+  const grid = h("div", { class: "tilegrid" });
+  const shown = h("div", { class: "tilegrid small" });
+  const where = h("div", { class: "tilegrid pick" });
+  const note = h("div", { class: "doc" });
+  const draw = () => {
+    const win = tileWindow(Number(t.center));
+    grid.replaceChildren();
+    for (let i = 0; i < 25; i++) {
+      const c = tileCell(Math.floor(i / 5), i % 5);
+      const me = c === TILE_DOLL;
+      const cls = ["tile", win.includes(c) ? "ech" : "out", t.cells.includes(c) ? "on" : "", me ? "me" : ""].join(" ");
+      grid.append(h("button", { class: cls, title: me ? "The doll" : `cell ${c}`, disabled: me, onclick: () => {
+        if (t.cells.includes(c)) t.cells.splice(t.cells.indexOf(c), 1); else t.cells.push(c);
+        dirty(); draw();
+      } }, me ? "DOLL" : t.cells.includes(c) ? "★" : ""));
+    }
+    // as the game shows it
+    shown.replaceChildren(...win.map(c => h("div", { class: ["tile", c === TILE_DOLL ? "me" : t.cells.includes(c) ? "on" : ""].join(" ") }, c === TILE_DOLL ? "DOLL" : t.cells.includes(c) ? "★" : "")));
+    // where the doll sits in that picture
+    where.replaceChildren(...[0, 1, 2].flatMap(r => [0, 1, 2].map(col => {
+      const center = TILE_DOLL + (r - 1) + (1 - col) * 5;
+      return h("button", { class: "tile" + (center === Number(t.center) ? " me" : ""), title: "Show the doll here", onclick: () => { t.center = center; dirty(); draw(); } },
+        center === Number(t.center) ? "DOLL" : "");
+    })));
+    const hidden = t.cells.filter(c => !win.includes(c));
+    note.textContent = hidden.length ? `Cells ${hidden.join(", ")} are buffed but outside the picture shown in game.` : "";
+  };
   draw();
   const buffs = h("div");
   const drawBuffs = () => {
@@ -615,8 +815,11 @@ function tileCard(e) {
     return h("label", { class: "check" }, cb, " " + label.split(" (")[1].replace(")", ""));
   }));
   return card("Tiles",
-    h("div", { class: "tilewrap" }, h("div", {}, grid, h("div", { class: "row small" }, modeBtn,
-      h("span", { class: "muted" }, "Click cells to buff them. The inner 3×3 is the echelon."))),
+    h("div", { class: "tilewrap" },
+      h("div", {}, h("div", { class: "subhead" }, "Cells the doll buffs"), grid,
+        h("div", { class: "muted small", style: "max-width:250px" }, "Click cells around the doll to buff them. The outlined 3×3 is the part shown in game."), note),
+      h("div", {}, h("div", { class: "subhead" }, "Where the doll appears in game"), where,
+        h("div", { class: "subhead" }, "Shown in game"), shown),
       h("div", { class: "grow" }, field("Buffs given to dolls on the starred cells", buffs),
         field("Which classes get the buff (none ticked = all)", targets))));
 }
@@ -724,7 +927,7 @@ function teamEditor(e) {
   wrap.append(card("Members", h("div", { class: "row" }, h("button", { class: "small", onclick: async () => {
       const id = await pickDialog("enemy", "Add which enemy?");
       if (id === null) return;
-      e.members.push({ id: null, enemy: Number(id), x: 13, y: 4, level: 100, links: 5, shield_pct: 0, wave: 0 });
+      e.members.push({ id: null, enemy: Number(id), x: 13, y: 4, level: 100, links: 5, shield_pct: 0, wave: 0, advance: true });
       dirty(); renderEditor();
     } }, "+ Add enemy")),
     battlefield(e), h("div", { class: "tablewrap" }, memberTable(e)),
@@ -733,21 +936,31 @@ function teamEditor(e) {
 }
 
 function memberTable(e) {
-  const tbl = h("table", { class: "grid" }, h("tr", {}, ["#", "Enemy", "Level", "Links", "Shield %", "Wave", "x", "y", ""].map(c => h("th", {}, c))));
+  const tbl = h("table", { class: "grid" }, h("tr", {}, ["#", "Enemy", "Level", "Links", "Shield %", "Wave", "x", "y", "Walks forward", ""].map(c => h("th", {}, c))));
   e.members.forEach((m, i) => {
     const nameSpan = h("span", { class: "muted small" });
-    lookupNames("enemy", [m.enemy]).then(n => { nameSpan.textContent = n[m.enemy] || ""; });
-    const enemyCell = h("div", { class: "row" }, h("button", { class: "small", onclick: async () => {
-      const id = await pickDialog("enemy", "Change enemy"); if (id !== null) { m.enemy = Number(id); dirty(); renderEditor(); } } }, String(m.enemy)), nameSpan);
+    const about = h("div", { class: "muted small" });
+    const final = h("div", { class: "small" });
+    catalog("enemy").then(rows => {
+      const r = rows.find(x => String(x.id) === String(m.enemy));
+      nameSpan.textContent = r ? r.name : "";
+      about.textContent = r && r.desc ? "Original: " + r.desc : "";
+    });
+    const showFinal = () => api(`enemy-at?id=${m.enemy}&level=${m.level}&links=${m.links}`).then(r => { final.textContent = r.line; }).catch(() => {});
+    showFinal();
+    const enemyCell = h("div", {}, h("div", { class: "row" }, h("button", { class: "small", onclick: async () => {
+      const id = await pickDialog("enemy", "Change enemy"); if (id !== null) { m.enemy = Number(id); dirty(); renderEditor(); } } }, String(m.enemy)), nameSpan), final, about);
     const tr = h("tr", {}, h("td", {}, i + 1 + (e.leader === i ? " ★" : "")), h("td", {}, enemyCell));
-    for (const k of ["level", "links", "shield_pct", "wave", "x", "y"]) tr.append(h("td", {}, numberInput(m, k, { onChange: () => k === "x" || k === "y" ? drawBattlefield(e) : null })));
+    for (const k of ["level", "links", "shield_pct", "wave", "x", "y"]) tr.append(h("td", {}, numberInput(m, k, { onChange: () => k === "x" || k === "y" ? drawBattlefield(e) : k === "level" || k === "links" ? showFinal() : null })));
+    if (m.advance === undefined) m.advance = true;
+    tr.append(h("td", { title: "Off: it stands still until one of yours is in its range, like a turret" }, checkbox(m, "advance", "")));
     tr.append(h("td", {}, h("span", { class: "row small" },
       h("button", { title: "Duplicate this enemy", onclick: () => { e.members.splice(i + 1, 0, Object.assign({}, m, { id: null, y: m.y + 2 })); dirty(); renderEditor(); } }, "Duplicate"),
       h("button", { title: "Move up", onclick: () => { if (i) { [e.members[i - 1], e.members[i]] = [e.members[i], e.members[i - 1]]; if (e.leader === i) e.leader = i - 1; else if (e.leader === i - 1) e.leader = i; dirty(); renderEditor(); } } }, "↑"),
       h("button", { class: "danger", onclick: () => { e.members.splice(i, 1); if (e.leader >= e.members.length) e.leader = 0; dirty(); renderEditor(); } }, "✕"))));
     tbl.append(tr);
   });
-  if (!e.members.length) tbl.append(h("tr", {}, h("td", { colspan: 9, class: "muted" }, "No enemies yet")));
+  if (!e.members.length) tbl.append(h("tr", {}, h("td", { colspan: 10, class: "muted" }, "No enemies yet")));
   return tbl;
 }
 
@@ -867,3 +1080,99 @@ async function init() {
 }
 
 init().catch(err => { $("#editor").replaceChildren(h("div", { class: "empty" }, "Could not load: " + err.message)); });
+
+// ------------------------------------------------------------------ allied forces and buildings
+
+const ALLY_SIDES = { 1: "With you (Griffin)", 2: "With the enemy", 0: "Third party (fights everyone)" };
+
+/** A list of map skills (or other catalog rows) by id, each with its name and description. */
+function catalogIdList(obj, key, kind, title) {
+  obj[key] ||= [];
+  const box = h("div");
+  const draw = async () => {
+    const by = Object.fromEntries((await catalog(kind)).map(r => [String(r.id), r]));
+    box.replaceChildren(...obj[key].map((id, i) => {
+      const r = by[String(id)] || { name: String(id), desc: "" };
+      return h("div", { class: "mech" }, h("div", { class: "row" }, h("strong", {}, r.name || String(id)), h("span", { class: "muted small" }, String(id)),
+          h("button", { class: "small danger", onclick: () => { obj[key].splice(i, 1); dirty(); draw(); } }, "✕")),
+        r.desc ? h("div", { class: "doc" }, r.desc) : null);
+    }), h("button", { class: "small", onclick: async () => {
+      const id = await pickDialog(kind, title);
+      if (id !== null) { obj[key].push(Number(id)); dirty(); draw(); } } }, "+ Add"));
+  };
+  draw();
+  return box;
+}
+
+function allyEditor(e) {
+  const wrap = h("div");
+  const enemy = h("span", { class: "ref" });
+  const showEnemy = async () => { const id = e.fights_as; if (!id) { enemy.textContent = "none"; return; } const n = await lookupNames("team", [id]); enemy.textContent = `${n[id] || ""} · team ${id}`; };
+  showEnemy();
+  const routeBox = h("input", { type: "text", placeholder: "e.g. 8000001, 8000002, 8000003" });
+  routeBox.value = (e.route || []).join(", ");
+  routeBox.addEventListener("input", () => { e.route = routeBox.value.split(/[ ,]+/).filter(x => /^\d+$/.test(x)).map(Number); dirty(); });
+  wrap.append(card("Allied force", h("div", { class: "fields" },
+    field("Name", textInput(e, "name")),
+    field("Side", selectInput(e, "side", ALLY_SIDES), "With you: it hunts enemies. With the enemy: it hunts your echelons. Third party: it attacks everyone."),
+    field("Orders", selectInput(e, "ai", S.L.ally_ai, { text: true, onChange: renderEditor })),
+    e.ai === "patrol" ? field("Route", routeBox, "Node numbers in order, as on the map it's placed on.") : null,
+    e.ai === "alert" ? field("Range (nodes)", numberInput(e, "range", { min: 1 })) : null,
+    field("Stays for", h("div", { class: "row" }, numberInput(e, "duration", { min: 0 }), h("span", { class: "muted small" }, "turns (0 = the whole mission)"))),
+    field("When you fight it", h("div", { class: "row" }, enemy,
+      h("button", { class: "small", onclick: async () => { const id = await pickDialog("team", "Which enemy team do you fight?"); if (id !== null) { e.fights_as = Number(id); dirty(); showEnemy(); } } }, "Pick…"),
+      h("button", { class: "small", onclick: () => e.fights_as && openEntity("team", e.fights_as) }, "Open")),
+      "The enemy team you battle when it is hostile to you."))));
+  const list = h("tbody");
+  const draw = async () => {
+    const n = await lookupNames("gun", e.members.map(m => m.gun));
+    list.replaceChildren(...e.members.map((m, i) => h("tr", {}, h("td", {}, `${i + 1}`), h("td", {}, n[m.gun] || `T-Doll ${m.gun}`),
+      h("td", {}, numberInput(m, "level", { min: 1, max: 120 })),
+      h("td", {}, h("button", { class: "small danger", onclick: () => { e.members.splice(i, 1); dirty(); draw(); } }, "✕")))));
+  };
+  draw();
+  wrap.append(card("T-Dolls in it",
+    h("p", { class: "muted small" }, "Shown when it is on your side. Their stats are the dolls' own at that level, with 5 links."),
+    h("table", { class: "grid" }, h("thead", {}, h("tr", {}, h("th", {}, "#"), h("th", {}, "T-Doll"), h("th", {}, "Level"), h("th", {}))), list),
+    h("button", { class: "small", onclick: async () => {
+      if (e.members.length >= 5) return toast("Five at most");
+      const id = await pickDialog("gun", "Which T-Doll?");
+      if (id !== null) { e.members.push({ gun: Number(id), level: 100, position: 0 }); dirty(); draw(); } } }, "+ T-Doll")));
+  wrap.append(card("", h("p", { class: "muted small" }, "Put it on a map from the map's Layout tab (a node's Mechanics), or make it appear with an allied force spawn.")));
+  return wrap;
+}
+
+function buildingEditor(e) {
+  const sides = S.L.building_sides;
+  const look = h("span", { class: "ref" }, e.look || "none");
+  const pic = h("img", { class: "build-pic", alt: "" });
+  const showPic = (id) => { if (id) { pic.src = `/api/picture?kind=building&id=${id}`; pic.style.display = ""; } else pic.style.display = "none"; };
+  showPic(e.in_base || e.in_mod ? e.id : e.copy);
+  const desc = h("textarea", { rows: 3 });
+  desc.value = e.desc || "";
+  desc.addEventListener("input", () => { e.desc = desc.value; dirty(); });
+  const tough = { v: Number(e.durability) >= 99999 };
+  return h("div", {},
+    card("Building", h("div", { class: "fields" },
+      field("Name", textInput(e, "name")),
+      field("Description", desc),
+      field("Looks like", h("div", { class: "row" }, pic, look, h("button", { class: "small", onclick: async () => {
+        const id = await pickDialog("building", "Look like which building?");
+        if (id === null) return;
+        const it = (await catalog("building")).find(r => String(r.id) === String(id));
+        if (it && it.code) { e.look = it.code; look.textContent = it.code; showPic(id); dirty(); }
+      } }, "Pick…"))),
+      field("Starts held by", selectInput(e, "side", sides)),
+      field("When destroyed, passes to", selectInput(e, "falls_to", sides)))),
+    card("Durability", checkbox(tough, "v", "Can't be destroyed", { onChange: () => { e.durability = tough.v ? 99999 : 50; renderEditor(); } }),
+      tough.v ? null : h("div", { class: "fields" },
+        field("Durability", numberInput(e, "durability", { min: 1 }), "Only HOCs, Coalition units and vehicles can damage buildings."),
+        checkbox(e, "by_attack", "Destroyed by attacking it"),
+        checkbox(e, "by_entering", "Destroyed (or used) by moving a unit onto it"))),
+    card("Map skills",
+      h("p", { class: "muted small" }, "Map skills it uses each turn for whoever holds it, once when the mission starts, and when it is destroyed."),
+      ...[1, 2, 3, 0].map(b => { e.turn_skills ||= {}; e.turn_skills[b] ||= []; return field(`Each turn, held by ${sides[b]}`, catalogIdList(e.turn_skills, String(b), "map_skill", "Map skill each turn")); }),
+      field("At mission start", catalogIdList(e, "start_skills", "map_skill", "Map skill at the start")),
+      field("When destroyed", catalogIdList(e, "death_skills", "map_skill", "Map skill when destroyed"))),
+    card("", h("p", { class: "muted small" }, "Put it on a node from a map's Layout tab (the node's Mechanics).")));
+}

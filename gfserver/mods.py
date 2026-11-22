@@ -3,12 +3,15 @@
 A mod is a folder under mods/ (see mods/README.md):
 
   mods/<name>/mod.json          {"name", "version", "enabled", "tables", "catchdata", "text", "grant",
-                                 "map_rules", "campaign", "chapter", "art", "banners", "profile_edits"}  (art: {"<new image path>":
+                                 "map_rules", "campaign", "chapter", "art", "custom_art", "game_assets", "banners", "profile_edits"}  (art: {"<new image path>":
                                  "<existing image path>"}, paths under Assets/Resources/DaBao/, built by
-                                 tools/build_mods.py)
+                                 tools/build_mods.py; custom_art: a T-Doll model with the mod's own pictures, see tools/custom_art.py;
+                                 game_assets: replaced or added pictures and music, see tools/game_assets.py)
   mods/<name>/tables/<t>.json   optional: rows for .stc table <t> (same as mod.json "tables"[t])
   mods/<name>/catchdata/<t>.json  optional: rows for catchdata table <t>
   mods/<name>/story/<file>.txt    optional: replaces the game's story file of that name (avgtxt/<file>.txt)
+  mods/<name>/art/<code>/<slot>.png  optional: pictures of "custom_art"
+  mods/<name>/art/assets/<category>/<name>.png|.adx  optional: files of "game_assets"
 
 Rows are matched on the table's first column (its key: "id" for almost every table). A row whose
 key exists replaces only the fields it lists; a new key adds a row, with unlisted fields taken from
@@ -39,8 +42,8 @@ MODS_DIR = config.ROOT / "mods"
 BUILD_DIR = config.ROOT / "build" / "mods"
 MANIFEST = BUILD_DIR / "manifest.json"
 # Part of data_version: bump when the builder's output changes for the same mods, so clients
-# re-download (2: sorted tables).
-BUILD_REVISION = 2
+# re-download (2: sorted tables; 3: map copies point at their own nodes; 4: new enemy team members walk forward).
+BUILD_REVISION = 4
 STORY_CUE = re.compile(r"<(?!/?Speaker\b)[^<>]+>[^<>|;]*")
 
 
@@ -49,6 +52,30 @@ class ModError(Exception):
 
 
 # ---------------------------------------------------------------------------- loading
+
+# Custom art models were first named Mod<gun id>, but the client drops "Mod" from a code when it
+# builds picture paths (CommonController$$LoadSmallPic: code.Replace("Mod", "").Replace("_mod", ""),
+# its Neural Upgrade naming), so Mod57's card and chibi were looked up as "57" and not found. They
+# are Own<gun id> now (tools/custom_art.py new_code); older mods are renamed as they load.
+OLD_ART_CODE = re.compile(r"Mod(\d+)")
+
+
+def renamed_art_code(code):
+    m = OLD_ART_CODE.fullmatch(str(code or ""))
+    return f"Own{m.group(1)}" if m else code
+
+
+def rename_old_art_codes(custom_art, tables):
+    """Rename Mod<id> custom art models (and the gun rows using them) to Own<id>, in place."""
+    old = [c for c in list(custom_art or {}) if renamed_art_code(c) != c]
+    for c in old:
+        custom_art[renamed_art_code(c)] = custom_art.pop(c)
+    if old:
+        for r in (tables or {}).get("gun", []):
+            if isinstance(r, dict) and r.get("code") in old:
+                r["code"] = renamed_art_code(r["code"])
+    return bool(old)
+
 
 # Which mods are on is the player's choice, kept in mods/_enabled.json ({"<mod folder>": true/false}) and
 # never shipped, so unpacking a new release over a setup keeps it. A mod's own "enabled" is only the
@@ -102,6 +129,7 @@ def discover(mods_dir=MODS_DIR, include_disabled=False):
                "map_rules": {str(k): v for k, v in (meta.get("map_rules") or {}).items()},
                "campaign": dict(meta.get("campaign") or {}),
                "chapter": dict(meta.get("chapter") or {}), "art": dict(meta.get("art") or {}),
+               "custom_art": dict(meta.get("custom_art") or {}), "game_assets": dict(meta.get("game_assets") or {}),
                "banners": list(meta.get("banners") or []), "profile_edits": dict(meta.get("profile_edits") or {}),
                "story": {p.name: hashlib.md5(p.read_bytes()).hexdigest() for p in sorted((d / "story").glob("*.txt"))}}
         for sub, key in (("tables", "tables"), ("catchdata", "catchdata")):
@@ -112,6 +140,7 @@ def discover(mods_dir=MODS_DIR, include_disabled=False):
                     raise ModError(f"{tf}: {e}")
                 mod[key].setdefault(tf.stem, [])
                 mod[key][tf.stem] = list(mod[key][tf.stem]) + list(rows)
+        rename_old_art_codes(mod["custom_art"], mod["tables"])
         out.append(mod)
     for n, mod in enumerate(m for m in out if (m["campaign"].get("missions"))):
         _campaign_rows(mod, n)
@@ -166,7 +195,7 @@ def digest(mods):
     for m in mods:
         h.update(json.dumps([m["name"], m["version"], m["tables"], m["catchdata"], m["text"], m["grant"],
                              m.get("map_rules", {}), m.get("campaign", {}), m.get("chapter", {}), m.get("art", {}), m.get("banners", []),
-                             m.get("profile_edits", {})],
+                             m.get("profile_edits", {}), m.get("game_assets", {})],
                             sort_keys=True, ensure_ascii=False).encode("utf-8"))
         if m.get("story"):
             h.update(json.dumps(m["story"], sort_keys=True).encode("utf-8"))
@@ -217,6 +246,11 @@ def _coerce(table, field, ftype, value):
     return v
 
 
+# Fields a new row (no _copy) gets other than 0 or "": enemies walk forward like nearly every game row (136058 of
+# 136197; 0 makes one stand still until a target is in range, EnemyInTeamInfo.isAdvance)
+NEW_ROW_DEFAULTS = {"enemy_in_team": {"is_advance": 1}}
+
+
 def apply_rows(table, base_rows, patches, fields=None, source=""):
     """Apply one mod's rows to a table. fields = schema [[name, type]] (None for catchdata).
 
@@ -260,6 +294,7 @@ def apply_rows(table, base_rows, patches, fields=None, source=""):
             row = dict(rows[index[src]])
         elif names is not None:
             row = {n: ("" if t == "string" else 0) for n, t in fields}
+            row.update({f: v for f, v in NEW_ROW_DEFAULTS.get(table, {}).items() if f in row})
         else:
             row = {}
         for f, v in p.items():
@@ -342,6 +377,7 @@ REFERENCES = [
     ("enemy_character_type", "normal_attack", "skill", "one"),
     ("enemy_character_type", "passive_skill", "skill", "list"),
     ("enemy_character_type", "level", "enemy_standard_attribute", "one"),
+    ("enemy_in_team", "level", "enemy_standard_attribute", "one"),     # a level with no scaling row hangs the battle
     ("enemy_team", "enemy_leader", "enemy_character_type", "one"),
     ("enemy_in_team", "enemy_team_id", "enemy_team", "one"),
     ("enemy_in_team", "enemy_character_type_id", "enemy_character_type", "one"),
@@ -382,19 +418,14 @@ def check(tables, changed):
             missing = [v for v in vals if v and v not in keys(target)]
             if missing:
                 problems.append(f"{table} {r[k]}: {field} -> {target} {missing} not found")
-    # a link listed on only one node is one-way (units move only that way); the original maps
-    # have some (3% of links), so this is a note in case it was not meant
-    if "spot" in changed:
-        routes = {int(r["id"]): set(_ints(r["route"])) for r in tables["spot"]}
-        mission_of = {int(r["id"]): int(r["mission_id"]) for r in tables["spot"]}
-        one_way = {}
-        for sid in sorted(int(k) for k in changed["spot"] if int(k) in routes):
-            for t in sorted(routes[sid]):
-                if t in routes and sid not in routes[t]:
-                    one_way.setdefault(mission_of[sid], []).append(f"{sid}->{t}")
-        for mid, links in sorted(one_way.items()):
-            shown = ", ".join(links[:4]) + (f" and {len(links) - 4} more" if len(links) > 4 else "")
-            problems.append(f"map {mid}: {len(links)} one-way link(s) ({shown}); fine if intended")
+    # the few enemy types with no stats of their own (maxlife 0, e.g. 10000) are stand-ins: a team using one can't be
+    # fought from Target Practice (MissionSelectionDroneTrainSettingController.GetEnemyPower: EnemyGun.Init overflows)
+    if "enemy_in_team" in changed:
+        blank = {int(r["id"]) for r in tables["enemy_character_type"] if not int(r.get("maxlife") or 0)}
+        for r in tables["enemy_in_team"]:
+            if str(r["id"]) in changed["enemy_in_team"] and int(r["enemy_character_type_id"] or 0) in blank:
+                problems.append(f"enemy_in_team {r['id']}: enemy_character_type {r['enemy_character_type_id']} is a stand-in "
+                                f"with no stats; team {r['enemy_team_id']} freezes the game in Target Practice")
     # a new or changed enemy team without members fights nobody
     if "enemy_team" in changed or "enemy_in_team" in changed:
         members = {int(r["enemy_team_id"]) for r in tables["enemy_in_team"]}
@@ -449,6 +480,8 @@ def build(mods=None, out_dir=BUILD_DIR, log=print, write=True, load_table=None):
             "battle_skill_config" if r[2] == "skill" else r[2] for r in REFERENCES if r[0] in touched}
         if {"enemy_team", "enemy_in_team"} & set(touched):
             need |= {"enemy_team", "enemy_in_team"}
+        if _copied_missions(mods):
+            need |= set(COPY_TABLES)
     tables = {}
     for t in sorted(need):
         tid, fields = schema[t]
@@ -458,7 +491,7 @@ def build(mods=None, out_dir=BUILD_DIR, log=print, write=True, load_table=None):
     # The client finds rows through each table's section index (StBaseDatas.GetDataById), which
     # needs ascending keys; 238 of 240 integer-keyed tables are sorted. Appending enemy team
     # 80000001 after 94040975 made it unfindable ("找不到敌人组队信息"), so sorted tables stay sorted.
-    was_sorted = {t: _is_sorted(tables[t], schema[t][1]) for t in touched}
+    was_sorted = {t: _is_sorted(tables[t], schema[t][1]) for t in need}
 
     problems = overlaps(mods, tables, schema)
     changed = {}
@@ -467,6 +500,8 @@ def build(mods=None, out_dir=BUILD_DIR, log=print, write=True, load_table=None):
             tables[t], keys = apply_rows(t, tables[t], patches, schema[t][1], source=f"{m['name']}: ")
             changed.setdefault(t, set()).update(keys)
             log(f"  {m['name']}: {t} {len(keys)} row(s)")
+
+    copies = copy_maps(_copied_missions(mods), tables, changed)
 
     lines = None
     cd_changed = {}
@@ -506,7 +541,8 @@ def build(mods=None, out_dir=BUILD_DIR, log=print, write=True, load_table=None):
         return {"data_version": data_version, "base_data_version": base_version, "digest": d,
                 "mods": [{"name": m["name"], "version": m["version"]} for m in mods],
                 "tables": {t: sorted(k, key=_sort_key) for t, k in changed.items()},
-                "grant": _merged_grants(mods), "map_rules": rules, "banners": banners, "problems": problems}
+                "grant": _merged_grants(mods), "map_rules": rules, "banners": banners, "copies": copies,
+                "problems": problems}
     out_files = dict(files)
     for t in changed:
         tid, fields = schema[t]
@@ -542,10 +578,145 @@ def build(mods=None, out_dir=BUILD_DIR, log=print, write=True, load_table=None):
         "grant": _merged_grants(mods),
         "map_rules": rules,
         "banners": banners,
+        "copies": copies,
+        "build_revision": BUILD_REVISION,
         "problems": problems,
     }
     (out_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=1), "utf-8")
     return manifest
+
+
+# ---------------------------------------------------------------------------- map copies
+#
+# A mod map made with "_copy" from a game map (Mod Studio's map copy) has new node ids at the same
+# places on the same map art. What names the source's nodes has to follow:
+#   - its own rows: spot route / map_route / auto_teleport, mission win_spot_id / special_spot_id /
+#     random_line_spot (translated here);
+#   - win conditions, which the client checks itself (DeploymentUIController$$CheckTypeComplete):
+#     mission_win_type_config 1101 "spot,..." and 1309 "ally_team,spot" rows naming source nodes
+#     get a copy for the map, and its win_type / lose_type / medal_type_silver / win_step (with the
+#     mission_win_step_control chain) name the copies;
+#   - what the server keeps by map id or shares with the source (team ai_content routes, ally
+#     betray / transform nodes, data/spawn_tables.json, recorded runs): read through manifest
+#     "copies" {"<map>": {"from": <source map>, "spots": {"<source node>": node}}} (missions.py).
+COPY_TABLES = ("mission", "spot", "mission_win_type_config", "mission_win_step_control")
+COPY_SPOT_FIELDS = {"mission": ("win_spot_id", "special_spot_id", "random_line_spot"),
+                    "spot": ("route", "map_route", "auto_teleport")}
+WIN_SPOT_ARGS = {1101: None, 1309: 1}       # condition type: which "," argument is a node (None: all)
+
+
+def _copied_missions(mods):
+    """{new map id: source map id} of the mods' mission rows made with _copy."""
+    out = {}
+    for m in mods:
+        for p in m["tables"].get("mission", []):
+            if isinstance(p, dict) and "_copy" in p and not p.get("_delete"):
+                out[int(p["id"])] = int(p["_copy"])
+    return out
+
+
+def _swap(text, remap, only=None):
+    """Numbers in text that are source nodes as the copy's (only: the "," position to touch)."""
+    if only is None:
+        return re.sub(r"\d+", lambda x: str(remap.get(int(x.group(0)), x.group(0))), str(text))
+    parts = str(text).split(",")
+    if only < len(parts) and parts[only].strip().isdigit():
+        parts[only] = str(remap.get(int(parts[only]), parts[only].strip()))
+    return ",".join(parts)
+
+
+def copy_maps(copied, tables, changed):
+    """Point each copied map at its own nodes (see above). Returns manifest "copies"."""
+    out = {}
+    if not copied:
+        return out
+    spots_of = {}
+    for r in tables["spot"]:
+        spots_of.setdefault(int(r["mission_id"]), []).append(r)
+    missions = {int(r["id"]): r for r in tables["mission"]}
+    conds = {int(r["id"]): r for r in tables["mission_win_type_config"]}
+    steps = {str(r["id"]): r for r in tables["mission_win_step_control"]}
+    place = lambda r: (int(r["coordinator_x"] or 0), int(r["coordinator_y"] or 0))
+    for new, src in sorted(copied.items()):
+        mine = {place(r): r for r in spots_of.get(new, [])}
+        remap = {int(r["id"]): int(mine[place(r)]["id"]) for r in spots_of.get(src, []) if place(r) in mine}
+        if not remap or new not in missions:
+            continue
+        out[str(new)] = {"from": src, "spots": {str(k): v for k, v in sorted(remap.items())}}
+        for r in spots_of.get(new, []):
+            for f in COPY_SPOT_FIELDS["spot"]:
+                if r.get(f):
+                    r[f] = _swap(r[f], remap)
+            changed.setdefault("spot", set()).add(str(r["id"]))
+        row = missions[new]
+        for f in COPY_SPOT_FIELDS["mission"]:
+            if row.get(f):
+                row[f] = _swap(row[f], remap)
+        base = new * 1000 if new * 1000 + 999 < 2 ** 31 else max(conds) + 1
+        made = {}
+
+        def cond_copy(cid):
+            c = conds.get(int(cid))
+            if c is None or int(c["type"]) not in WIN_SPOT_ARGS:
+                return cid
+            args = _swap(c["arguments"], remap, WIN_SPOT_ARGS[int(c["type"])])
+            if args == str(c["arguments"]):
+                return cid
+            if int(cid) not in made:
+                nid = base + len(made)
+                while nid in conds:
+                    nid += 1
+                conds[nid] = dict(c, id=nid, arguments=args)
+                tables["mission_win_type_config"].append(conds[nid])
+                changed.setdefault("mission_win_type_config", set()).add(str(nid))
+                made[int(cid)] = nid
+            return str(made[int(cid)])
+
+        swap_conds = lambda text: re.sub(r"\d+", lambda x: cond_copy(x.group(0)), str(text or ""))
+        for f in ("win_type", "lose_type", "medal_type_silver"):
+            if row.get(f):
+                row[f] = swap_conds(row[f])
+        # the win_step chain: copied when a step in it names a copied condition
+        chain, todo = [], re.findall(r"\d+", str(row.get("win_step") or ""))
+        while todo:
+            sid = todo.pop()
+            if sid in chain or sid not in steps:
+                continue
+            chain.append(sid)
+            todo += re.findall(r"\d+", steps[sid]["next_id"] or "")
+        if any(swap_conds(steps[s]["win_step"]) != steps[s]["win_step"] or
+               swap_conds(steps[s]["lose_step"]) != steps[s]["lose_step"] for s in chain):
+            ids = {}
+            for s in sorted(chain):
+                nid = base + 500 + len(ids)
+                while str(nid) in steps:
+                    nid += 1
+                ids[s] = str(nid)
+            swap_steps = lambda text: re.sub(r"\d+", lambda x: ids.get(x.group(0), x.group(0)), str(text or ""))
+            for s in sorted(chain):
+                r = steps[s]
+                nr = dict(r, id=int(ids[s]), win_step=swap_conds(r["win_step"]), lose_step=swap_conds(r["lose_step"]),
+                          next_id=swap_steps(r["next_id"]), lock_id=swap_steps(r["lock_id"]))
+                steps[ids[s]] = nr
+                tables["mission_win_step_control"].append(nr)
+                changed.setdefault("mission_win_step_control", set()).add(ids[s])
+            row["win_step"] = swap_steps(row["win_step"])
+        changed.setdefault("mission", set()).add(str(new))
+    return out
+
+
+_COPIES = {"key": None, "copies": {}}
+
+
+def copies():
+    """Built map copies: {"<map>": {"from": source map, "spots": {"<source node>": node}}}."""
+    try:
+        key = (config.MODS_DISABLED, MANIFEST.stat().st_mtime_ns)
+    except OSError:
+        return {}
+    if key != _COPIES["key"]:
+        _COPIES.update(key=key, copies=(manifest() or {}).get("copies") or {})
+    return _COPIES["copies"]
 
 
 def _is_sorted(rows, fields):
@@ -560,7 +731,10 @@ def _sort_key(k):
     return (0, int(k)) if k.lstrip("-").isdigit() else (1, k)
 
 
-SPAWN_KEYS = {"spot", "teams", "start", "from_turn", "to_turn", "every", "chance", "max", "enemy_owned"}
+# the keys gfserver/missions.py _spawn and _spawn_allies read
+SPAWN_KEYS = {"spot", "spots", "teams", "start", "from_turn", "to_turn", "every", "chance", "max", "enemy_owned",
+              "one_of", "blind", "queue", "while_alive", "min_kills", "max_kills", "if_special", "unless_special",
+              "after_killed", "after_destroyed", "our_turn", "min_casts", "not_ours", "ally", "owner", "side"}
 
 
 def _merged_map_rules(mods):
@@ -576,7 +750,7 @@ def _merged_map_rules(mods):
                 bad = set(r) - SPAWN_KEYS - {k for k in r if k.startswith("_")}
                 if bad:
                     raise ModError(f"{m['name']}: map {mid} spawn rule has unknown key(s) {sorted(bad)}")
-                if "spot" not in r or not r.get("teams"):
+                if not ("spot" in r or r.get("spots")) or not (r.get("teams") or r.get("queue")):
                     raise ModError(f"{m['name']}: map {mid} spawn rule needs a spot and teams: {r}")
             out[str(int(mid))] = rules
     return out
@@ -597,7 +771,9 @@ def check_map_rules(rules, tables, files, schema, load_table=None):
             for sid in [int(x) for x in r.get("spots") or [r["spot"]]]:
                 if spot_map.get(sid) != int(mid):
                     problems.append(f"map {mid}: spawn spot {sid} is not a node of this map")
-            missing = [t["team"] for t in r["teams"] if int(t.get("team") or 0) not in teams]
+            known = {int(x["id"]) for x in load("ally_team")} if r.get("ally") else teams
+            wanted = [t.get("team") for t in r.get("teams") or []] + list(r.get("queue") or [])
+            missing = [t for t in wanted if int(t or 0) not in known]
             if missing:
                 problems.append(f"map {mid}: spawn teams {missing} not found")
     return problems
@@ -674,7 +850,8 @@ def stale():
     m = manifest()
     if m is None:
         return bool(mods)
-    return m.get("digest") != digest(mods) or [x["name"] for x in m["mods"]] != [x["name"] for x in mods]
+    return (m.get("digest") != digest(mods) or [x["name"] for x in m["mods"]] != [x["name"] for x in mods]
+            or (bool(mods) and m.get("build_revision", 2) != BUILD_REVISION))
 
 
 def map_rules(mission_id):
@@ -713,7 +890,8 @@ def apply_grants(state, uid, man=None):
     """Give the save what the mods grant, once each (missions are opened in mission_with_user_info).
 
     "grant": {"guns": [8001 or {"id": 8001, "level": 100, "number": 5, "skill1": 10, "skill2": 10}],
-              "sangvis": [...], "fairies": [...], "missions": [...]}
+              "sangvis": [...], "fairies": [...], "missions": [...], "items": [item ids: one of each, e.g. a mod's
+              own profile picture or home background]}
     Granted ids are remembered in the save's "_mod_grants". When a doll's options change in a later
     build, the granted doll is updated to match. Returns {kind: [ids added or updated]}.
     """
@@ -767,6 +945,10 @@ def apply_grants(state, uid, man=None):
                     applied[key] = opts
             elif kind == "missions" and unit in missions._missions():
                 missions._mission_record(state, unit)["is_open"] = "1"
+            elif kind == "items":
+                from . import squads
+                rec = squads._item(state, unit)
+                rec["number"] = str(max(1, int(rec["number"] or 0)))
             else:
                 continue
             done.setdefault(kind, []).append(unit)

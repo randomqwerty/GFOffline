@@ -9,6 +9,7 @@ Scripts in the bundle are TextAssets XOR'd with a repeating key
 HotFixController.LoadHotFix from LoginController.Awake, so code appended to it runs
 before the SDK login.
 """
+import re
 import sys
 from pathlib import Path
 
@@ -39,6 +40,11 @@ def local_base():
 
 def fill(text):
     return text.replace("{{LOCAL_BASE}}", local_base())
+
+
+def unfilled(text):
+    """Placeholders ({{NAME}}) fill() left in a patch; Lua's own "{{" (a table of tables) is not one."""
+    return re.findall(r"\{\{[A-Z_]+\}\}", text)
 
 
 def inject(plain, patches):
@@ -84,7 +90,7 @@ def main():
     orig = {o.path_id: script_bytes(o.read()) for o in UnityPy.load(src.read_bytes()).objects if o.type.name == "TextAsset"}
     got = xor(texts[pid]).decode("utf-8")
     assert got.endswith(f"{END}\n") and all(fill(p.read_text("utf-8")).strip() in got for p in patches)
-    assert "{{" not in got[got.index(BEGIN):], "unfilled placeholder in patches"
+    assert not unfilled(got[got.index(BEGIN):]), f"unfilled placeholder in patches: {unfilled(got[got.index(BEGIN):])}"
     assert set(texts) == set(orig) and all(texts[k] == orig[k] for k in orig if k != pid)
     print(f"wrote {out} ({out.stat().st_size} bytes); PatchList +{len(new_plain) - len(xor(orig[pid]))} bytes; "
           f"{len(orig) - 1} other scripts unchanged; patches: {', '.join(p.name for p in patches)}")

@@ -3,6 +3,7 @@
   python tools/live_archive.py --log <packet.log>      fetch everything, signing in with the session in a packet log
   python tools/live_archive.py --uid <your uid>        the same, asking for the session's sign (it is not echoed)
   python tools/live_archive.py --from-log <packet.log> no network at all: keep what a packet log already recorded
+  python tools/live_archive.py --products              only the shop's paid goods (no login: the game asks without one)
 
 Replies go to player/archive/<uid>/ (gfserver/archived.py reads them), and your account file (the "userinfo" reply,
 Index/index) also goes to player/<uid>_user_info.json unless there is one. Safe to re-run: what is already saved is skipped
@@ -18,6 +19,8 @@ and to an ended session, which stops the run.
 Other players: your friends are fetched by default (--no-friends skips them). --players <file> adds players who agreed to it,
 one uid per line, up to MAX_PLAYERS. There is deliberately no way to walk through every uid on the server: those people
 haven't been asked.
+The shop's paid goods (gem packs, cards, packages, battle pass) come from the paycenter's product list, asked with no
+account at all; every run saves it to data/pay_products.json, as it is the same for everyone.
 Friends' support echelons come with Friend/teamGuns, which takes no uid and lists only your own friends'. Their equipment's
 stats come only when one is deployed in a mission, so --from-log also keeps each Mission/reinforceFriendTeam it finds.
 """
@@ -43,6 +46,9 @@ MAX_PLAYERS = 200
 STOP_AFTER_ERRORS = 5
 HEARTBEAT_URL = "http://gf-transit.sunborngame.com/index.php"     # ServerInfo.SendHeartBeatRequest, as a packet log records it
 HEARTBEAT_EVERY = 60                                               # ServerInfo.HEART_BEAT_DELAY
+PAY_URL = HEARTBEAT_URL            # ServerInfo.RequestProductList: AddrUtil R_PRODUCT_LIST is pay_transit_addr, this host
+PAY_QUERY = {"c": "micasdk", "a": "getProducts", "channel_id": "en_mica", "device": "steam"}   # SunBornUrlManager.CHANNLE_ID
+PRODUCTS_FILE = ROOT / "data" / "pay_products.json"
 REFUSED = "error:2"                 # a refused call, or an ended session (the client logs in again: Request.CheckWWWError)
 PROBE = "Friend/list"               # read-only, answered for every account
 
@@ -289,6 +295,20 @@ def fetch_all(session, friends=True, players=(), refresh=False, log=print):
     return saved, skipped, failed
 
 
+def fetch_products(url=PAY_URL, target=PRODUCTS_FILE, log=print):
+    """The paycenter's product list as the game asks for it (GET, no uid or sign), saved as it came. Returns how many."""
+    query = urllib.parse.urlencode(dict(PAY_QUERY, check_version=config.CLIENT_VERSION))
+    with OPENER.open(f"{url}?{query}", timeout=60) as r:
+        reply = json.loads(r.read().decode("utf-8", "replace"))
+    if not isinstance(reply, dict) or str(reply.get("Err_No")) != "100":
+        raise RuntimeError(f"the product list came back with {str(reply)[:80]}")
+    n = sum(1 for k in reply if k.isdigit())
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(reply, ensure_ascii=False, indent=1), encoding="utf-8")
+    log(f"  saved {n} paid goods to {target.name}")
+    return n
+
+
 FRIEND_DEPLOY = "Mission/reinforceFriendTeam"     # --from-log only: kept per friend, its "equips" merged
 
 
@@ -367,11 +387,21 @@ def main():
     ap.add_argument("--no-friends", action="store_true")
     ap.add_argument("--players", help="file of uids of players who agreed, one per line")
     ap.add_argument("--refresh", action="store_true", help="fetch again what is already saved")
+    ap.add_argument("--products", action="store_true", help="only the shop's paid goods, with no login")
     ap.add_argument("--pause", type=float, default=2.0, help="seconds between calls (at least 1)")
     args = ap.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
     if args.from_log:
         print(f"{import_log(args.from_log)} replies kept in {config.PLAYER_DIR / 'archive'}")
+        return 0
+    if args.products or args.log or args.uid:
+        try:
+            fetch_products()
+        except (RuntimeError, ValueError, urllib.error.URLError, OSError) as e:
+            print(f"  failed: the paid goods list: {e}")
+            if args.products:
+                return 1
+    if args.products:
         return 0
     if args.log:
         ident = recording_identity(read_log(args.log))

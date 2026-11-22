@@ -11,7 +11,11 @@ Steps:
  3. art: extra paths for existing images (mod "art", title art for mod chapters, mission icons for
     mod maps), added to the bundles holding them -> build/<bundle>.ab + build/asset_aliases.json
  4. story files (story/<file>.txt in a mod): replace the game's in the story bundle -> build/<bundle>.ab
- 5. tools/build_resconfig.py (declares build/*.ab sizes and alias paths) and copy the bundles into
+ 5. custom art (mod "custom_art"): copies of a doll's art bundles with the mod's pictures, under a new
+    model code -> build/gfmodart*.ab + build/custom_art.json (tools/custom_art.py)
+ 6. game assets (mod "game_assets"): replaced or added pictures and music -> build/<bundle>.ab,
+    build/gfmodasset*.ab, build/<name>.acb.bytes + build/game_assets.json (tools/game_assets.py)
+ 7. tools/build_resconfig.py (declares build/*.ab sizes and alias paths) and copy the bundles into
     the game copy
 
 Restart the server afterwards; on the next login the client downloads the new package.
@@ -318,11 +322,12 @@ def build_story_bundle(found, src, out):
     out.write_bytes(env.file.save(packer="original"))
 
 
-def copy_into_game(src, name):
+def copy_into_game(src, name, ours=False):
+    """ours: a bundle only the build makes (custom art), never kept as an original."""
     if "steamapps" in (p.lower() for p in GAME_PC.parts):
         raise SystemExit(f"refusing to write inside a Steam library: {GAME_PC}")
     dst = GAME_PC / name
-    if dst.exists() and not config.original_bundles(name):     # playing from the source folder: keep what's overwritten
+    if not ours and dst.exists() and not config.original_bundles(name):     # playing from the source folder: keep what's overwritten
         config.PRISTINE_DIR.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(dst, config.PRISTINE_DIR / name)
     if not dst.exists() or dst.read_bytes() != src.read_bytes():
@@ -341,16 +346,21 @@ def _bundle_on_disk(fname):
     return GAME_PC / fname if (GAME_PC / fname).is_file() else None
 
 
-def build_fallbacks(art_files):
+def build_fallbacks(art_files, custom_files=()):
     """art_fallback.py: bundles nobody can serve leave the resource config; their other version
     answers for them. Returns the bundle files to copy into the game (changed now or before)."""
     import UnityPy
     import art_fallback
+    import custom_art
     before = json.loads(art_fallback.FALLBACKS_FILE.read_text("utf-8")) if art_fallback.FALLBACKS_FILE.exists() else {}
     meta = json.loads((config.ARCHIVE_DIR / "resconfig.json").read_text("utf-8"))
     tree = next(o for o in UnityPy.load(str(config.ARCHIVE_DIR / meta["file"])).objects
                 if o.type.name == "MonoBehaviour").read_typetree()
-    result = art_fallback.build(tree, _bundle_on_disk, ROOT / "build", built=art_files)
+    custom_art.add_entries(tree)
+    import game_assets
+    game_assets.add_entries(tree)
+    find = lambda f: ROOT / "build" / f if f in custom_files else _bundle_on_disk(f)
+    result = art_fallback.build(tree, find, ROOT / "build", built=set(art_files) | set(custom_files))
     stale = set(before.get("files") or {}) - set(result["files"]) - set(art_files)
     for fname in stale:                 # no longer needed: back to the original bundle
         (ROOT / "build" / fname).unlink(missing_ok=True)
@@ -359,6 +369,49 @@ def build_fallbacks(art_files):
         print(f"  missing bundles: {len(result['drop'])}; {len(result['alias'])} answered by their other "
               f"version, {alone} left out (shown empty)")
     return set(result["files"]) | stale
+
+
+def build_custom_art(found):
+    """Custom art copies (tools/custom_art.py); a copy no longer made leaves build/ and the game copy.
+    Returns {file name: bundle name} of the copies made."""
+    import custom_art
+    before = {e["file"] for e in custom_art.listed()}
+    try:
+        made = custom_art.build(custom_art.collect(found), ROOT / "build")
+    except custom_art.ArtError as e:
+        raise mods.ModError(str(e))
+    for fname in before - set(made):
+        if fname.startswith(custom_art.PREFIX):
+            (ROOT / "build" / fname).unlink(missing_ok=True)
+            if "steamapps" not in (p.lower() for p in GAME_PC.parts):
+                (GAME_PC / fname).unlink(missing_ok=True)
+    return made
+
+
+def build_game_assets(found, art_files):
+    """Replaced and added pictures and music (tools/game_assets.py). What an earlier build made and this one
+    doesn't leaves build/: an added file leaves the game copy too, a replaced one is restored there.
+    Returns (result of game_assets.build, {file: "restore" or "remove"} for the game copy)."""
+    import game_assets
+    before = game_assets.listed()
+    try:
+        made = game_assets.build(game_assets.collect(found), ROOT / "build", built=art_files)
+    except (game_assets.AssetError, game_assets.cri.CriError) as e:
+        raise mods.ModError(str(e))
+    gone = {}
+    for fname in set(before.get("replaced") or ()) - set(made["replaced"]) - set(art_files):
+        (ROOT / "build" / fname).unlink(missing_ok=True)
+        gone[fname] = "restore"
+    for item in before.get("new") or ():
+        if item["file"] not in made["new"]:
+            (ROOT / "build" / item["file"]).unlink(missing_ok=True)
+            gone[item["file"]] = "remove"
+    for s in before.get("sounds") or ():
+        if s["file"] not in made["sounds"]:
+            (ROOT / "build" / s["file"]).unlink(missing_ok=True)
+            (ROOT / "build" / s["dat"]).unlink(missing_ok=True)
+            gone[s["file"]] = "remove" if s["new"] else "restore"
+    return made, gone
 
 
 def main():
@@ -420,14 +473,26 @@ def main():
         ALIASES_FILE.write_text(json.dumps(aliases, indent=1), "utf-8")
     else:
         ALIASES_FILE.unlink(missing_ok=True)
-    fallback_files = build_fallbacks(set(art))
+    custom = build_custom_art(found)
+    assets, gone = build_game_assets(found, set(art))
+    fallback_files = build_fallbacks(set(art) | set(assets["replaced"]), set(custom) | set(assets["new"]))
     subprocess.run([sys.executable, str(ROOT / "tools" / "build_resconfig.py")], check=True)
     copy_into_game(built if built.exists() else src, src.name)
     copy_into_game(cbuilt if cbuilt.exists() else csrc, csrc.name)
     copy_into_game(sbuilt if sbuilt.exists() else ssrc, ssrc.name)
-    for fname in set(art) | stale | fallback_files:
+    for fname in custom:
+        copy_into_game(ROOT / "build" / fname, fname, ours=True)
+    for fname in set(assets["new"]) | {f for f, new in assets["sounds"].items() if new}:
+        copy_into_game(ROOT / "build" / fname, fname, ours=True)
+    for fname in {f for f, new in assets["sounds"].items() if not new}:
+        copy_into_game(ROOT / "build" / fname, fname)
+    restore = {f for f, how in gone.items() if how == "restore"}
+    for fname in (set(art) | stale | fallback_files | set(assets["replaced"]) | restore) - set(custom):
         built_file = ROOT / "build" / fname
         copy_into_game(built_file if built_file.exists() else config.original_bundles(fname)[0], fname)
+    for fname in (f for f, how in gone.items() if how == "remove"):
+        if "steamapps" not in (p.lower() for p in GAME_PC.parts):
+            (GAME_PC / fname).unlink(missing_ok=True)
     subprocess.run([sys.executable, str(ROOT / "tools" / "check_save.py")], check=False)   # the new tables: a fresh process
     print("done; restart the server, then log in to download the new data package")
 

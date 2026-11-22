@@ -4,7 +4,8 @@ Seasons are stc event_battlepass rows (start_time..end_time; rotate_switch "1,<d
 window every <days> days). The pass exp is the count of the season's pt_item_id (10606), which
 the daily and weekly quest prizes pay; the level is exp / game_config battlepass_lvup_exp + 1
 (PassOrderUserData$$GetCurrentPassLevel: level 1 at 0 exp), up to battlepass_lv_upperlimit, and every
-further battlepass_lvup_exp after the top level is one extra bundle (gift_extra). The paid track (gift_paytounlock) needs the first unlock_itemid item.
+further battlepass_lvup_exp after the top level is one extra bundle (gift_extra). The paid track (gift_paytounlock) needs
+either unlock_itemid item.
 Reply formats (from the client's handlers):
   Battlepass/index {} -> {"battlepass_with_user": [{"id", "battlepass_id", "free_bonus", "paid_bonus",
       "extra_bonus", "is_expired", "start_time"}], "battlepass_pt_item": {"<item>": count}}
@@ -107,8 +108,11 @@ def _exp(state, row):
 
 
 def _paid(state, row):
-    unlock = str(row.get("unlock_itemid") or "").split(";")[0]
-    return unlock.strip().isdigit() and int(squads._item(state, unlock)["number"]) > 0
+    """Either unlock item opens the paid track: PassOrderUserData$$UnlockLevel is 1 for the first (basic), 2 for
+    the second (advanced), 3 for both. The items come with the account file (item_with_user_info) and the
+    archived Battlepass/index (battlepass_pt_item), so a pass bought live stays bought."""
+    unlock = [i.strip() for i in str(row.get("unlock_itemid") or "").split(";") if i.strip().isdigit()]
+    return any(int(squads._item(state, i)["number"]) > 0 for i in unlock)
 
 
 def index(state, body, now=None):
@@ -117,9 +121,17 @@ def index(state, body, now=None):
     if row is None:
         return {"battlepass_with_user": state.get("battlepass_with_user") or [], "battlepass_pt_item": {}}
     _record(state, row, now)
-    items = [str(row["pt_item_id"])] + [i for i in str(row.get("unlock_itemid") or "").split(";") if i.strip().isdigit()]
-    return {"battlepass_with_user": state["battlepass_with_user"],
-            "battlepass_pt_item": {i: int(squads._item(state, i)["number"]) for i in items}}
+    return {"battlepass_with_user": state["battlepass_with_user"], "battlepass_pt_item": pt_items(state, now)}
+
+
+def pt_items(state, now=None):
+    """{item: count} of the running season's pass exp and unlock items, as the client keeps them in its bag
+    (Battlepass/index, Mall/staticTables)."""
+    row, _ = current(now)
+    if row is None:
+        return {}
+    items = [str(row["pt_item_id"])] + [i.strip() for i in str(row.get("unlock_itemid") or "").split(";") if i.strip().isdigit()]
+    return {i: int(squads._item(state, i)["number"]) for i in items}
 
 
 def _claim(state, row, rec, kind, level):

@@ -448,7 +448,8 @@ function skillLinks(obj, key, label, opts = {}) {
     const raw = idList(obj[key]);
     const groups = raw.map(x => opts.rowIds ? String(Math.floor(Number(x) / 100)) : x);
     const n = groups.length ? await lookupNames("skill", groups) : {};
-    box.replaceChildren(h("span", { class: "muted small" }, label), ...groups.map((g, i) => h("span", { class: "pill" }, `${n[g] || "skill"} · ${g} `,
+    const descs = await Promise.all(groups.map(skillDesc));
+    box.replaceChildren(h("span", { class: "muted small" }, label), ...groups.map((g, i) => h("span", { class: "pill", title: descs[i] }, `${n[g] || "skill"} · ${g} `,
       h("button", { class: "small", onclick: () => openEntity("skill", g) }, "Open"),
       h("button", { class: "small danger", onclick: () => { raw.splice(i, 1); obj[key] = raw.join(","); dirty(); draw(); } }, "✕"))),
       opts.single && raw.length ? null : h("button", { class: "small", onclick: async () => {
@@ -510,7 +511,7 @@ function watcherCard(tree, wid, onRemove, visited) {
     const write = () => { wch.activation_skills = list.join(","); wch.sp_skill_target = list.map((_, i) => targets[i] || "0").join(","); dirty(); };
     skillsBox.replaceChildren(...list.map((g, i) => {
       const tg = { v: targets[i] || "0" };
-      return h("div", { class: "row cond" }, h("span", { class: "pill" }, `${n[g] || "skill"} · ${g}`),
+      return h("div", { class: "row cond" }, h("span", { class: "pill", title: S.skillIndex && (S.skillIndex[String(g)] || {}).desc || "" }, `${n[g] || "skill"} · ${g}`),
         h("span", { class: "muted small" }, "aimed at"), selectInput(tg, "v", SK.watchTarget, { text: true, onChange: () => { targets[i] = tg.v; write(); } }),
         h("button", { class: "small", onclick: () => openEntity("skill", g) }, "Open"),
         h("button", { class: "small danger", onclick: () => { list.splice(i, 1); targets.splice(i, 1); write(); drawSkills(); } }, "✕"));

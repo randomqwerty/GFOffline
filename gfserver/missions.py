@@ -323,6 +323,82 @@ def _missions():
     return {int(r["id"]): r for r in stc.table("mission")}
 
 
+_COPY_CACHE = {"of": None, "maps": {}}
+
+
+def _copy_maps():
+    """mods.copies() with int keys: {map: (source map, {source node: node})}."""
+    from . import mods
+    got = mods.copies()
+    if got is not _COPY_CACHE["of"]:
+        _COPY_CACHE.update(of=got, maps={int(k): (int(v["from"]), {int(a): int(b) for a, b in v["spots"].items()})
+                                         for k, v in got.items()})
+    return _COPY_CACHE["maps"]
+
+
+def _copied_spots(mid):
+    """{source node: this map's node} for a mod's copy of a game map (mods.copy_maps), else {}."""
+    got = _copy_maps().get(int(mid)) if mid is not None else None
+    return got[1] if got else {}
+
+
+def _source(mid):
+    """The game map a mod map copies, or None."""
+    got = _copy_maps().get(int(mid)) if mid is not None else None
+    return got[0] if got else None
+
+
+def _for_map(table, mid, default=None):
+    """A per-map rule of this file for the map, or for the game map a mod map copies (a set of
+    nodes on the copy's nodes)."""
+    if int(mid) in table:
+        return table[int(mid)]
+    src = _source(mid)
+    if src is None or src not in table:
+        return default
+    got = table[src]
+    if isinstance(got, (set, frozenset)):
+        return frozenset(_copied_spots(mid).get(x, x) for x in got)
+    return got
+
+
+def local_spots(mid, text):
+    """Text naming a copied map's source nodes (team ai_content routes) with this map's nodes."""
+    remap = _copied_spots(mid)
+    if not remap or text is None:
+        return text
+    return re.sub(r"\d+", lambda x: str(remap.get(int(x.group(0)), x.group(0))), str(text))
+
+
+def _local_rules(mid, rules):
+    """A copied map's source spawn rules on its own nodes (rule keys spot / spots / after_destroyed)."""
+    remap = _copied_spots(mid)
+    out = []
+    for r in rules or []:
+        r = dict(r)
+        for k in ("spot", "after_destroyed"):
+            if isinstance(r.get(k), int):
+                r[k] = remap.get(r[k], r[k])
+        if isinstance(r.get("spots"), list):
+            r["spots"] = [remap.get(x, x) if isinstance(x, int) else x for x in r["spots"]]
+        out.append(r)
+    return out
+
+
+def _local_recording(mid, entry):
+    """A copied map's source recordings on its own nodes (recordings.py layout)."""
+    remap = _copied_spots(mid)
+    node = lambda x: remap.get(int(x), x) if str(x).isdigit() else x
+    out = dict(entry)
+    for key in ("grow", "start", "allies"):
+        if key in entry:
+            out[key] = [[node(x[0]), *x[1:]] for x in entry[key]]
+    if "marker_runs" in entry:
+        out["marker_runs"] = [dict(run, markers=[[node(mk[0]), *mk[1:]] for mk in run.get("markers", [])])
+                              for run in entry["marker_runs"]]
+    return out
+
+
 @lru_cache(maxsize=1)
 def _clear_prizes():
     """mission id -> prize id of its first-clear reward (catchdata mission_event_prize_info, which the
@@ -406,7 +482,8 @@ def start_mission(state, body, rng=random):
             s["enemy_birth_turn"] = "1"
             # read by MissionAction$$CheckEnemyDataTemp as int / string
             team = _enemy_teams().get(int(s["enemy_team_id"])) or {}
-            s["enemy_ai"], s["enemy_ai_para"] = int(team.get("ai") or 0), str(team.get("ai_content") or "0")
+            s["enemy_ai"] = int(team.get("ai") or 0)
+            s["enemy_ai_para"] = local_spots(mid, str(team.get("ai_content") or "0"))
     for dep in body.get("spots") or []:
         s = spots.get(int(dep["spot_id"]))
         if s is not None:
@@ -436,6 +513,8 @@ def start_mission(state, body, rng=random):
         _place_squad(state, m, dep.get("spot_id"), dep.get("squad_with_user_id"), int(dep.get("battleskill_switch", 1) or 0))
     _place_buildings(m, rng)
     _place_allies(m, body.get("mission_ally_spots"))
+    if is_night(mid):
+        _third_parties_hold(m)
     _spawn(m, rng, at_start=True)
     m["hostages_total"] = sum(1 for sp in m["spots"] if str(sp.get("hostage_id") or "0") != "0")
     m["had_units"] = bool(m["team_pos"] or m.get("sangvis_pos") or m.get("vehicle_pos"))
@@ -879,12 +958,26 @@ def enemy_ai(team_id):
 MAP_AI_DEFAULT = {10674: "standby"}
 
 
+# a mod map's "default_ai" for its AI-0 teams, where enemy_ai_type has no code for it
+MAP_AI_WORDS = {STANDBY, RANDOM, ATTACK, ALERT, EXPAND}
+ALERT_RANGE_DEFAULT = "2"
+
+
 def enemy_behaviour(mid, team_id):
     """(behaviour, ai_content) of an enemy team in a mission, resolving code 0 to the
     mission's default."""
+    behaviour, para = _enemy_behaviour(mid, team_id)
+    return behaviour, local_spots(mid, para)
+
+
+def _enemy_behaviour(mid, team_id):
     ai, para = enemy_ai(team_id)
-    if ai == 0 and int(mid) in MAP_AI_DEFAULT:
-        return MAP_AI_DEFAULT[int(mid)], para
+    if ai == 0 and _for_map(MAP_AI_DEFAULT, mid):
+        return _for_map(MAP_AI_DEFAULT, mid), para
+    if ai == 0:
+        word = _map_setting(mid, "default_ai")
+        if word in MAP_AI_WORDS:
+            return word, para if word != ALERT or (_ids(para.split("|")[0]) or [0])[0] > 0 else ALERT_RANGE_DEFAULT
     if ai == 0:
         return _MISSION_AI.get(int(_missions().get(mid, {}).get("enemy_ai_type") or 0), STANDBY), para
     return _TEAM_AI.get(ai, STANDBY), para
@@ -2916,7 +3009,8 @@ def _random_event(state, m, dst, team, reply, rng=random):
             row = _enemy_teams()[enemy]
             dst.update({"enemy_team_id": str(enemy), "enemy_instance_id": str(inst), "boss_hp": str(_boss_hp(enemy)),
                         "enemy_hp_percent": "1", "enemy_birth_turn": str(m["turn"]),
-                        "enemy_ai": int(row.get("ai") or 0), "enemy_ai_para": str(row.get("ai_content") or "0")})
+                        "enemy_ai": int(row.get("ai") or 0),
+                        "enemy_ai_para": local_spots(m["mission_id"], str(row.get("ai_content") or "0"))})
             m["pending_battle"] = {"team": team, "spot": dst["spot_id"], "from": ""}
             reply["enemy_team_id"] = str(enemy)
             return reply
@@ -3265,7 +3359,7 @@ def _echelon_out(m, spot=None, lost=False, vehicle=False):
     """An echelon of ours left the map (win type 2403, the S-rank limit). Score maps: a withdrawal
     from a Command Post or heliport costs field 3, one from anywhere else or a lost battle field 2
     (recorded on 11116: -1500; player report's City of Nightmares+ and Mirror Stage+ rules: "off
-    helipad or fight retreat")."""
+    helipad or fight retreat"). A mod map can price a lost battle on its own ("defeat_points")."""
     m["echelons_out"] = int(m.get("echelons_out") or 0) + 1
     rule = score_rule(m["mission_id"])
     if rule is None:
@@ -3274,6 +3368,10 @@ def _echelon_out(m, spot=None, lost=False, vehicle=False):
     if vehicle:         # Mobile Armor: fields 20-22
         beaten = MA_DEFEAT.get(int(m["mission_id"]), rule["ma_defeat"])
         _add_score(m, -(beaten if lost else rule["ma_withdraw_deploy"] if on_deploy else rule["ma_out"]))
+        return
+    if lost:
+        own = _map_setting(m["mission_id"], "defeat_points")     # a mod map's own cost of a lost echelon
+        _add_score(m, -(int(own) if own is not None else rule["echelon_out"]))
         return
     _add_score(m, -(rule["withdraw_deploy"] if on_deploy else rule["echelon_out"]))
 
@@ -3908,14 +4006,13 @@ def start_enemy_turn(state, body, rng=random):
     # reinforcements first, so the moves go round them (the AI here only approximates the live one;
     # recorded on 11374: 9584211 appeared on 95551 / 95553 in enemy turn 1 and first moved in turn 2)
     grow = _spawn(m, rng)
-    newborn = {str(g["enemy_instance_id"]) for g in grow}
+    # new enemies move in the turn they appear (player report: true on every map); the client reads
+    # grow_enemy before enemy_move (RequestStartEnemyTurnHandle), so they can move in the same reply
     m["enemy_steps"] = {}
-    moves = _step_enemies(state, m, rng, newborn)
+    moves = _step_enemies(state, m, rng, set())
     for mv in moves:
         _count_move(m, "enemy", mv["enemy_instance_id"])
         _note_moved(m, MOVED_ENEMY, mv["enemy_instance_id"])
-    for inst in newborn:
-        m["enemy_steps"][inst] = STEP_DONE      # only just arrived: no extra step either
     if is_night(m["mission_id"]):
         # the client takes night moves from night_enemy, and only the ones in sight
         night, grow = _night_moves(state, m, moves, grow)
@@ -4012,8 +4109,12 @@ FALLBACK_SPAWN_CHANCE = 100
 
 
 def _live_spawn_seen(mid):
-    """The map's recorded runs: the shipped ones and the player's own (gfserver/recordings.py)."""
-    return recordings.mission(LIVE_SPAWNS, mid)
+    """The map's recorded runs: the shipped ones and the player's own (gfserver/recordings.py); a
+    mod's copy of a map adds its source's, on its own nodes."""
+    seen = recordings.mission(LIVE_SPAWNS, mid)
+    if _source(mid) is not None:
+        seen = recordings.add(seen, _local_recording(mid, recordings.mission(LIVE_SPAWNS, _source(mid))))
+    return seen
 
 
 @lru_cache(maxsize=None)
@@ -4052,14 +4153,17 @@ def _fallback_spawn_rules(mid):
 
 
 def _spawn_point_rules(m):
-    """Spawn-point special spots on the map now (placed by skills), any side's spot."""
+    """Spawn-point special spots on the map now (placed by skills): on any side's node, but on a heliport
+    only while the enemy holds it (and, like every spawn, not while it is closed)."""
     rules = []
+    types = _spot_types(int(m["mission_id"]))
     for sp in (m.get("effects") or {}).get("specials", {}).values():
         if int(_spot_buff(sp).get("grow_enemy_pool") or 0):
             teams = _spawn_pool(m["mission_id"], sp["spot"])
             if teams:
+                heli = abs(types.get(int(sp["spot"]), 0)) in (SPOT_HELIPORT, SPOT_HEAVY)
                 rules.append({"spot": int(sp["spot"]), "chance": FALLBACK_SPAWN_CHANCE, "teams": teams,
-                              "enemy_owned": False, "_dynamic": True})
+                              "enemy_owned": heli, "_dynamic": True})
     return rules
 
 
@@ -4098,9 +4202,21 @@ def _map_setting(mid, key):
 SPAWN_TABLES = config.ROOT / "data" / "spawn_tables.json"
 
 
-@lru_cache(maxsize=None)
 def _spawn_table(mid):
-    """The map's entry in data/spawn_tables.json (a dict), or None."""
+    """The map's entry in data/spawn_tables.json (a dict), or None; a mod's copy of a map has
+    its source's, on its own nodes."""
+    got = _shipped_spawn_table(mid)
+    if got is None and _source(mid) is not None:
+        got = _shipped_spawn_table(_source(mid))
+        if got is not None:
+            got = dict(got, spawns=_local_rules(mid, got.get("spawns")))
+            if isinstance(got.get("move_order"), dict):
+                got["move_order"] = dict(got["move_order"], first=_local_rules(mid, got["move_order"].get("first")))
+    return got
+
+
+@lru_cache(maxsize=None)
+def _shipped_spawn_table(mid):
     try:
         got = json.loads(SPAWN_TABLES.read_text("utf-8")).get("missions", {}).get(str(mid))
     except (OSError, ValueError):
@@ -4264,9 +4380,9 @@ def _spawn(m, rng, at_start=False, avoid=(), our_turn=False):
 def _spawn_allies(m, rng=random):
     """Spawn rules with "ally": true put a force (stc ally_team) on the heliport instead of an
     enemy: a third party's (SC+ 11320's military, ally teams 9550122-9550163 on their belong-0
-    heliports, the SC+ notes). The rule's node must be held by "owner" (a belong, default 0: the
-    third party) and free. Turns are enemy turns as for enemies; the force comes in at the start of
-    our next turn in summon_ally (the reply Silent Sandtable's door waves were recorded in), as
+    heliports, the SC+ notes). "side" sets whose side it is (else its row's). The rule's node must
+    be held by "owner" (a belong, default 0: the third party) and free. Turns are enemy turns as
+    for enemies; the force comes in at the start of our next turn in summon_ally (the reply Silent Sandtable's door waves were recorded in), as
     {"<instance>": <ally_instance_info entry, with spot_id>}. Returns that, or None."""
     turn = int(m["turn"]) - 1           # the enemy turn that just ended
     if turn < 1:
@@ -4291,7 +4407,7 @@ def _spawn_allies(m, rng=random):
             if rng.random() * 100 >= float(rule.get("chance", 100)):
                 continue
             team = rng.choices([int(t["team"]) for t in teams], weights=[float(t.get("weight", 1)) for t in teams])[0]
-            iid = _new_ally(m, team, spot)
+            iid = _new_ally(m, team, spot, belong=rule.get("side"))
             if iid is None:
                 continue
             m["spawned"][key] = done + 1
@@ -4305,7 +4421,7 @@ def _put_enemy(m, spot, team, turn):
     inst = int(m.get("next_instance") or 0) or 1 + max([int(s["enemy_instance_id"]) for s in m["spots"]] + [0])
     m["next_instance"] = inst + 1
     row = _enemy_teams()[team]
-    ai, para = int(row.get("ai") or 0), str(row.get("ai_content") or "0")
+    ai, para = int(row.get("ai") or 0), local_spots(m["mission_id"], str(row.get("ai_content") or "0"))
     spot.update({"enemy_team_id": str(team), "enemy_instance_id": str(inst), "boss_hp": str(_boss_hp(team)),
                  "enemy_hp_percent": "1", "enemy_birth_turn": str(turn), "enemy_ai": ai, "enemy_ai_para": para})
     if team in _boss_teams(m["mission_id"]):
@@ -4620,7 +4736,8 @@ def supply_team(state, body):
     if spot is not None:
         count = int(spot.get("supply_count") or 0) + 1
         spot["supply_count"] = str(count)
-    _rule_points(m, "supply", 1)          # a score map's resupply points (field 17)
+    if spot is None or _spot_types(m["mission_id"]).get(int(spot["spot_id"])) not in DEPLOY_TYPES:
+        _rule_points(m, "supply", 1)      # field 17: resupplying away from a Command Post or heliport (player report)
     if spot is not None:
         _use_crate(m, spot)                 # a dropped crate (_crate_plan); the map's own score nothing used
     return {"max_ammo": full[0], "max_mre": full[1], "type5_score": 0, "supply_count": str(count)}
@@ -5041,9 +5158,9 @@ CRATE_NODES = {10520: frozenset({92413, 92414, 92415, 92509})}
 
 @lru_cache(maxsize=None)
 def _crate_spots(mid):
-    if int(mid) in CRATE_NODES:
-        return CRATE_NODES[int(mid)]
-    ok = CRATE_SPOT_RULE.get(int(mid), CRATE_SPOT_DEFAULT)
+    if _for_map(CRATE_NODES, mid):
+        return _for_map(CRATE_NODES, mid)
+    ok = _for_map(CRATE_SPOT_RULE, mid, CRATE_SPOT_DEFAULT)
     return frozenset(int(r["id"]) for r in _spots_by_mission().get(mid, [])
                      if int(r["type"]) == 2 and str(r.get("random_get") or "0") in ("", "0")
                      and ok(int(r["building_id"] or 0)))
@@ -8206,7 +8323,7 @@ def _spring_traps(state, m, spot_id, inst, team_id, hp):
 # in ally_instance_ids and startMission sends ally_instance_info, an object {"<instance>":
 # {"ally_team_id", "ally_instance_id", "battleskill_switch" (bool), "target_type", "ally_type",
 # "duration_end_turn", "ai" ("<code>" or "<code>:<ammo>,<mre>"), "ai_para" (str), "ally_enemy"}}
-# (AllyTeam$$.ctor / SetHp / CheckAI; ally_guns/ally_boss_hp/team_resource are optional, the guns
+# (AllyTeam$$.ctor / SetHp / CheckAI; ally_guns/team_resource are optional, the guns
 # then come from the client's own ally_team row). target_type 302/303 switch the client to a
 # Coalition-style force; 0 lets it decide from the row. The client catches bad entries ("Ally数据有误").
 # duration_end_turn: the client removes the force once the turn equals it (0 = never).
@@ -8261,7 +8378,7 @@ def _new_ally(m, team_id, spot, belong=None):
     iid = str(m["next_ally"])
     duration = int(row.get("duration") or 0)
     m.setdefault("allies", {})[iid] = {
-        "ally_team_id": int(row["id"]), "spot": spot["spot_id"],
+        "ally_team_id": int(row["id"]), "spot": spot["spot_id"], "mission": m["mission_id"],
         "belong": int(row["initial_type"]) if belong is None else int(belong),
         "end_turn": int(m["turn"]) + duration if duration > 0 else 0}
     spot["ally_instance_ids"] = list(spot.get("ally_instance_ids") or []) + [int(iid)]
@@ -8278,9 +8395,10 @@ def _place_allies(m, deployed=None):
     placed = {(int(r["id"]), int(r["ally_team_id"])) for r in _spots_by_mission().get(m["mission_id"], [])
               if int(r["ally_team_id"] or 0)}
     # the table lists the deployed forces too (their spots' ally_team_id); the request says which
+    sides = _map_setting(m["mission_id"], "ally_sides") or {}     # a mod's side for a node's force
     for spot, team in sorted(placed | set(_live_allies(m["mission_id"])) | set(_start_allies(m["mission_id"])) | mine):
         mine_here = (spot, team) in mine
-        iid = _new_ally(m, team, _spot_of(m, spot), belong=ALLY_FRIENDLY if mine_here else None)
+        iid = _new_ally(m, team, _spot_of(m, spot), belong=ALLY_FRIENDLY if mine_here else sides.get(str(spot)))
         if iid is not None and mine_here:
             m["allies"][iid]["myside"] = True
 
@@ -8300,6 +8418,9 @@ def _ally_json(m, a):
            "ally_enemy": int(a.get("enemy", row.get("enemy_team_id")) or 0)}
     ai, content = _ally_ai(a, row)
     out.update(ai=ai, ai_para=_ai_para(a, ai, content))
+    boss = _boss_hp(out["ally_enemy"])
+    if boss:        # without it a force whose team has a boss (249 of them: 2298, Beak_M16) starts it at about 1 HP
+        out["ally_boss_hp"] = int(a.get("boss_hp") or boss)
     if a.get("hp") is not None:
         out["ally_enemy_hp_percent"] = a["hp"]      # weakened in a fight with another force
     if a.get("guns"):           # re-equipped when it changed sides (ally_changes)
@@ -8545,7 +8666,8 @@ def ally_stand_rules(m, side, reply):
         row = _ally_teams().get(a["ally_team_id"], {})
         tokens = set()
         for ct, nt in (("transform_condition", "transform_number"), ("betray_condition", "betray_number")):
-            conds, nums = str(row.get(ct) or "").split(";"), str(row.get(nt) or "").split(";")
+            conds = str(row.get(ct) or "").split(";")
+            nums = str(_spot_nums(m, ALLY_ON_STAND, row.get(nt)) or "").split(";")
             for g, c in enumerate(conds):
                 if c.strip() == str(ALLY_ON_STAND) and g < len(nums):
                     tokens.update(n.strip() for n in nums[g].split(",") if n.strip())
@@ -8570,7 +8692,7 @@ def _ally_ai(a, row):
     ais, paras = str(row.get("ai") or "0").split(";"), str(row.get("ai_content") or "0").split(";")
     side = int(a["belong"])
     pick = lambda xs: (xs[side] if side < len(xs) else xs[0]).strip() or "0"
-    return pick(ais), pick(paras)
+    return pick(ais), local_spots(a.get("mission"), pick(paras))
 
 
 def _ai_para(a, ai, content):
@@ -8580,6 +8702,12 @@ def _ai_para(a, ai, content):
     if ai == str(TEAM_ALERT):
         return "@%s,%s" % (a["spot"], content)
     return "" if content in ("", "0") else content
+
+
+def _spot_nums(m, cond, text):
+    """A transform / betray number list with a copied map's source nodes as its own, for the
+    conditions whose numbers are nodes."""
+    return local_spots(m["mission_id"], text) if cond in (ALLY_ON_SPOT, ALLY_ON_ENTER, ALLY_ON_STAND) else text
 
 
 def ally_changes(m, cond, value, reply=None, only=None):
@@ -8593,7 +8721,7 @@ def ally_changes(m, cond, value, reply=None, only=None):
             continue
         row = _ally_teams().get(a["ally_team_id"], {})
         spot = _spot_of(m, a["spot"])
-        hit = _ally_rule(row.get("transform_condition"), row.get("transform_number"), cond, value)
+        hit = _ally_rule(row.get("transform_condition"), _spot_nums(m, cond, row.get("transform_number")), cond, value)
         if hit is not None:
             result = _pick(row.get("transform_result"), *hit) or "0"
             kind, _, hostage = result.partition(":")
@@ -8611,7 +8739,7 @@ def ally_changes(m, cond, value, reply=None, only=None):
             out["ally_instance_transform"][iid] = entry
             left.append(a["ally_team_id"])
             continue
-        hit = _ally_rule(row.get("betray_condition"), row.get("betray_number"), cond, value)
+        hit = _ally_rule(row.get("betray_condition"), _spot_nums(m, cond, row.get("betray_number")), cond, value)
         if hit is None or list(hit) in (a.get("betrayed") or []):
             continue        # (each rule once; 11353's force changes sides twice, by two skills)
         side = _pick(row.get("betray_result"), *hit)
@@ -8811,6 +8939,10 @@ def _ally_battle_reply(m, reply):
         reply["ally_battle"] = battles
     for team in m.pop("ally_fight_dead", None) or []:
         _ally_left(reply, team)
+    beaten = m.pop("ally_fight_dead_enemy", None)
+    if beaten:
+        died = reply.setdefault("died_this_section", {"enemy": [], "ally": []})
+        died.setdefault("enemy", []).extend(beaten)
     return reply
 
 
@@ -9018,6 +9150,9 @@ def _ally_enemy_fight(m, iid, a, spot, state=None):
         a["hp"] = round(max(0.01, 1 - foe / mine), 4) * float(a.get("hp") or 1)
         entry.update(win_ally_instance_id=int(iid), ally_enemy_hp_percent=round(a["hp"], 4),
                      enemy_hp_percent=0, survive_force=SURVIVE_FORCE, ally_boss_hp=_ally_boss_hp(a))
+        # the beaten team goes in died_this_section, as from our own battles (no recording of a force
+        # winning; without it the client was left waiting on turn 3 of a Hornet's Nest+ copy)
+        m.setdefault("ally_fight_dead_enemy", []).append(str(team))
         _enemy_killed(m, spot, state, by="npc")
     else:
         left = round(max(0.01, 1 - mine / foe), 4) if foe else 1
@@ -9254,6 +9389,22 @@ def _friend_act_info(m):
     return {k: v for k, v in act.items() if v}
 
 
+def _third_parties_hold(m):
+    """Third parties take the spots they stand on: {spot: 0} for those that changed.
+    At night the client draws a third party only on a spot it holds (seen on the 10508 copy:
+    the forces at 91519 / 91521 showed once endOtherSideTurn turned their spots to 0), so on
+    night maps this runs at the start too. Hidden nodes (HIDDEN_BELONGS) stay as they are: they open by their
+    own rules (Vortex of Secrets)."""
+    taken = {}
+    for a in (m.get("allies") or {}).values():
+        sp = _spot_of(m, a["spot"])
+        if (a["belong"] == ALLY_THIRD and sp is not None and sp["belong"] != "0"
+                and str(sp["belong"]) not in HIDDEN_BELONGS):
+            sp["belong"] = "0"
+            taken[sp["spot_id"]] = 0
+    return taken
+
+
 def other_side_turn(state, body):
     """startOtherSideTurn / othersideTurnMove / endOtherSideTurn: third parties take their step once a
     turn (in the first of these calls)."""
@@ -9267,12 +9418,7 @@ def other_side_turn(state, body):
     if first:
         # third parties take the spots they stand on (105: endOtherSideTurn change_belong
         # {"9270": 0, ...}, recorded)
-        taken = {}
-        for a in (m.get("allies") or {}).values():
-            sp = _spot_of(m, a["spot"])
-            if a["belong"] == ALLY_THIRD and sp is not None and sp["belong"] != "0":
-                sp["belong"] = "0"
-                taken[sp["spot_id"]] = 0
+        taken = _third_parties_hold(m)
         if taken:
             reply["change_belong"] = taken
     reply = ally_stand_rules(m, ALLY_THIRD, reply) if first else reply

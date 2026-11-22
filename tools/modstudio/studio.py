@@ -40,6 +40,7 @@ FREE_FROM = {
     "enemy_in_team": 80000001, "mission": 800001, "spot": 8000001, "battle_skill_config": 900000101,
     "battle_buff": 7000001, "mission_win_type_config": 80000001, "building": 95000001,
     "sangvis_resolution": 800100, "battle_formula": 7000001, "battle_watch": 7000001, "battle_watch_trigger": 7000001,
+    "ally_team": 95000001, "gun_in_ally": 95000001,
 }
 SKILL_GROUP_FROM = 9000001
 
@@ -49,6 +50,8 @@ TEXT_FIELDS = {
     "sangvis": {"name": "1", "en_introduce": "3"},
     "enemy_character_type": {"name": "2", "character": "1"},
     "mission": {"name": "1", "mission_describe": "2"},
+    "ally_team": {"name": "1"},
+    "building": {"name": "1", "des": "2"},
     "battle_skill_config": {"name": "1", "description": "2", "lvup_description": "3"},
 }
 
@@ -147,6 +150,7 @@ def _load_mod(name):
     cd = {t: list(r) for t, r in (meta.pop("catchdata", None) or {}).items()}
     for f in sorted((d / "catchdata").glob("*.json")) if (d / "catchdata").is_dir() else []:
         cd[f.stem] = cd.get(f.stem, []) + json.loads(f.read_text("utf-8"))
+    mods.rename_old_art_codes(meta.get("custom_art"), tables)     # Mod<id> -> Own<id>, kept on the next save
     meta.setdefault("name", name)
     meta.setdefault("version", "1")
     meta["enabled"] = mods.is_enabled(d, meta)          # the player's choice (mods/_enabled.json) first
@@ -330,6 +334,88 @@ def text_of(text, key):
     return decode_text(text.get(str(key or ""), "")) if key else ""
 
 
+def plain_text(v):
+    """Game text without colour tags, on one line."""
+    return re.sub(r"\s+", " ", re.sub(r"<[^>]*>", "", str(v or ""))).strip()
+
+
+# map mechanics a ranking map can use: catalog kind -> (table, description field)
+MECHANIC_CATALOGS = {"map_skill": ("mission_skill_config", "description"), "map_effect": ("mission_buff_config", "description"),
+                     "map_marker": ("special_spot_config", "description"), "ally_team": ("ally_team", None),
+                     "building": ("building", "des")}
+
+
+def _enemy_skill_names(text):
+    """{illustration sub_id: [skill names]} from the enemy encyclopedia (enemy_illustration)."""
+    names = {str(r["id"]): plain_text(text_of(text, r.get("name"))) for r in world_table("enemy_illustration_skill")}
+    return {str(r["sub_id"]): [names[x] for x in str(r.get("enemy_skill") or "").split(",") if names.get(x)]
+            for r in world_table("enemy_illustration")}
+
+
+def enemy_summary(r, skills):
+    """One line telling versions of an enemy apart: level, stats, the encyclopedia's skills."""
+    stats = [("HP", int(r.get("maxlife") or 0) * max(1, int(r.get("number") or 1))), ("FP", r.get("pow")), ("ACC", r.get("hit")),
+             ("EVA", r.get("dodge")), ("ROF", r.get("rate")), ("Armor", r.get("armor")), ("Shield", r.get("shield"))]
+    line = f"Lv{r.get('level')} · " + " ".join(f"{k} {v}" for k, v in stats if int(v or 0))
+    if int(r.get("number") or 1) > 1:
+        line += f" ({r['number']} units)"
+    sk = skills.get(str(r.get("enemy_illustration_sub_id") or ""))
+    return line + (" · " + ", ".join(sk) if sk else "")
+
+
+SCALED = ("maxlife", "pow", "hit", "dodge", "armor")
+
+
+def enemy_at(eid, level, links=1):
+    """What an enemy brings at a team member's level and links: its stats scaled by
+    enemy_standard_attribute from its own level, as the battle does (missions._enemy_attribute)."""
+    r = world_index("enemy_character_type").get(str(eid))
+    if r is None:
+        return ""
+    std = cached(("std",), lambda: {int(x["level"]): x for x in world_table("enemy_standard_attribute")})
+    level, links = int(level or 0), max(1, int(links or 1))
+    here, norm = std.get(level), std.get(int(r.get("level") or 0))
+    if here is None:
+        return f"The game has no stats for Lv{level}, so the battle would not load. Levels 1 to 200 work."
+
+    def at(f):
+        v = float(r.get(f) or 0)
+        if f in SCALED and norm and float(norm.get(f) or 0):
+            v = v * float(here.get(f) or 0) / float(norm[f])
+        return round(v)
+    stats = [("HP", at("maxlife") * links), ("FP", at("pow")), ("ACC", at("hit")), ("EVA", at("dodge")),
+             ("ROF", at("rate")), ("Armor", at("armor")), ("Shield", at("shield"))]
+    return f"In battle at Lv{level}: " + " ".join(f"{k} {v}" for k, v in stats if v)
+
+
+def ally_contents(row, text=None, idx=None):
+    """One line on what an allied force holds: its T-Dolls (and levels), other units, and the enemy team
+    it is fought as. idx: a dict kept across calls for the tables it reads."""
+    text = text or world_text()
+    idx = {} if idx is None else idx
+    if not idx:
+        idx.update((t, world_index(t)) for t in ("gun", "gun_in_ally", "enemy_team", "enemy_character_type"))
+    guns, members = idx["gun"], idx["gun_in_ally"]
+    dolls = []
+    for x in str(row.get("guns") or "").split(","):
+        m = members.get(x.strip())
+        if m:
+            g = guns.get(str(m["gun_id"])) or {}
+            dolls.append(f"{text_of(text, g.get('name')) or g.get('en_name') or g.get('code') or m['gun_id']} Lv{m['gun_level']}")
+    parts = [("T-Dolls: " + ", ".join(dolls)) if dolls else ""]
+    n = len([x for x in str(row.get("sangvis") or "").split(",") if x.strip() not in ("", "0")])
+    parts.append(f"{n} Coalition unit{'s' * (n != 1)}" if n else "")
+    parts.append("HOC" if int(row.get("squad") or 0) else "")
+    parts.append("vehicle" if int(row.get("vehicle") or 0) else "")
+    tid = str(row.get("enemy_team_id") or "0")
+    if tid != "0":
+        t = idx["enemy_team"].get(tid) or {}
+        lead = idx["enemy_character_type"].get(str(t.get("enemy_leader") or 0)) or {}
+        who = text_of(text, lead.get("name")) or lead.get("code") or ""
+        parts.append(f"fought as enemy team {tid}" + (f" ({who})" if who else ""))
+    return " · ".join(p for p in parts if p)
+
+
 def catalog(kind):
     text = world_text()
     if kind == "gun":
@@ -339,19 +425,28 @@ def catalog(kind):
         return [{"id": r["id"], "name": text_of(text, r["name"]) or r["en_name"], "code": r["code"],
                  "type": r["type"]} for r in world_table("sangvis")]
     if kind == "enemy":
+        skills = _enemy_skill_names(text)
         return [{"id": r["id"], "name": text_of(text, r["name"]) or r["code"], "code": r["code"],
-                 "type": r["type"], "level": r["level"]} for r in world_table("enemy_character_type")]
+                 "type": r["type"], "level": r["level"], "desc": enemy_summary(r, skills)} for r in world_table("enemy_character_type")
+                # stand-ins with no stats of their own (maxlife 0) freeze Target Practice; they aren't offered
+                if int(r.get("maxlife") or 0)]
     if kind == "team":
         enemies = world_index("enemy_character_type")
-        counts = {}
+        members = {}
         for r in world_table("enemy_in_team"):
-            counts[r["enemy_team_id"]] = counts.get(r["enemy_team_id"], 0) + 1
+            members.setdefault(r["enemy_team_id"], []).append(r)
         out = []
         for r in world_table("enemy_team"):
             lead = enemies.get(str(r["enemy_leader"])) or {}
+            mem = members.get(r["id"], [])
+            parts = {}
+            for m in mem:
+                e = enemies.get(str(m["enemy_character_type_id"])) or {}
+                key = f"{text_of(text, e.get('name')) or e.get('code') or m['enemy_character_type_id']} Lv{e.get('level', '?')}"
+                parts[key] = parts.get(key, 0) + 1
             out.append({"id": r["id"], "leader": r["enemy_leader"],
                         "name": text_of(text, lead.get("name")) or lead.get("code", ""),
-                        "members": counts.get(r["id"], 0)})
+                        "members": len(mem), "desc": ", ".join(f"{k} ×{n}" if n > 1 else k for k, n in parts.items())})
         return out
     if kind == "mission":
         return [{"id": r["id"], "name": text_of(text, r["name"]), "campaign": r["campaign"], "sub": r["sub"],
@@ -363,7 +458,21 @@ def catalog(kind):
             if g not in seen:
                 seen[g] = {"id": g, "name": text_of(text, r["name"]), "code": r["code"], "levels": 0}
             seen[g]["levels"] += 1
+            desc = plain_text(text_of(text, r.get("description")))
+            if desc:
+                seen[g]["desc"] = desc          # the highest level's
         return list(seen.values())
+    if kind in MECHANIC_CATALOGS:
+        table, desc_field = MECHANIC_CATALOGS[kind]
+        idx = {}
+        return [{"id": r["id"], "name": plain_text(text_of(text, r.get("name"))) or r.get("code") or "", "code": r.get("code") or "",
+                 "desc": plain_text(text_of(text, r.get(desc_field))) if desc_field else ally_contents(r, text, idx) if table == "ally_team" else "",
+                 **({"side": int(r.get("initial_type") or 0)} if table == "ally_team" else {})}
+                for r in world_table(table)]
+    if kind == "env_skill":
+        return [{"id": r["id"], "name": text_of(text, r["name"]) or r["code"], "code": r["code"],
+                 "desc": plain_text(text_of(text, r.get("desc")))}
+                for r in world_table("fight_environment_skill") if r.get("if_display")]
     if kind == "story":
         import content
         return [{"id": n, "name": n} for n in sorted(content.originals())]
@@ -380,10 +489,14 @@ def strip_row(row, table, against=None):
     fields = stc.schema()[table][1]
     k = fields[0][0]
     out = {k: row[k]}
+    new_row = mods.NEW_ROW_DEFAULTS.get(table, {})      # what the build gives a new row that leaves a field out
     for f, t in fields[1:]:
         v = row.get(f, "" if t == "string" else 0)
         if against is not None:
             if str(v) != str(against.get(f, "" if t == "string" else 0)):
+                out[f] = v
+        elif f in new_row:
+            if str(v) != str(new_row[f]):
                 out[f] = v
         elif v not in ("", 0, 0.0, None, "0"):
             out[f] = v
@@ -604,7 +717,8 @@ def blank_entity(kind):
                  map_res_name="Chapter1_Y;OPS86_Y", map_information="3000,2625|2472,1574|0,-758;6000,6000|6000,4000|0,5000",
                  is_snow="0", fog_length="0,500;0,500", fog_color="#000000FF;#000000FF", round_config="1:1,2:2,3:3",
                  support_available=2, limit_sangvis=4, limit_squad=-1, limit_vehicle=-1, limit_team="0",
-                 difficulty_recommend="500,1;0,0;0,0;0,0;0,0", turn_duration=360000000)
+                 difficulty_recommend="500,1;0,0;0,0;0,0;0,0", turn_duration=360000000,
+                 integration_switch="1-1;4-40:80:160")     # empty: the client shows "Repair Disabled"
         return {"kind": kind, "table": "mission", "row": r, "spots": [], "spawns": [],
                 "texts": {f: "" for f in TEXT_FIELDS["mission"]}}
     if kind == "skill":
@@ -717,6 +831,13 @@ def save_entity(mod_name, e):
         return check_mod(mod_name)
 
 
+def _owned_members(mod, ally_id):
+    """This mod's gun_in_ally rows that its allied force lists."""
+    row = next((r for r in mod["tables"].get("ally_team", []) if str(r.get("id")) == str(ally_id)), {})
+    listed = {x.strip() for x in str(row.get("guns") or "").split(",")}
+    return [str(r["id"]) for r in mod["tables"].get("gun_in_ally", []) if str(r["id"]) in listed]
+
+
 def delete_entity(mod_name, kind, eid):
     with LOCK:
         mod = load_mod(mod_name)
@@ -737,8 +858,10 @@ def delete_entity(mod_name, kind, eid):
                                               if str(r.get("enemy_team_id")) != eid]
         elif kind == "map":
             put_rows(mod, "mission", [], remove_keys=[eid])
-            mod["tables"]["spot"] = [r for r in mod["tables"].get("spot", []) if str(r.get("mission_id")) != eid]
-            mod["meta"]["map_rules"].pop(eid, None)
+            spots = world_index("spot")       # an edit of a game node has no mission_id of its own
+            mod["tables"]["spot"] = [r for r in mod["tables"].get("spot", [])
+                                     if str(r.get("mission_id") or (spots.get(str(r["id"])) or {}).get("mission_id")) != eid]
+            mod["meta"].get("map_rules", {}).pop(eid, None)
             set_grant(mod, "missions", eid, None)
             if mod["meta"].get("campaign"):
                 mod["meta"]["campaign"]["missions"] = [i for i in mod["meta"]["campaign"].get("missions", []) if str(i) != eid]
@@ -747,6 +870,14 @@ def delete_entity(mod_name, kind, eid):
         elif kind == "skill":
             mod["tables"]["battle_skill_config"] = [r for r in mod["tables"].get("battle_skill_config", [])
                                                     if str(r.get("skill_group_id")) != eid]
+        elif kind in ("ally", "building"):
+            table = "ally_team" if kind == "ally" else "building"
+            if kind == "ally":
+                mine = _owned_members(mod, eid)
+                put_rows(mod, "gun_in_ally", [], remove_keys=mine)
+            put_rows(mod, table, [], remove_keys=[eid])
+            for f in TEXT_FIELDS[table]:
+                mod["meta"]["text"].pop(text_key(table, f, eid), None)
         save_mod(mod_name, mod)
         return check_mod(mod_name)
 
@@ -766,6 +897,20 @@ def world_tables():
     return set(stc.schema())
 
 
+def _changed_maps(mod):
+    """Ids of the maps a mod makes or changes: its mission rows, the maps of its node rows, its map settings."""
+    t = mod["tables"]
+    out = [int(r["id"]) for r in t.get("mission", []) if not r.get("_delete")]
+    spots = world_index("spot")
+    for r in t.get("spot", []):
+        mid = r.get("mission_id") or (spots.get(str(r["id"])) or {}).get("mission_id")
+        if mid:
+            out.append(int(mid))
+    out += [int(k) for k in (mod["meta"].get("map_rules") or {}) if str(k).isdigit()]
+    missions = world_index("mission")
+    return [m for m in dict.fromkeys(out) if str(m) in missions]
+
+
 def mod_summary(name):
     mod = load_mod(name)
     t = mod["tables"]
@@ -778,28 +923,71 @@ def mod_summary(name):
         r = world[table].get(str(key)) or {}
         return text_of(text, r.get(field)) or r.get("en_name") or r.get("code") or ""
 
+    # skills a doll's conditional-skill rules made (combos.py): edited through the doll, not listed
+    made = {int(g) for c in (mod["meta"].get("combos") or {}).values() for g in (c.get("ids") or {}).get("groups") or []}
     ents = {
         "unit": [{"id": r["id"], "name": label("gun", r["id"])} for r in t.get("gun", []) if not r.get("_delete")],
         "sangvis": [{"id": r["id"], "name": label("sangvis", r["id"])} for r in t.get("sangvis", []) if not r.get("_delete")],
         "enemy": [{"id": r["id"], "name": label("enemy_character_type", r["id"])}
                   for r in t.get("enemy_character_type", []) if not r.get("_delete")],
         "team": [{"id": r["id"], "name": ""} for r in t.get("enemy_team", []) if not r.get("_delete")],
-        "map": [{"id": r["id"], "name": label("mission", r["id"])} for r in t.get("mission", []) if not r.get("_delete")],
+        "map": [{"id": m, "name": label("mission", m)} for m in _changed_maps(mod)],
+        "ally": [{"id": r["id"], "name": label("ally_team", r["id"])} for r in t.get("ally_team", []) if not r.get("_delete")],
+        "building": [{"id": r["id"], "name": label("building", r["id"])} for r in t.get("building", []) if not r.get("_delete")],
         "skill": [{"id": g, "name": label("battle_skill_config", g * 100 + 10)}
-                  for g in sorted({int(r.get("skill_group_id") or int(r["id"]) // 100) for r in t.get("battle_skill_config", [])})],
+                  for g in sorted({int(r.get("skill_group_id") or int(r["id"]) // 100) for r in t.get("battle_skill_config", [])})
+                  if g not in made],
     }
     # tables owned by an entry: the skill's pieces, a Coalition unit's resolution rows
     owned = {"gun", "sangvis", "enemy_character_type", "enemy_team", "enemy_in_team", "mission", "spot",
              "battle_skill_config", "battle_trigger", "battle_target_select_ai", "battle_buff", "battle_action_config",
              "battle_creation", "battle_hurt_config", "battle_formula", "battle_watch", "battle_watch_trigger",
-             "sangvis_resolution", "normal_activity", "mission_event"}
+             "sangvis_resolution", "normal_activity", "mission_event", "ally_team", "gun_in_ally", "building"}
     ents["row"] = [{"id": f"{tb}:{r.get(key_of(tb))}", "show": r.get(key_of(tb)),
                     "name": " · ".join(filter(None, [table_label(tb), text_of(text, (world_index(tb).get(str(r.get(key_of(tb)))) or {}).get("name")) if tb in world_tables() else ""]))}
                    for tb, rows in t.items() if tb not in owned for r in rows]
     import content
     ents.update(content.summary(name, mod))
-    meta = {k: v for k, v in mod["meta"].items() if k not in ("text", "grant", "map_rules")}
+    import assets
+    ents["assets"] = assets.summary(mod)
+    hidden = {f"{t}:{k}" for t, k in assets.owned(mod)[0]}      # rows of added pictures and music: on their page
+    ents["row"] = [r for r in ents["row"] if r["id"] not in hidden]
+    meta = {k: v for k, v in mod["meta"].items() if k not in ("text", "grant", "map_rules", "combos")}
     return {"meta": meta, "entities": ents, "campaign": mod["meta"].get("campaign") or mod["meta"].get("chapter")}
+
+
+def picture_of(kind, eid):
+    """[(chibi kind, code), ...] to try for the map layout's pictures: an enemy team's leader, a building's icon,
+    an allied force's first doll, then the enemy team it fights as."""
+    eid = str(eid or "")
+
+    def team(tid):
+        t = world_index("enemy_team").get(str(tid)) or {}
+        types = world_index("enemy_character_type")
+        lead = types.get(str(t.get("enemy_leader") or 0))
+        if lead is None:
+            first = next((r for r in world_table("enemy_in_team") if str(r["enemy_team_id"]) == str(tid)), None)
+            lead = types.get(str(first["enemy_character_type_id"])) if first else None
+        return ("enemy", lead["code"]) if lead and lead.get("code") else None
+
+    if kind == "team":
+        return [x for x in [team(eid)] if x]
+    if kind == "building":
+        code = (world_index("building").get(eid) or {}).get("code")
+        return [("building", code)] if code else []
+    if kind == "ally":
+        row = world_index("ally_team").get(eid) or {}
+        first = next((int(x) for x in str(row.get("guns") or "").split(",") if x.strip().isdigit()), 0)
+        gun = (world_index("gun_in_ally").get(str(first)) or {}).get("gun_id")
+        code = (world_index("gun").get(str(gun)) or {}).get("code") if gun else None
+        return [x for x in [("gun", code) if code else None, team(row.get("enemy_team_id"))] if x]
+    return []
+
+
+def picture(kind, eid):
+    """PNG bytes of that picture (gfserver/chibi.py, from the game's files), or None."""
+    from gfserver import chibi
+    return next((data for k, code in picture_of(kind, eid) if (data := chibi.png(code, 0, k))), None)
 
 
 def check_mod(name):
@@ -868,7 +1056,8 @@ def lookups():
             "enemy_types": models.ENEMY_TYPES, "enemy_stats": [[k, label] for k, _, label in models.ENEMY_STATS],
             "team_ai": team_ai, "team_tags": models.TEAM_TAGS, "map_kinds": models.MAP_KINDS, "map_ai": models.MAP_AI,
             "skill2_kinds": models.SANGVIS_SKILL2_KINDS, "skill_presets": skills.PRESETS,
-            "mission_icons": mission_icons()}
+            "mission_icons": mission_icons(), "score_template": models.score_design(models.SCORE_TEMPLATE),
+            "ally_ai": models.ALLY_AI_LABELS, "building_sides": models.BUILDING_SIDES}
 
 
 def meta_info():
@@ -899,7 +1088,10 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(data)))
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
-        self.wfile.write(data)
+        try:
+            self.wfile.write(data)
+        except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+            pass                        # the page moved on before the reply (a list it no longer shows)
 
     def _body(self):
         n = int(self.headers.get("Content-Length") or 0)
@@ -927,8 +1119,13 @@ class Handler(BaseHTTPRequestHandler):
                     except mod_share.ShareError as e:
                         return self._send(404, {"error": str(e)})
                     return self._send(200, data, "application/zip", download=fname)
+                if route == ["picture"]:
+                    data = picture(q.get("kind"), q.get("id"))
+                    return self._send(200, data, "image/png") if data else self._send(404, {"error": "no picture"})
                 if len(route) == 2 and route[0] == "catalog":
                     return self._send(200, catalog(route[1]))
+                if route == ["enemy-at"]:
+                    return self._send(200, {"line": enemy_at(q.get("id"), q.get("level"), q.get("links"))})
                 if len(route) == 3 and route[0] == "entity":
                     return self._send(200, load_entity(q.get("mod"), route[1], route[2]))
                 if len(route) == 2 and route[0] == "new":
@@ -960,6 +1157,34 @@ class Handler(BaseHTTPRequestHandler):
                     return self._send(200, content.search_text(q.get("q")))
                 if route == ["cn-data"]:
                     return self._send(200, {"available": content.cn_available()})
+                import art
+                if route == ["art"]:
+                    return self._send(200, art.info(q.get("mod"), int(q.get("id") or 0), q.get("model") or "",
+                                                    int(q.get("skin") or 0)))
+                if route == ["art-template"]:
+                    src, slot = q.get("from") or "", q.get("slot") or ""
+                    return self._send(200, art.template_png(src, slot), "image/png", download=f"{src}_{slot}_template.png")
+                if route == ["art-image"]:
+                    data = art.image_png(q.get("mod"), q.get("code"), q.get("slot"))
+                    return self._send(200, data, "image/png") if data else self._send(404, {"error": "no picture"})
+                import assets
+                if route == ["assets"]:
+                    return self._send(200, assets.categories())
+                if len(route) == 2 and route[0] == "assets":
+                    return self._send(200, assets.listing(q.get("mod"), route[1]))
+                if route == ["asset-thumb"]:
+                    data = assets.thumb(q.get("mod"), q.get("cat"), q.get("key"))
+                    return self._send(200, data, "image/png") if data else self._send(404, {"error": "no picture"})
+                if route == ["asset-template"]:
+                    cat, key = q.get("cat") or "", q.get("key") or ""
+                    return self._send(200, assets.template_png(cat, key), "image/png", download=f"{key}.png")
+                if route == ["asset-file"]:
+                    got = assets.mod_file(q.get("mod"), q.get("cat"), q.get("key"), q.get("which") or "")
+                    return self._send(200, got[0], got[1]) if got else self._send(404, {"error": "no file"})
+                if route == ["asset-maps"]:
+                    return self._send(200, assets.maps_using(q.get("key") or "", q.get("from") or None, mod_name=q.get("mod") or None))
+                if route == ["own-map-backgrounds"]:
+                    return self._send(200, assets.own_map_backgrounds())
                 if route == ["buffinfo"]:
                     return self._send(200, buff_info([i for i in (q.get("ids") or "").split(",") if i]))
             return self._send(404, {"error": "not found"})
@@ -1018,6 +1243,15 @@ class Handler(BaseHTTPRequestHandler):
             if route and len(route) == 2 and route[0] == "map-config":
                 with LOCK:
                     return self._send(200, map_config_save(route[1], body))
+            if route and len(route) == 3 and route[0] == "mod" and route[2] in ("art-upload", "art-remove", "art-look"):
+                import art
+                act = {"art-upload": art.upload, "art-remove": art.remove, "art-look": art.set_look}[route[2]]
+                return self._send(200, act(route[1], body))
+            if route and len(route) == 3 and route[0] == "mod" and route[2] in ("asset-upload", "asset-add", "asset-remove", "asset-rename"):
+                import assets
+                act = {"asset-upload": assets.upload, "asset-add": assets.add, "asset-remove": assets.remove,
+                       "asset-rename": assets.rename}[route[2]]
+                return self._send(200, act(route[1], body))
             if route == ["build"]:
                 return self._send(200, run_build())
             return self._send(404, {"error": "not found"})

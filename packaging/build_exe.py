@@ -10,8 +10,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-VERSION = "1.0.0"
 REPO = Path(__file__).resolve().parent.parent
+VERSION = (REPO / "gfserver" / "version.py").read_text("utf-8").split('VERSION = "')[1].split('"')[0]   # the release tag, v<VERSION>
 DIST = REPO / "dist"
 APP = ["gfserver", "client_patch", "data", "mods", "tools", "launcher.pyw", "play.py", "run.py", "README.md", "requirements.txt"]
 

@@ -96,7 +96,7 @@ at login. New art still isn't possible (see Art).
 
 Mod Studio's **Export to share** saves the mod as one `.zip` (`<name>-v<version>.zip`, the folder inside). The
 launcher's **Add a mod** (Tools tab, or `tools/add_mod.py <zip>`) checks a zip before writing anything: one `mod.json`,
-nothing that would land outside the folder, only `.json`, `.txt` and `.md` files (mods hold no game art), at most 50 MB.
+nothing that would land outside the folder, only `.json`, `.txt` and `.md` files and the mod's own `.png` pictures under `art/`, at most 50 MB.
 A mod with the same folder name is replaced, and the old one kept in `mods/_replaced/`. If the new mod can't be on with
 the mods you have on (most often both add something with the same id), it is added turned off, and the note names
 the other mod.
@@ -197,6 +197,7 @@ remembers what was granted in `_mod_grants`.
 - `fairies`: a level-1 fairy with the first basic talent, or with `{"id": 1001, "max": 1}` level 100, 5 stars
   and skill 10
 - `missions`: opens the map in `mission_with_user_info`
+- `items`: one of each item (`item_with_user_info`), e.g. a mod's own profile picture or home background
 
 Fields starting with `_` (such as `"_comment"`) are ignored, so rows can carry notes.
 
@@ -277,9 +278,8 @@ modded map work the same as on an original one.
 
 ## Not possible yet
 
-- **New art** (new character models or map backgrounds): needs AssetBundles built for Unity 2018.4,
-  plus `resconfig` entries. The build already declares modified bundles (`tools/build_resconfig.py`),
-  so this is the next step, but nothing builds new bundles yet.
+- **New models** (new chibi animations, map backgrounds): a T-Doll can have its own pictures (see
+  Custom T-Doll art), but its chibi keeps an existing doll's skeleton and animations.
 - **Skill checks**: the build checks references between tables, but not whether a formula is valid
   or a skill makes sense in battle.
 - **Map icons and banners** can only reuse the game's images (see Art).
@@ -291,9 +291,68 @@ modded map work the same as on an original one.
   held by Griffin sees 2 nodes around it, and an Illumination Fairy lights 2 nodes around its
   target for a turn.
 
+## Custom T-Doll art
+
+A T-Doll can have pictures of its own (Mod Studio: the doll's Own pictures card). They are copies of
+an existing doll's art with the mod's pictures painted in, under a new model code:
+
+```json
+"custom_art": { "Mod8001": { "from": "KP31", "images": { "portrait": "art/Mod8001/portrait.png",
+                                                        "chibi": "art/Mod8001/chibi.png" } } }
+```
+
+Pictures (`mods/<mod>/art/<code>/`): `portrait`, `damaged` (else the portrait), `card` (the list
+picture; else made from the portrait), `chibi` and `dorm` (sprite sheets painted over the source
+doll's sheet, same layout). Mod Studio converts any picture for the portraits (a plain background
+is removed, the figure placed as the source doll's stands); a sheet must be the template painted over,
+since the chibi keeps the source doll's skeleton. The doll's gun row uses the new code. The build (`tools/custom_art.py`)
+copies the source doll's `character_<code>`, `_he`, `_nom` and `_spine` bundles with the new paths
+and pictures, and declares them in the resource config.
+
+## Pictures and music
+
+Mod Studio's Pictures and music page replaces the game's profile pictures, home screen backgrounds,
+map backgrounds and music, or adds new ones made like one of the game's:
+
+```json
+"game_assets": { "home_bg/cg_manwear": { "file": "art/assets/home_bg/cg_manwear.png" },
+                 "profile_pic/profilePic_Own90001": { "file": "art/assets/profile_pic/profilePic_Own90001.png",
+                                                      "new": true, "from": "profilePic_rank2_G43", "name": "My face" } }
+```
+
+Pictures are stored at the size of the one they replace or are made from; music as ADX
+(`.adx`, converted when uploaded) with the uploaded file beside it. The build (`tools/game_assets.py`)
+rebuilds a replaced picture's bundle with the picture swapped, copies the template's bundle for a new
+one (only its picture, under the new name), and puts the sound into the game's music file
+(`<name>.acb.bytes`, `tools/cri.py`); everything is declared in the resource config. A new profile picture
+or background also needs a `friend_cosmetic` and an `item` row and an `items` grant, new music a
+`music_collection` row (the base's music player); the studio writes them. A new map background is used
+by setting a map's background to its name (`OwnMap1_Y`).
+
+Home backgrounds: the game shows the one picked in its background settings; its built-in default (none
+picked) can't be changed. A replaced background that has an animated (Live2D) version shows still: the
+build leaves the animated one out of the resource config. A new one also gets a copy of the template's
+home screen part (`<code>_prefab.prefab`). Every home background is drawn stretched over a 2048 x 1536
+(4:3) frame; a 16:9 screen shows about the middle 2048 x 1152.
+
+Map and home backgrounds keep the uploaded picture and how it lies on the map or the home frame (a home
+background's `place` has no `area`; its list icon is the frame's middle square):
+
+```json
+"map_bg/Chapter1_Y": { "file": "art/assets/map_bg/Chapter1_Y.png", "source": "art/assets/map_bg/Chapter1_Y_source.png",
+                       "place": { "mode": "fit", "zoom": 1, "x": 0.1, "y": -0.2, "area": [3000, 2625] } }
+```
+
+The game stretches the map texture over the map's size (the first pair of `map_information`, here
+3000 x 2625), so the build draws the picture on that shape (`fill`, `fit` or `stretch`, then `zoom`;
+`x`/`y` move its centre by that share of the width/height, down is positive) and squeezes it into the
+texture. Zoom and offsets have no limit. Past the map's edges the game repeats the picture mirrored,
+and it only shows the map's view (the second and third pairs, size and centre); the studio's preview
+draws both.
+
 ## Art
 
-New art can't be built yet, but an existing image can be given a second path, so the client finds
+An existing image can be given a second path, so the client finds
 it where a table points: `"art": {"<new path>": "<existing image>"}`, paths below
 `Assets/Resources/DaBao/` (the new one as the client asks for it, case included). The build adds
 the path to the bundle that holds the image (an AssetBundle may list several paths for one asset),

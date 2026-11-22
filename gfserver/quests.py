@@ -957,6 +957,9 @@ MAILBOX_TYPES = (1, 3, 6)
 
 def mail_list(state, body):
     """A locked mail stays listed after its end time, as live lists it (locking keeps it)."""
+    from . import account, paid_shop
+    account.explore_settle(state)
+    paid_shop.card_mails(state)
     start = _n(body, "start_id", 0)
     now = time.time()
     return [m for m in _mails(state) if (not m["if_received"] or int(m["type"]) in MAILBOX_TYPES)

@@ -11,7 +11,8 @@ from . import config
 CLIENT_OPTIONS_FILE = "gf_client_options.txt"
 TOOL_SWITCHES = ("damage_log", "damage_csv", "skill_overlay", "battle_log", "simulator", "mobile_armor", "old_target_order")
 SERVER_SWITCHES = ("confirm_battles",)     # read by the server as it runs (gfserver/battle_hold.py), not sent to the game
-LAUNCHER_SWITCHES = {"map_ids": False, "map_buildings": True, "map_chibis": True}     # the Map tab's switches
+LAUNCHER_SWITCHES = {"map_ids": False, "map_buildings": True, "map_chibis": True,     # the Map tab's switches
+                     "check_updates": True}                                         # look for a new release at start
 # The simulator's settings, written only while it is on: (lowest, highest). 0 for the enemy team or the seed means unset.
 SIM_NUMBERS = {"sim_enemy_team": (0, 2**31 - 1), "sim_runs": (1, 1000), "sim_seed": (0, 2**31 - 1),
                "sim_limit_drone_seconds": (1, 86400), "sim_limit_other_seconds": (1, 86400)}
@@ -24,11 +25,26 @@ DEFAULTS = {"damage_log": False, "damage_csv": False, "skill_overlay": False, "b
             "sim_enemy_team": 0, "sim_runs": 1, "sim_seed": 0, "sim_no_random": False,
             "sim_limit_drone": False, "sim_limit_drone_seconds": LIMIT_SECONDS,
             "sim_limit_other": False, "sim_limit_other_seconds": LIMIT_SECONDS,
-            "custom_keys": False, "keys": {}, "account": "own", "new_account": 1, "target_practice": "",
+            "custom_keys": False, "keys": {}, "game_config": {}, "account": "own", "new_account": 1, "target_practice": "",
             **LAUNCHER_SWITCHES}
 ACCOUNTS = ("own", "sample", "new", "perfect")     # gfserver/new_account.py
 # target_practice: enemy team ids, "1,2,3"; when set, target practice lists them in place of the saved list
 # (account.target_practice_list), which stays in the save untouched.
+
+# Game rules the player may change: catchdata game_config_info values, read by the client (client_patch/game_config.lua
+# answers Data.GetInt with them) and by the server (stc.catch). (name, label, lowest, highest)
+GAME_CONFIG = (
+    ("collect_target_num", "Target Practice: saved enemy teams", 1, 200),
+    ("targettrain_battle_timelimit", "Target Practice: fight time limit (seconds)", 10, 86400),
+    ("targettrain_logmail_num", "Target Practice: records kept", 1, 200),
+    ("plan_mode_limit", "Planning mode: moves per plan", 1, 999),
+    ("vehicle_preset_max", "Mobile Armor presets", 1, 50),
+    ("simulate_sweeping_maxnum", "Combat simulation: sweeps at once", 1, 999),
+    ("max_locked_mails", "Locked mails kept", 1, 5000),
+    ("support_daily_limit", "Friend echelons: uses a day", 1, 999),
+    ("dorm_visit_prize_limit", "Dorm likes that pay friendship points, a day", 0, 999),
+)
+GAME_CONFIG_NAMES = {name: (lo, hi) for name, _, lo, hi in GAME_CONFIG}
 
 RENAMED = {"fight_log": "battle_log"}     # in settings.json files from before the rename
 RETIRED = {"sim_vehicle", "sim_vehicle_name"}     # the Mobile Armor is now chosen in the game
@@ -97,6 +113,21 @@ def clean(settings):
             out[k] = {a: key for a, key in (v or {}).items() if key != defaults.get(a)}
         elif k in TOOL_SWITCHES or k in SERVER_SWITCHES or k in SIM_SWITCHES or k in SIM_LIMITS or k in LAUNCHER_SWITCHES or k == "custom_keys":
             out[k] = bool(v)
+        elif k == "game_config":
+            out[k] = {}
+            for name, value in (v or {}).items():
+                if name not in GAME_CONFIG_NAMES:
+                    raise SettingsError(f"unknown game rule {name!r}")
+                if value in (None, ""):
+                    continue
+                lo, hi = GAME_CONFIG_NAMES[name]
+                try:
+                    n = int(value)
+                except (TypeError, ValueError):
+                    raise SettingsError(f"{name} must be a whole number, not {value!r}")
+                if not lo <= n <= hi:
+                    raise SettingsError(f"{name} must be from {lo} to {hi}")
+                out[k][name] = n
         elif k == "target_practice":
             ids = [x.strip() for x in str(v or "").replace(";", ",").replace(" ", ",").split(",") if x.strip()]
             bad = [x for x in ids if not x.isdigit()]
@@ -158,6 +189,7 @@ def options_text(settings):
         lines += [f"{k}={settings[k]}" for k in SIM_NUMBERS if settings.get(k) and k not in SIM_LIMITS.values()]
         lines += [f"{k}=1" for k in SIM_SWITCHES if settings.get(k)]
         lines += [f"{k}={settings[seconds]}" for k, seconds in SIM_LIMITS.items() if settings.get(k)]
+    lines += [f"config.{name}={value}" for name, value in sorted((settings.get("game_config") or {}).items())]
     if settings.get("custom_keys"):
         for action, key in sorted((settings.get("keys") or {}).items()):
             lines += [f"key.{action}={key}", f"label.{action}={KEY_LABELS[key]}"]

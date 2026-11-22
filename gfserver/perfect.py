@@ -12,7 +12,8 @@ echelons, presets, logistics and adjutants are dropped (clear()), and then:
   Coalition      each, maxed (mods._max_sangvis)
                  1-2 star ones (rank 3 and 4: units start at rank - 2 stars) that are not Bosses (Ringleaders, type 1):
                  as many maxed copies as fit one echelon, 36 // ap_cost
-  items          every item at its upper_limit, or 99999 where it has none
+  items          every item at its upper_limit, or 99999 where it has none, except gift packages (stc present) past
+                 their due_time: those are dropped (expired())
   gifts          every gift (gift_item) not hidden: 99999
   achievements   every one done, with its counter at the target (no mail)
   costumes       every skin not hidden
@@ -22,12 +23,15 @@ echelons, presets, logistics and adjutants are dropped (clear()), and then:
   Armors         the sample's, with their crew moved to this account's copy of the same doll or Coalition unit
                  (crew points at unit record ids, which differ here: a crew member that isn't there hangs the fight)
 """
+import time
+from datetime import datetime
+
 from . import factory, missions, mods, quests, stc, workshop
 
 MOD_OFFSET = 20000
 REGULAR_EQUIP, EXCLUSIVE_EQUIP = 5, 1
-VERSION = 7       # saves made by an older fill() are made again (Store.load_player), except those in UPGRADES
-UPGRADES = {6: "crew"}   # {old VERSION: what upgrade() still has to do}
+VERSION = 8       # saves made by an older fill() are made again (Store.load_player), except those in UPGRADES
+UPGRADES = {6: ("crew", "expired"), 7: ("expired",)}   # {old VERSION: what upgrade() still has to do}
 LEADER = 55       # M4A1
 DROPPED = {"gun_with_user_info": [], "equip_with_user_info": {}, "fairy_with_user_info": {}, "gun_preset_info": [],
            "sangvis_with_user_info": [], "sangvis_team_with_user_info": [], "sangvis_chip_with_user_info": [],
@@ -79,6 +83,26 @@ def _items(state):
         rec = have.setdefault(str(row["id"]), {"item_id": str(row["id"]), "number": "0", "last_recover_time": "0"})
         rec["number"] = str(int(row.get("upper_limit") or 0) or ITEM_NO_LIMIT)
     state["item_with_user_info"] = list(have.values())
+
+
+def _expired_ids(now=None):
+    now = datetime.fromtimestamp(now or time.time())
+    out = set()
+    for row in stc.table("present"):
+        due = " ".join(str(row.get("due_time") or "").split())
+        try:
+            if due and datetime.strptime(due, "%Y/%m/%d %H:%M:%S") < now:
+                out.add(str(row["item_id"]))
+        except ValueError:
+            pass
+    return out
+
+
+def expired(state, now=None):
+    """Drop the gift packages (indicators, transfer letters) whose due_time has passed."""
+    gone = _expired_ids(now)
+    state["item_with_user_info"] = [i for i in state.get("item_with_user_info") or [] if str(i["item_id"]) not in gone]
+    return state
 
 
 def _gifts(state):
@@ -150,8 +174,11 @@ def crew(state, sample_units):
 
 def upgrade(state, sample):
     """Bring a save made by an older fill() up to VERSION without making it again, where UPGRADES says how."""
-    if UPGRADES.get(state.get("_perfect")) == "crew":
+    steps = UPGRADES.get(state.get("_perfect")) or ()
+    if "crew" in steps:
         crew(state, _units(sample))
+    if "expired" in steps:
+        expired(state)
     state["_perfect"] = VERSION
     return state
 
@@ -215,6 +242,7 @@ def fill(state):
 
     crew(state, sample_units)
     _items(state)
+    expired(state)
     _gifts(state)
 
     grants = (mods.manifest() or {}).get("grant") or {}       # already given here: mods.apply_grants adds no copies
